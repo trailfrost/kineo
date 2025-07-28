@@ -1,0 +1,39 @@
+{
+  "name": "kineo",
+  "version": "0.1.0",
+  "description": "Declarative, TypeScript-first Object-Graph Mapper for Neo4j.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./schema": {
+      "default": "./dist/schema.js",
+      "types": "./dist/schema.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "vitest",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "build": "tsc -b"
+  },
+  "keywords": [
+    "object-graph-mapper",
+    "ogm",
+    "neo4j"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.13.1",
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "neo4j-driver": "^5.28.1"
+  }
+}

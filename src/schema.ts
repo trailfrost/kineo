@@ -23,6 +23,8 @@ export type Direction = "IN" | "OUT" | "BOTH";
 export type Node = Record<string, FieldDef | RelationshipDef>;
 export type Schema = Record<string, Node>;
 
+// TODO `InferSchema`/`InferNode` type
+
 export class FieldDef {
   cypherTypes: CypherType[];
   defaultValue: unknown | null;
@@ -138,9 +140,5 @@ export function relation(to: string): RelationshipDef {
 }
 
 export function node<TNode extends Node>(def: TNode): TNode {
-  return def;
-}
-
-export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
   return def;
 }

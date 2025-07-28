@@ -8,10 +8,6 @@
     ".": {
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./schema": {
-      "default": "./dist/schema.js",
-      "types": "./dist/schema.d.ts"
     }
   },
   "scripts": {

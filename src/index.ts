@@ -1,6 +1,6 @@
 import * as neo4j from "neo4j-driver";
 import type * as Neo4j from "neo4j-driver";
-import type { Node, Schema } from "./schema";
+import type { InferSchema, Node, Schema } from "./schema";
 
 export type Auth =
   | {
@@ -39,7 +39,17 @@ export type DatabaseOpts<TSchema extends Schema> = (
   driverConfig?: Neo4j.Config;
 };
 
-export class Model<TNode extends Node> {
+type ModelsForSchema<TSchema extends Schema> = {
+  [Node in keyof TSchema]: Model<TSchema[Node]>;
+};
+
+export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
+  ModelsForSchema<TSchema>;
+
+export type InferClient<T> =
+  T extends KineoOGM<infer TSchema> ? InferSchema<TSchema> : never;
+
+class Model<TNode extends Node> {
   node: TNode;
 
   constructor(node: TNode) {
@@ -48,15 +58,6 @@ export class Model<TNode extends Node> {
 
   // TODO
 }
-
-// helper type for the dynamic model keys
-type ModelsForSchema<TSchema extends Schema> = {
-  [Node in keyof TSchema]: Model<TSchema[Node]>;
-};
-
-// client with models
-export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
-  ModelsForSchema<TSchema>;
 
 class KineoClient<TSchema extends Schema> {
   driver: Neo4j.Driver;
@@ -124,7 +125,7 @@ class KineoClient<TSchema extends Schema> {
   }
 }
 
-export function Kineo<TSchema extends Schema>(
+export default function Kineo<TSchema extends Schema>(
   opts: DatabaseOpts<TSchema>
 ): KineoOGM<TSchema> {
   return new KineoClient(opts) as KineoOGM<TSchema>;

@@ -1,5 +1,5 @@
 import { test } from "vitest";
-import { Kineo } from ".";
+import Kineo, { type InferClient } from ".";
 import { defineSchema, field, relation, node } from "./schema";
 
 // ! WARNING: to run these tests, you must have a Neo4j instance on localhost:7687. I recommend using Docker.
@@ -9,7 +9,7 @@ function exampleDb() {
     User: node({
       name: field("STRING").id(),
       password: field("STRING").required(),
-      posts: relation("Post").outgoing("HAS_POST"),
+      posts: relation("Post").outgoing("HAS_POST").array(),
     }),
 
     Post: node({
@@ -27,6 +27,25 @@ function exampleDb() {
     },
     schema,
   });
+
+  const test: InferClient<typeof db> = {
+    User: {
+      name: "neo4j",
+      password: "password",
+      posts: [],
+    },
+    Post: {
+      id: "hello world!",
+      author: {
+        name: "neo4j",
+        password: "password",
+        posts: [],
+      },
+      title: "Title",
+    },
+  };
+
+  console.log(test);
 
   return db;
 }

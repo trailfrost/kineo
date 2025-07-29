@@ -39,68 +39,93 @@ export type DatabaseOpts<TSchema extends Schema> = (
   driverConfig?: Neo4j.Config;
 };
 
-export type KineoOGM<TSchema extends Schema> = {
-  driver: Neo4j.Driver;
-} & { [node in keyof TSchema]: Model<TSchema[node]> };
-
 export class Model<TNode extends Node> {
   node: TNode;
 
   constructor(node: TNode) {
     this.node = node;
   }
+
+  // TODO
 }
 
-export function createDriver(
-  url: string,
-  auth: Auth,
-  config?: Neo4j.Config
-): Neo4j.Driver {
-  let authToken: Neo4j.AuthToken;
-  switch (auth.type) {
-    case "basic":
-    case undefined:
-      authToken = neo4j.auth.basic(auth.username, auth.password);
-      break;
-    case "bearer":
-      authToken = neo4j.auth.bearer(auth.token);
-      break;
-    case "kerberos":
-      authToken = neo4j.auth.kerberos(auth.ticket);
-      break;
-    case "custom":
-      authToken = neo4j.auth.custom(
-        auth.principal,
-        auth.credentials,
-        auth.realm,
-        auth.scheme,
-        auth.parameters
+// helper type for the dynamic model keys
+type ModelsForSchema<TSchema extends Schema> = {
+  [Node in keyof TSchema]: Model<TSchema[Node]>;
+};
+
+// client with models
+export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
+  ModelsForSchema<TSchema>;
+
+class KineoClient<TSchema extends Schema> {
+  driver: Neo4j.Driver;
+  session: Neo4j.Session;
+
+  constructor(opts: DatabaseOpts<TSchema>) {
+    if ("driver" in opts) {
+      this.driver = opts.driver;
+    } else {
+      this.driver = KineoClient.createDriver(
+        opts.url,
+        opts.auth,
+        opts.driverConfig
       );
-      break;
+    }
+
+    this.session = this.driver.session();
+
+    // Assign all models to `this`
+    for (const key in opts.schema) {
+      const model = new Model(opts.schema[key]);
+      (this as unknown as Record<string, Model<TSchema[string]>>)[key] = model;
+    }
   }
 
-  return neo4j.driver(url, authToken, config);
+  static createDriver(
+    url: string,
+    auth: Auth,
+    config?: Neo4j.Config
+  ): Neo4j.Driver {
+    let authToken: Neo4j.AuthToken;
+
+    switch (auth.type) {
+      case "basic":
+      case undefined:
+        authToken = neo4j.auth.basic(auth.username, auth.password);
+        break;
+      case "bearer":
+        authToken = neo4j.auth.bearer(auth.token);
+        break;
+      case "kerberos":
+        authToken = neo4j.auth.kerberos(auth.ticket);
+        break;
+      case "custom":
+        authToken = neo4j.auth.custom(
+          auth.principal,
+          auth.credentials,
+          auth.realm,
+          auth.scheme,
+          auth.parameters
+        );
+        break;
+    }
+
+    return neo4j.driver(url, authToken, config);
+  }
+
+  async close(): Promise<void> {
+    await this.session.close();
+    await this.driver.close();
+  }
+
+  async transaction(): Promise<Neo4j.Transaction> {
+    return await this.session.beginTransaction();
+  }
 }
 
 export function Kineo<TSchema extends Schema>(
   opts: DatabaseOpts<TSchema>
 ): KineoOGM<TSchema> {
-  const record: {
-    [node in keyof TSchema]?: Model<TSchema[node]>;
-  } = {};
-
-  for (const key in opts.schema) {
-    record[key] = new Model(opts.schema[key]);
-  }
-
-  const driver =
-    "driver" in opts
-      ? opts.driver
-      : createDriver(opts.url, opts.auth, opts.driverConfig);
-  return {
-    ...record,
-    driver,
-  } as KineoOGM<TSchema>;
+  return new KineoClient(opts) as KineoOGM<TSchema>;
 }
-
-export * from "./schema";

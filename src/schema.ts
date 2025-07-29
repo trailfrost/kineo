@@ -142,3 +142,7 @@ export function relation(to: string): RelationshipDef {
 export function node<TNode extends Node>(def: TNode): TNode {
   return def;
 }
+
+export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
+  return def;
+}

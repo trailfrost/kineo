@@ -31,8 +31,22 @@ export const db = Kineo({
   schema,
 });
 
-await db.User.findOne({
-  where: { name: "trailfrost" },
+const user = await db.User.matchOne({
+  where: {
+    name: {
+      startsWith: "a",
+      not: {
+        endsWith: "z",
+      },
+    },
+    AND: [
+      {
+        password: {
+          contains: "secure",
+        },
+      },
+    ],
+  },
   include: {
     posts: true,
   },

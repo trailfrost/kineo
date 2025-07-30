@@ -73,24 +73,35 @@ type InferRelationship<
     ? InferNode<T[To], T>
     : InferNode<T[To], T> | undefined;
 
-export type InferNode<
-  TNode extends Node,
-  TSchema extends Schema = { dummy: { dummy: RelationshipDef<"UNKNOWN"> } },
-> = {
-  [key in keyof TNode]: TNode[key] extends FieldDef<
-    infer Type,
-    infer Required extends boolean,
-    infer Array extends boolean
-  >
-    ? InferValue<Type, Required, Array>
-    : TNode[key] extends RelationshipDef<
-          infer To extends string,
-          infer Required extends boolean,
-          infer Array extends boolean
-        >
-      ? InferRelationship<TSchema, To, Required, Array>
-      : never;
-};
+type IsRequiredField<T> =
+  // eslint-disable-next-line
+  T extends FieldDef<any, infer Req, any>
+    ? Req
+    : // eslint-disable-next-line
+      T extends RelationshipDef<any, infer Req, any>
+      ? Req
+      : false;
+
+type InferNode<TNode extends Node, TSchema extends Schema> =
+  // Required fields
+  {
+    [K in keyof TNode as IsRequiredField<TNode[K]> extends true
+      ? K
+      : never]: TNode[K] extends FieldDef<infer Type, true, infer Array>
+      ? InferValue<Type, true, Array>
+      : TNode[K] extends RelationshipDef<infer To, true, infer Array>
+        ? InferRelationship<TSchema, To, true, Array>
+        : never;
+  } & {
+    // Optional fields
+    [K in keyof TNode as IsRequiredField<TNode[K]> extends false
+      ? K
+      : never]?: TNode[K] extends FieldDef<infer Type, false, infer Array>
+      ? InferValue<Type, false, Array>
+      : TNode[K] extends RelationshipDef<infer To, false, infer Array>
+        ? InferRelationship<TSchema, To, false, Array>
+        : never;
+  };
 
 export type InferSchema<T extends Schema> = {
   [key in keyof T]: InferNode<T[key], T>;

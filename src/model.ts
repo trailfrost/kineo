@@ -1,5 +1,5 @@
-import type { Schema, Node, InferNode, RelationshipDef } from "./schema";
 import type * as Neo4j from "neo4j-driver";
+import type { Schema, Node, InferNode, RelationshipDef } from "./schema";
 
 // TODO actually build and fire commands
 
@@ -150,14 +150,12 @@ export type CypherResult<T = unknown> = {
   raw: unknown;
 };
 
-export class Model<S extends Schema, N extends Node> {
+export default class Model<S extends Schema, N extends Node> {
   node: N;
-  driver: Neo4j.Driver;
   session: Neo4j.Session;
 
-  constructor(node: N, driver: Neo4j.Driver, session: Neo4j.Session) {
+  constructor(node: N, session: Neo4j.Session) {
     this.node = node;
-    this.driver = driver;
     this.session = session;
   }
 
@@ -239,9 +237,5 @@ export class Model<S extends Schema, N extends Node> {
 
   async count(opts?: Where<S, N>) {
     throw new Error("not implemented");
-  }
-
-  async cypher(command: string, params: Record<string, unknown>) {
-    return await this.session.run(command, params);
   }
 }

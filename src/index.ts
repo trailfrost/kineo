@@ -1,7 +1,7 @@
 import * as neo4j from "neo4j-driver";
 import type * as Neo4j from "neo4j-driver";
 import type { InferSchema, Schema } from "./schema";
-import { Model } from "./model";
+import Model from "./model";
 
 export type Auth =
   | {
@@ -69,7 +69,7 @@ class KineoClient<TSchema extends Schema> {
 
     // Assign all models to `this`
     for (const key in opts.schema) {
-      const model = new Model(opts.schema[key], this.driver, this.session);
+      const model = new Model(opts.schema[key], this.session);
       (this as unknown as Record<string, unknown>)[key] = model;
     }
   }
@@ -114,6 +114,12 @@ class KineoClient<TSchema extends Schema> {
   async transaction(): Promise<Neo4j.Transaction> {
     return await this.session.beginTransaction();
   }
+  async cypher<Shape extends neo4j.RecordShape>(
+    command: string,
+    params?: Record<string, unknown>
+  ) {
+    return await this.session.run<Shape>(command, params);
+  }
 }
 
 export default function Kineo<TSchema extends Schema>(
@@ -121,5 +127,3 @@ export default function Kineo<TSchema extends Schema>(
 ): KineoOGM<TSchema> {
   return new KineoClient(opts) as KineoOGM<TSchema>;
 }
-
-export * from "./model";

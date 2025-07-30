@@ -1,6 +1,6 @@
 import { test } from "vitest";
-import Kineo, { type InferClient } from ".";
-import { defineSchema, field, relation, node } from "./schema";
+import { defineSchema, field, relation, node } from "../schema";
+import Kineo from "..";
 
 // ! WARNING: to run these tests, you must have a Neo4j instance on localhost:7687. I recommend using Docker.
 
@@ -28,25 +28,6 @@ function exampleDb() {
     schema,
   });
 
-  const test: InferClient<typeof db> = {
-    User: {
-      name: "neo4j",
-      password: "password",
-      posts: [],
-    },
-    Post: {
-      id: "hello world!",
-      author: {
-        name: "neo4j",
-        password: "password",
-        posts: [],
-      },
-      title: "Title",
-    },
-  };
-
-  console.log(test);
-
   return db;
 }
 
@@ -56,3 +37,5 @@ test("database connection", async () => {
 
   await db.driver.close();
 });
+
+// TODO write tests for model functions

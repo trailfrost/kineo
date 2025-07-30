@@ -68,12 +68,15 @@ type InferRelationship<
   IsRequired extends boolean,
   IsArray extends boolean,
 > = IsArray extends true
-  ? Array<InferNode<T, T[To]>>
+  ? Array<InferNode<T[To], T>>
   : IsRequired extends true
-    ? InferNode<T, T[To]>
-    : InferNode<T, T[To]> | undefined;
+    ? InferNode<T[To], T>
+    : InferNode<T[To], T> | undefined;
 
-type InferNode<T extends Schema, TNode extends Node> = {
+export type InferNode<
+  TNode extends Node,
+  TSchema extends Schema = { dummy: { dummy: RelationshipDef<"UNKNOWN"> } },
+> = {
   [key in keyof TNode]: TNode[key] extends FieldDef<
     infer Type,
     infer Required extends boolean,
@@ -85,18 +88,19 @@ type InferNode<T extends Schema, TNode extends Node> = {
           infer Required extends boolean,
           infer Array extends boolean
         >
-      ? InferRelationship<T, To, Required, Array>
+      ? InferRelationship<TSchema, To, Required, Array>
       : never;
 };
 
 export type InferSchema<T extends Schema> = {
-  [key in keyof T]: InferNode<T, T[key]>;
+  [key in keyof T]: InferNode<T[key], T>;
 };
 
 export class FieldDef<
   TType extends CypherType,
   IsRequired extends boolean = false,
   IsArray extends boolean = false,
+  IsId extends boolean = false,
 > {
   cypherType: TType;
   defaultValue: unknown | null;
@@ -112,28 +116,28 @@ export class FieldDef<
   id() {
     this.isPrimaryKey = true;
     this.isRequired = true;
-    return this as FieldDef<TType, true, IsArray>;
+    return this as FieldDef<TType, true, IsArray, true>;
   }
 
   default(value: unknown) {
     this.defaultValue = value;
     this.isRequired = true;
-    return this as FieldDef<TType, false, IsArray>;
+    return this as FieldDef<TType, false, IsArray, IsId>;
   }
 
   required() {
     this.isRequired = true;
-    return this as FieldDef<TType, true, IsArray>;
+    return this as FieldDef<TType, true, IsArray, IsId>;
   }
 
   optional() {
     this.isRequired = false;
-    return this as FieldDef<TType, false, IsArray>;
+    return this as FieldDef<TType, false, IsArray, IsId>;
   }
 
   array() {
     this.isArray = true;
-    return this as FieldDef<TType, IsRequired, true>;
+    return this as FieldDef<TType, IsRequired, true, IsId>;
   }
 }
 
@@ -141,13 +145,15 @@ export class RelationshipDef<
   To extends string,
   IsRequired extends boolean = false,
   IsArray extends boolean = false,
+  Metadata extends object | undefined = undefined,
 > {
   refTo: To;
   refLabel: string = "UNNAMED";
   refDirection: Direction = "OUT";
   isRequired: boolean = false;
   isArray: boolean = false;
-  defaultValue: unknown | null = null;
+  defaultValue: unknown | null;
+  metadata: Metadata = undefined as Metadata;
 
   constructor(to: To) {
     this.refTo = to;
@@ -155,7 +161,7 @@ export class RelationshipDef<
 
   to(refTo: string) {
     this.refTo = refTo as To;
-    return this as RelationshipDef<typeof refTo, IsRequired, IsArray>;
+    return this as RelationshipDef<typeof refTo, IsRequired, IsArray, Metadata>;
   }
 
   label(name: string) {
@@ -183,17 +189,22 @@ export class RelationshipDef<
 
   required() {
     this.isRequired = true;
-    return this as RelationshipDef<To, true, IsArray>;
+    return this as RelationshipDef<To, true, IsArray, Metadata>;
   }
 
   default(value: unknown) {
     this.defaultValue = value;
-    return this as RelationshipDef<To, false, IsArray>;
+    return this as RelationshipDef<To, false, IsArray, Metadata>;
   }
 
   array() {
     this.isArray = true;
-    return this as RelationshipDef<To, IsRequired, true>;
+    return this as RelationshipDef<To, IsRequired, true, Metadata>;
+  }
+
+  meta<T extends object>(metadata: T) {
+    this.metadata = metadata as unknown as Metadata;
+    return this as unknown as RelationshipDef<To, IsRequired, IsArray, T>;
   }
 }
 

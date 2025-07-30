@@ -1,6 +1,7 @@
 import * as neo4j from "neo4j-driver";
 import type * as Neo4j from "neo4j-driver";
-import type { InferSchema, Node, Schema } from "./schema";
+import type { InferSchema, Schema } from "./schema";
+import { Model } from "./model";
 
 export type Auth =
   | {
@@ -40,7 +41,7 @@ export type DatabaseOpts<TSchema extends Schema> = (
 };
 
 type ModelsForSchema<TSchema extends Schema> = {
-  [Node in keyof TSchema]: Model<TSchema[Node]>;
+  [Node in keyof TSchema]: Model<TSchema, TSchema[Node]>;
 };
 
 export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
@@ -48,16 +49,6 @@ export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
 
 export type InferClient<T> =
   T extends KineoOGM<infer TSchema> ? InferSchema<TSchema> : never;
-
-class Model<TNode extends Node> {
-  node: TNode;
-
-  constructor(node: TNode) {
-    this.node = node;
-  }
-
-  // TODO
-}
 
 class KineoClient<TSchema extends Schema> {
   driver: Neo4j.Driver;
@@ -78,8 +69,8 @@ class KineoClient<TSchema extends Schema> {
 
     // Assign all models to `this`
     for (const key in opts.schema) {
-      const model = new Model(opts.schema[key]);
-      (this as unknown as Record<string, Model<TSchema[string]>>)[key] = model;
+      const model = new Model(opts.schema[key], this.driver, this.session);
+      (this as unknown as Record<string, unknown>)[key] = model;
     }
   }
 
@@ -130,3 +121,5 @@ export default function Kineo<TSchema extends Schema>(
 ): KineoOGM<TSchema> {
   return new KineoClient(opts) as KineoOGM<TSchema>;
 }
+
+export * from "./model";

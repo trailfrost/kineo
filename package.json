@@ -9,6 +9,10 @@
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
+    "./builder": {
+      "default": "./dist/builder.js",
+      "types": "./dist/builder.d.ts"
+    },
     "./schema": {
       "default": "./dist/schema.js",
       "types": "./dist/schema.d.ts"

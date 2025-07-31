@@ -81,7 +81,10 @@ function compileCreate(stmt: IRCreate, idx: number) {
   const label = stmt.label;
   const propsKey = `props${idx}`;
 
-  const cypher = `CREATE (${alias}:${label} $${propsKey})`;
+  const cypher = `
+    CREATE (${alias}:${label} $${propsKey})
+    RETURN ${alias}
+  `;
   return {
     cypher,
     params: { [propsKey]: stmt.data },

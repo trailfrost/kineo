@@ -152,6 +152,26 @@ export type DeleteOpts<
   where?: Partial<INode>;
 };
 
+function toNode<S extends Schema, N extends Node>(
+  record: Neo4j.Record
+): InferNode<N, S>;
+function toNode<S extends Schema, N extends Node>(
+  record: Neo4j.Record[]
+): InferNode<N, S>[];
+
+function toNode<S extends Schema, N extends Node>(
+  record: Neo4j.Record | Neo4j.Record[]
+) {
+  if (!record) return null;
+
+  if (Array.isArray(record)) {
+    return record.map(
+      (record) => (record.get("n") as Neo4j.Node).properties as InferNode<N, S>
+    );
+  }
+  return (record.get("n") as Neo4j.Node).properties as InferNode<N, S>;
+}
+
 export default class Model<S extends Schema, N extends Node> {
   readonly label: string;
   readonly node: N;
@@ -171,13 +191,13 @@ export default class Model<S extends Schema, N extends Node> {
   async matchOne(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async matchMany(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return result.records;
+    return toNode<S, N>(result.records);
   }
 
   async exists(opts: Where<S, N>) {
@@ -189,49 +209,49 @@ export default class Model<S extends Schema, N extends Node> {
   async createOne(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async createMany(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records;
+    return toNode<S, N>(result.records);
   }
 
   async mergeOne(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async mergeMany(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records;
+    return toNode<S, N>(result.records);
   }
 
   async deleteOne(opts: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async deleteMany(opts?: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return result.records;
+    return toNode<S, N>(result.records);
   }
 
   async connect(opts: ConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async disconnect(opts: ConnectOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async isConnected(opts: IsConnectedOpts<S, N>) {
@@ -243,19 +263,23 @@ export default class Model<S extends Schema, N extends Node> {
   async upsertRelation(opts: UpsertConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts); // Could differentiate based on `create?: true`
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async deleteRelation(opts: DeleteConnectionOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records[0] ?? null;
+    return toNode<S, N>(result.records[0]);
   }
 
   async getRelations(opts: GetRelationOpts<S, N>) {
     const ir = parseRelationQuery(this.label, "n", opts);
     const result = await this.run(ir);
-    return result.records;
+    return toNode<S, N>(result.records) as unknown as GetTargetNodeType<
+      S,
+      N,
+      RelationshipKeys<N>
+    >[];
   }
 
   async count(opts?: Where<S, N>) {
@@ -282,11 +306,11 @@ export default class Model<S extends Schema, N extends Node> {
   async getNodeProperties(label: string): Promise<string[]> {
     const result = await this.session.run(
       `
-    CALL db.schema.nodeTypeProperties()
-    YIELD nodeType, propertyName
-    WHERE $label IN nodeType
-    RETURN DISTINCT propertyName
-    `,
+      CALL db.schema.nodeTypeProperties()
+      YIELD nodeType, propertyName
+      WHERE $label IN nodeType
+      RETURN DISTINCT propertyName
+      `,
       { label }
     );
     return result.records.map((r) => r.get("propertyName"));
@@ -295,11 +319,11 @@ export default class Model<S extends Schema, N extends Node> {
   async getRelationshipProperties(type: string): Promise<string[]> {
     const result = await this.session.run(
       `
-    CALL db.schema.relTypeProperties()
-    YIELD relType, propertyName
-    WHERE relType = $type
-    RETURN DISTINCT propertyName
-    `,
+      CALL db.schema.relTypeProperties()
+      YIELD relType, propertyName
+      WHERE relType = $type
+      RETURN DISTINCT propertyName
+      `,
       { type }
     );
     return result.records.map((r) => r.get("propertyName"));

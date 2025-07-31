@@ -1,7 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { db } from "./utils";
 
-// TODO fix tests (type errors and fails)
+// TODO fix test fails
 
 describe("Model", () => {
   test("createOne: creates a user", async () => {
@@ -56,8 +56,8 @@ describe("Model", () => {
       },
     });
 
-    expect(merged.name).toBe("alice");
-    expect(merged.password).toBe("updated!");
+    expect(merged?.name).toBe("alice");
+    expect(merged?.password).toBe("updated!");
   });
 
   test("connect: connect user to post", async () => {
@@ -82,9 +82,7 @@ describe("Model", () => {
       from: { name: "alice" },
       relation: "posts",
       where: {
-        title: {
-          contains: "Hello",
-        },
+        title: "Hello",
       },
     });
 

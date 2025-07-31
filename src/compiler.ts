@@ -163,9 +163,12 @@ function compileConnect(stmt: IRConnect, idx: number) {
     `WHERE ${toMatch.clause}`,
   ];
 
-  const relOp = stmt.type === "CONNECT" ? "CREATE" : "DELETE";
-  const relClause = `${relOp} (${from.alias})-[:${rel}]->(${to.alias})`;
-  clauses.push(relClause);
+  if (stmt.type === "DISCONNECT") {
+    clauses.push(`MATCH (${from.alias})-[r:${rel}]->(${to.alias})`);
+    clauses.push(`DELETE r`);
+  } else {
+    clauses.push(`CREATE (${from.alias})-[:${rel}]->(${to.alias})`);
+  }
 
   clauses.push(`RETURN ${from.alias}`);
 

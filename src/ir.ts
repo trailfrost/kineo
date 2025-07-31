@@ -266,8 +266,12 @@ export function parseDelete<S extends Schema, N extends Node>(
 export function parseConnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: ConnectOpts<S, N>
+  opts: ConnectOpts<S, N>,
+  nodeDef: N
 ): IRConnect {
+  const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
+  const toLabel = relDef.refTo;
+
   return {
     type: "CONNECT",
     label,
@@ -278,7 +282,7 @@ export function parseConnect<S extends Schema, N extends Node>(
       match: opts.from,
     },
     to: {
-      label: opts.relation as string,
+      label: toLabel,
       alias: "to",
       match: opts.to,
     },
@@ -289,10 +293,11 @@ export function parseConnect<S extends Schema, N extends Node>(
 export function parseDisconnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: ConnectOpts<S, N>
+  opts: ConnectOpts<S, N>,
+  nodeDef: N
 ): IRConnect {
   return {
-    ...parseConnect(label, alias, opts),
+    ...parseConnect(label, alias, opts, nodeDef),
     type: "DISCONNECT",
   };
 }

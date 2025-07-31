@@ -9,6 +9,9 @@ import type {
   WhereNode as SchemaWhereNode,
 } from "./model";
 
+/**
+ * All possible statements.
+ */
 export type IRQueryType =
   | "MATCH"
   | "CREATE"
@@ -18,6 +21,9 @@ export type IRQueryType =
   | "DISCONNECT"
   | "RELATION_QUERY";
 
+/**
+ * A `WHERE` clause.
+ */
 export interface IRWhereClause {
   field: string;
   operator:
@@ -35,6 +41,9 @@ export interface IRWhereClause {
   value: unknown;
 }
 
+/**
+ * A `WHERE` node.
+ */
 export interface IRWhereNode {
   AND?: IRWhereNode[];
   OR?: IRWhereNode[];
@@ -42,12 +51,18 @@ export interface IRWhereNode {
   conditions?: IRWhereClause[];
 }
 
+/**
+ * Base interface for creating IR types.
+ */
 export interface IRBase {
   type: IRQueryType;
   label: string;
   alias: string;
 }
 
+/**
+ * Match statement.
+ */
 export interface IRMatch extends IRBase {
   type: "MATCH";
   where?: IRWhereNode;
@@ -60,11 +75,17 @@ export interface IRMatch extends IRBase {
   select?: string[];
 }
 
+/**
+ * Create statement.
+ */
 export interface IRCreate extends IRBase {
   type: "CREATE";
   data: Record<string, unknown>;
 }
 
+/**
+ * Merge (upsert) statement.
+ */
 export interface IRMerge extends IRBase {
   type: "MERGE";
   where: Record<string, unknown>;
@@ -72,11 +93,17 @@ export interface IRMerge extends IRBase {
   create?: Record<string, unknown>;
 }
 
+/**
+ * Delete statement.
+ */
 export interface IRDelete extends IRBase {
   type: "DELETE";
   where?: Record<string, unknown>;
 }
 
+/**
+ * Connect statement.
+ */
 export interface IRConnect extends IRBase {
   type: "CONNECT" | "DISCONNECT";
   from: {
@@ -92,6 +119,9 @@ export interface IRConnect extends IRBase {
   relation: string;
 }
 
+/**
+ * Relation query.
+ */
 export interface IRRelationQuery extends IRBase {
   type: "RELATION_QUERY";
   from: {
@@ -103,6 +133,9 @@ export interface IRRelationQuery extends IRBase {
   where?: Record<string, unknown>;
 }
 
+/**
+ * All types of statements.
+ */
 export type IRStatement =
   | IRMatch
   | IRCreate
@@ -111,15 +144,24 @@ export type IRStatement =
   | IRConnect
   | IRRelationQuery;
 
+/**
+ * Intermediate representation, built for compiling into Cypher.
+ */
 export interface IR {
   statements: IRStatement[];
 }
 
 // --------- WHERE CLAUSE PARSING ---------
 
+/**
+ * Parses a field in a `WHERE` statement.
+ * @param field The field to parse.
+ * @param fieldValue The value of the field.
+ * @returns `WHERE` clauses.
+ */
 export function parseWhereField(
   field: string,
-  fieldValue: Record<string, unknown>
+  fieldValue: Record<string, unknown>,
 ): IRWhereClause[] {
   const clauses: IRWhereClause[] = [];
 
@@ -170,6 +212,11 @@ export function parseWhereField(
   return clauses;
 }
 
+/**
+ * Parses a `WHERE` node.
+ * @param node The node to parse.
+ * @returns A `WHERE` node.
+ */
 export function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
   const result: IRWhereNode = {};
 
@@ -204,10 +251,17 @@ export function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
 
 // --------- STATEMENT PARSERS ---------
 
+/**
+ * Parses a match statement.
+ * @param label The label of the statement.
+ * @param alias Name of the return.
+ * @param opts Options passed into the model.
+ * @returns A `MATCH` statement.
+ */
 export function parseMatch<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: QueryOpts<S, N>
+  opts: QueryOpts<S, N>,
 ): IRMatch {
   return {
     type: "MATCH",
@@ -222,10 +276,17 @@ export function parseMatch<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a `CREATE` statement.
+ * @param label The label of the command.
+ * @param alias Name of return value.
+ * @param opts Options passed into the model.
+ * @returns A `CREATE` statement.
+ */
 export function parseCreate<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: CreateOpts<S, N>
+  opts: CreateOpts<S, N>,
 ): IRCreate {
   return {
     type: "CREATE",
@@ -235,10 +296,17 @@ export function parseCreate<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a merge statement.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @param opts Options passed into the model.
+ * @returns A `MERGE` statement.
+ */
 export function parseMerge<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: MergeOpts<S, N>
+  opts: MergeOpts<S, N>,
 ): IRMerge {
   return {
     type: "MERGE",
@@ -250,10 +318,17 @@ export function parseMerge<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a delete statement.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @param opts Options passed into the module.
+ * @returns A `DELETE` statement.
+ */
 export function parseDelete<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: DeleteOpts<S, N>
+  opts: DeleteOpts<S, N>,
 ): IRDelete {
   return {
     type: "DELETE",
@@ -263,11 +338,19 @@ export function parseDelete<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a connect statement.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @param opts Options passed into the model.
+ * @param nodeDef Node definition.
+ * @returns A connect statement.
+ */
 export function parseConnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N
+  nodeDef: N,
 ): IRConnect {
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
   const toLabel = relDef.refTo;
@@ -290,11 +373,19 @@ export function parseConnect<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a disconnect statement.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @param opts Options passed into the model.
+ * @param nodeDef Node definition.
+ * @returns A disconnect statement.
+ */
 export function parseDisconnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N
+  nodeDef: N,
 ): IRConnect {
   return {
     ...parseConnect(label, alias, opts, nodeDef),
@@ -302,10 +393,17 @@ export function parseDisconnect<S extends Schema, N extends Node>(
   };
 }
 
+/**
+ * Parses a relationship query.
+ * @param schema Object definitions.
+ * @param nodeLabel Name of the node that is related.
+ * @param opts Options passed into the model.
+ * @returns A relationship query.
+ */
 export function parseRelationQuery<S extends Schema, N extends Node>(
   schema: S,
   nodeLabel: string,
-  opts: GetRelationOpts<S, N>
+  opts: GetRelationOpts<S, N>,
 ): IRRelationQuery {
   const nodeDef = schema[nodeLabel] as N;
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;

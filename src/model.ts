@@ -12,17 +12,23 @@ import {
 } from "./ir";
 import compile from "./compiler";
 
-// Utility to extract relationship definitions
+/**
+ * Utility to extract relationship definitions.
+ */
 export type RelationshipKeys<N extends Node> = {
   // eslint-disable-next-line
   [K in keyof N]: N[K] extends RelationshipDef<any> ? K : never;
 }[keyof N];
 
-// Extract the "To" key from a relationship field
+/**
+ * Gets a relationship target.
+ */
 export type GetRelationshipTargetLabel<N extends Node, R extends keyof N> =
   N[R] extends RelationshipDef<infer To> ? To : never;
 
-// Get the full InferNode for the target node
+/**
+ * Gets the type of a relationship target.
+ */
 export type GetTargetNodeType<
   S extends Schema,
   N extends Node,
@@ -31,6 +37,9 @@ export type GetTargetNodeType<
   ? InferNode<S[GetRelationshipTargetLabel<N, R>], S>
   : never;
 
+/**
+ * Options for connecting two nodes.
+ */
 export type ConnectOpts<
   S extends Schema,
   N extends Node,
@@ -43,12 +52,18 @@ export type ConnectOpts<
   relation: R;
 };
 
+/**
+ * Options for checking if a node is connected.
+ */
 export type IsConnectedOpts<
   S extends Schema,
   N extends Node,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
 > = ConnectOpts<S, N, R>;
 
+/**
+ * Options for upserting a connection.
+ */
 export type UpsertConnectOpts<
   S extends Schema,
   N extends Node,
@@ -57,12 +72,18 @@ export type UpsertConnectOpts<
   create?: boolean;
 };
 
+/**
+ * Options for deleting a connection.
+ */
 export type DeleteConnectionOpts<
   S extends Schema,
   N extends Node,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
 > = ConnectOpts<S, N, R>;
 
+/**
+ * Options for getting a relationship.
+ */
 export type GetRelationOpts<
   S extends Schema,
   N extends Node,
@@ -74,6 +95,9 @@ export type GetRelationOpts<
   where?: Partial<GetTargetNodeType<S, N, R>>;
 };
 
+/**
+ * Defines a field in a `where` clause.
+ */
 export type WhereField<T> = {
   equals?: T;
   in?: T[];
@@ -88,6 +112,9 @@ export type WhereField<T> = {
   not?: WhereField<T> | T;
 };
 
+/**
+ * A `WHERE` node.
+ */
 export type WhereNode<T> = {
   AND?: WhereNode<T>[];
   OR?: WhereNode<T>[];
@@ -102,10 +129,16 @@ export type WhereNode<T> = {
         : never;
 };
 
+/**
+ * A `WHERE` clause.
+ */
 export type Where<S extends Schema, N extends Node> = WhereNode<
   InferNode<N, S>
 >;
 
+/**
+ * Options for simple queries.
+ */
 export interface QueryOpts<
   S extends Schema,
   N extends Node,
@@ -126,6 +159,9 @@ export interface QueryOpts<
   };
 }
 
+/**
+ * Options for creating a node.
+ */
 export type CreateOpts<
   S extends Schema,
   N extends Node,
@@ -134,6 +170,9 @@ export type CreateOpts<
   data: INode;
 };
 
+/**
+ * Options for merging (creating or updating) a node.
+ */
 export type MergeOpts<
   S extends Schema,
   N extends Node,
@@ -144,6 +183,9 @@ export type MergeOpts<
   create?: INode;
 };
 
+/**
+ * Options for deleting a node.
+ */
 export type DeleteOpts<
   S extends Schema,
   N extends Node,
@@ -152,9 +194,15 @@ export type DeleteOpts<
   where?: Partial<INode>;
 };
 
+/**
+ * Applies default values.
+ * @param nodeDef The node to apply to.
+ * @param record The record to apply to.
+ * @returns The record, with defaults applied.
+ */
 function applyDefaults<N extends Node, S extends Schema>(
   nodeDef: N,
-  record: Record<string, unknown>
+  record: Record<string, unknown>,
 ) {
   for (const key in nodeDef) {
     const def = nodeDef[key];
@@ -176,12 +224,34 @@ function applyDefaults<N extends Node, S extends Schema>(
   return record as InferNode<N, S>;
 }
 
+/**
+ * A model, created when instantiating the OGM. Provides functions for interacting with the database.
+ */
 export default class Model<S extends Schema, N extends Node> {
+  /**
+   * The label of the node this model applies to.
+   */
   readonly label: string;
+  /**
+   * Full schema.
+   */
   readonly schema: S;
+  /**
+   * Individual node this applies to.
+   */
   readonly node: N;
+  /**
+   * Session to run commands in.
+   */
   readonly session: Neo4j.Session;
 
+  /**
+   * Creates a new model.
+   * @param label The label of the node this model applies to.
+   * @param schema Full schema.
+   * @param node Node this model applies to.
+   * @param session Session to run commands in.
+   */
   constructor(label: string, schema: S, node: N, session: Neo4j.Session) {
     this.label = label;
     this.schema = schema;
@@ -189,14 +259,25 @@ export default class Model<S extends Schema, N extends Node> {
     this.session = session;
   }
 
+  /**
+   * Compiles and runs an IR.
+   * @param ir The IR to compile and run.
+   * @returns The result of running the IR.
+   */
   private async run(ir: IRStatement): Promise<Neo4j.QueryResult> {
     const { cypher, params } = compile({ statements: [ir] });
-    console.log("CYPHER:", cypher);
-    console.log("PARAMS:", params);
     return this.session.run(cypher, params);
   }
 
+  /**
+   * Gets the properties from a record.
+   * @param record The record.
+   */
   private toNodeProperties(record: Neo4j.Record): InferNode<N, S> | null;
+  /**
+   * Gets all properties from a list of records.
+   * @param record The records.
+   */
   private toNodeProperties(record: Neo4j.Record[]): InferNode<N, S>[];
 
   private toNodeProperties(record: Neo4j.Record | Neo4j.Record[]) {
@@ -214,98 +295,178 @@ export default class Model<S extends Schema, N extends Node> {
     return apply(record);
   }
 
+  /**
+   * Runs a `MATCH` query and returns a single node.
+   * @param opts Match options.
+   * @returns Properties of the matched node.
+   */
   async matchOne(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Runs a `MATCH` query and returns multiple nodes.
+   * @param opts Match options.
+   * @returns Properties of the matched nodes.
+   */
   async matchMany(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
+  /**
+   * Runs a `MATCH` query to check if a node exists.
+   * @param opts Match options.
+   * @returns If the node exists.
+   */
   async exists(opts: Where<S, N>) {
     const ir = parseMatch(this.label, "n", { where: opts, limit: 1 });
     const result = await this.run(ir);
     return result.records.length > 0;
   }
 
+  /**
+   * Runs a `CREATE` query and returns one node.
+   * @param opts Create options.
+   * @returns Properties of the created node.
+   */
   async createOne(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Runs a `CREATE` query and returns multiple nodes.
+   * @param opts Create options.
+   * @returns Properties of the created nodes.
+   */
   async createMany(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
+  /**
+   * Runs a `MERGE` query and returns one node.
+   * @param opts Create options.
+   * @returns Properties of the merged node.
+   */
   async mergeOne(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Runs a `MERGE` query and returns multiple node.
+   * @param opts Create options.
+   * @returns Properties of the merged nodes.
+   */
   async mergeMany(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
+  /**
+   * Runs a `DELETE` query and returns one node.
+   * @param opts Create options.
+   * @returns Properties of the deleted node.
+   */
   async deleteOne(opts: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Runs a `DELETE` query and returns multiple node.
+   * @param opts Create options.
+   * @returns Properties of the deleted nodes.
+   */
   async deleteMany(opts?: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts ?? {});
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
+  /**
+   * Connects two nodes together.
+   * @param opts Connection options.
+   * @returns The first node.
+   */
   async connect(opts: ConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts, this.node);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Disconnects two nodes.
+   * @param opts Disconnection options.
+   * @returns The first node.
+   */
   async disconnect(opts: ConnectOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts, this.node);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Checks if two nodes are connected.
+   * @param opts Connection options.
+   * @returns The first node.
+   */
   async isConnected(opts: IsConnectedOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts, this.node);
     const result = await this.run(ir);
     return result.records.length > 0;
   }
 
+  /**
+   * Upserts a relationship.
+   * @param opts Connection options.
+   * @returns The first node.
+   */
   async upsertRelation(opts: UpsertConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts, this.node); // Could differentiate based on `create?: true`
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Removes a relationship.
+   * @param opts Connection options.
+   * @returns The first node.
+   */
   async deleteRelation(opts: DeleteConnectionOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts, this.node);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
+  /**
+   * Gets all relationships.
+   * @param opts What relations to get
+   * @returns The relations.
+   */
   async getRelations(opts: GetRelationOpts<S, N>) {
     const ir = parseRelationQuery(this.schema, this.label, opts);
     const result = await this.run(ir);
     return this.toNodeProperties(
-      result.records
+      result.records,
     ) as unknown as GetTargetNodeType<S, N, RelationshipKeys<N>>[];
   }
 
+  /**
+   * Counts nodes.
+   * @param opts Nodes to count.
+   * @returns Number of nodes that match.
+   */
   async count(opts?: Where<S, N>) {
     const ir = parseMatch(this.label, "n", {
       where: opts,
@@ -317,19 +478,33 @@ export default class Model<S extends Schema, N extends Node> {
     return result.records[0]?.get("count").toInt?.() ?? 0;
   }
 
+  /**
+   * Gets all labels.
+   * @returns Labels.
+   */
   async getNodeLabels(): Promise<string[]> {
     const result = await this.session.run(`CALL db.labels()`);
     return result.records.map((r) => r.get("label"));
   }
 
+  /**
+   * Gets all relationship types.
+   * @returns Types.
+   */
   async getRelationshipTypes(): Promise<string[]> {
     const result = await this.session.run(`CALL db.relationshipTypes()`);
     return result.records.map((r) => r.get("relationshipType"));
   }
 
+  /**
+   * Gets properties of a node.
+   * @param label The label to get properties of.
+   * @param arrayType Only enable this if node types are arrays.
+   * @returns Node properties.
+   */
   async getNodeProperties(
     label: string,
-    arrayType?: boolean
+    arrayType?: boolean,
   ): Promise<string[]> {
     const result = await this.session.run(
       `
@@ -338,11 +513,16 @@ export default class Model<S extends Schema, N extends Node> {
       WHERE ${arrayType ? "$label IN nodeType" : "$label = nodeType"}
       RETURN DISTINCT propertyName
       `,
-      { label }
+      { label },
     );
     return result.records.map((r) => r.get("propertyName"));
   }
 
+  /**
+   * Gets relationship properties.
+   * @param type The relationship type.
+   * @returns Relationship properties.
+   */
   async getRelationshipProperties(type: string): Promise<string[]> {
     const result = await this.session.run(
       `
@@ -351,7 +531,7 @@ export default class Model<S extends Schema, N extends Node> {
       WHERE relType = $type
       RETURN DISTINCT propertyName
       `,
-      { type }
+      { type },
     );
     return result.records.map((r) => r.get("propertyName"));
   }

@@ -57,6 +57,10 @@ const user = await db.User.matchOne({
 
 Contributions are welcome! Just make sure to dicuss changes you want to make in [Discussions](https://github.com/trailfrost/kineo/discussions), and discuss bug reports in [Issues](https://github.com/trailfrost/kineo/issues).
 
+## Roadmap
+
+We plan on supporting other graph databases (like ArangoDB) in the future with adapters.
+
 ## License
 
 This project uses the [MIT License](LICENSE).

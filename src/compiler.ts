@@ -10,6 +10,11 @@ import type {
   IRWhereNode,
 } from "./ir";
 
+/**
+ * Compiles an intermediate representation to Cypher.
+ * @param ir Intermediate representation to compile.
+ * @returns The compiled Cypher command.
+ */
 export default function compile(ir: IR) {
   const parts: string[] = [];
   const params: Record<string, unknown> = {};
@@ -26,6 +31,12 @@ export default function compile(ir: IR) {
   };
 }
 
+/**
+ * Compiles a statement into Cypher.
+ * @param stmt The statement to compile.
+ * @param index The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileStatement(stmt: IRStatement, index: number) {
   switch (stmt.type) {
     case "MATCH":
@@ -46,6 +57,12 @@ function compileStatement(stmt: IRStatement, index: number) {
   }
 }
 
+/**
+ * Compiles a `MATCH` statement into Cypher.
+ * @param stmt The `MATCH` statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileMatch(stmt: IRMatch, idx: number) {
   const alias = stmt.alias;
   const label = stmt.label;
@@ -76,6 +93,12 @@ function compileMatch(stmt: IRMatch, idx: number) {
   };
 }
 
+/**
+ * Compiles a `CREATE` statement into Cypher.
+ * @param stmt The `CREATE` statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileCreate(stmt: IRCreate, idx: number) {
   const alias = stmt.alias;
   const label = stmt.label;
@@ -91,6 +114,12 @@ function compileCreate(stmt: IRCreate, idx: number) {
   };
 }
 
+/**
+ * Compiles a `MERGE` statement into Cypher.
+ * @param stmt The `MERGE` statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileMerge(stmt: IRMerge, idx: number) {
   const alias = stmt.alias;
   const label = stmt.label;
@@ -130,6 +159,12 @@ function compileMerge(stmt: IRMerge, idx: number) {
   };
 }
 
+/**
+ * Compiles a `DELETE` statement into Cypher.
+ * @param stmt The statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileDelete(stmt: IRDelete, idx: number) {
   const alias = stmt.alias;
   const label = stmt.label;
@@ -148,6 +183,12 @@ function compileDelete(stmt: IRDelete, idx: number) {
   };
 }
 
+/**
+ * Compiles a connect statement.
+ * @param stmt The statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileConnect(stmt: IRConnect, idx: number) {
   const from = stmt.from;
   const to = stmt.to;
@@ -181,6 +222,12 @@ function compileConnect(stmt: IRConnect, idx: number) {
   };
 }
 
+/**
+ * Compiles a relation query.
+ * @param stmt The statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
   const from = stmt.from;
   const rel = stmt.relation;
@@ -215,10 +262,16 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
   };
 }
 
+/**
+ * Compiles a `WHERE` clause.
+ * @param stmt The statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileWhere(
   node: IRWhereNode | undefined,
   alias: string,
-  idx: number
+  idx: number,
 ): {
   clauses: string[];
   params: Record<string, unknown>;
@@ -281,7 +334,7 @@ function compileWhere(
       inner.push(
         n.OR.map(walk)
           .map((s) => `(${s})`)
-          .join(" OR ")
+          .join(" OR "),
       );
     if (n.NOT) inner.push(`NOT (${walk(n.NOT)})`);
 
@@ -294,10 +347,16 @@ function compileWhere(
   return { clauses, params };
 }
 
+/**
+ * Compiles a match object.
+ * @param stmt The statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
 function compileMatchObject(
   where: Record<string, unknown>,
   alias: string,
-  idx: number
+  idx: number,
 ) {
   const clauses: string[] = [];
   const params: Record<string, unknown> = {};

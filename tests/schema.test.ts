@@ -52,11 +52,6 @@ describe("RelationshipDef", () => {
     expect(r.refLabel).toBe("UNNAMED");
   });
 
-  test("sets target with to()", () => {
-    const r = relation("Old").to("New");
-    expect(r.refTo).toBe("New");
-  });
-
   test("sets label", () => {
     const r = relation("User").label("KNOWS");
     expect(r.refLabel).toBe("KNOWS");

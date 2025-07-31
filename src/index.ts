@@ -3,6 +3,9 @@ import type * as Neo4j from "neo4j-driver";
 import type { InferSchema, Schema } from "./schema";
 import Model from "./model";
 
+/**
+ * Neo4j authentication options.
+ */
 export type Auth =
   | {
       type?: "basic";
@@ -27,6 +30,9 @@ export type Auth =
       parameters: Record<string, unknown>;
     };
 
+/**
+ * Options for creating a database.
+ */
 export type DatabaseOpts<TSchema extends Schema> = (
   | {
       url: string;
@@ -40,20 +46,42 @@ export type DatabaseOpts<TSchema extends Schema> = (
   driverConfig?: Neo4j.Config;
 };
 
+/**
+ * Utility type for creating models from a schema.
+ */
 type ModelsForSchema<TSchema extends Schema> = {
   [Node in keyof TSchema]: Model<TSchema, TSchema[Node]>;
 };
 
+/**
+ * Kineo Client + all the models from a schema.
+ */
 export type KineoOGM<TSchema extends Schema> = KineoClient<TSchema> &
   ModelsForSchema<TSchema>;
 
+/**
+ * Infers the TypeScript types from a Kineo OGM.
+ */
 export type InferClient<T> =
   T extends KineoOGM<infer TSchema> ? InferSchema<TSchema> : never;
 
+/**
+ * Kineo client.
+ */
 class KineoClient<TSchema extends Schema> {
+  /**
+   * The driver of this client.
+   */
   driver: Neo4j.Driver;
+  /**
+   * The session to run queries on.
+   */
   session: Neo4j.Session;
 
+  /**
+   * Creates a new Kineo client.
+   * @param opts Options for connecting to the database.
+   */
   constructor(opts: DatabaseOpts<TSchema>) {
     if ("driver" in opts) {
       this.driver = opts.driver;
@@ -61,7 +89,7 @@ class KineoClient<TSchema extends Schema> {
       this.driver = KineoClient.createDriver(
         opts.url,
         opts.auth,
-        opts.driverConfig
+        opts.driverConfig,
       );
     }
 
@@ -74,10 +102,17 @@ class KineoClient<TSchema extends Schema> {
     }
   }
 
+  /**
+   * Creates a new Neo4j driver.
+   * @param url URL to your database.
+   * @param auth Authentication options.
+   * @param config Driver configuration.
+   * @returns A Neo4j driver.
+   */
   static createDriver(
     url: string,
     auth: Auth,
-    config?: Neo4j.Config
+    config?: Neo4j.Config,
   ): Neo4j.Driver {
     let authToken: Neo4j.AuthToken;
 
@@ -98,7 +133,7 @@ class KineoClient<TSchema extends Schema> {
           auth.credentials,
           auth.realm,
           auth.scheme,
-          auth.parameters
+          auth.parameters,
         );
         break;
     }
@@ -106,24 +141,43 @@ class KineoClient<TSchema extends Schema> {
     return neo4j.driver(url, authToken, config);
   }
 
+  /**
+   * Closes the session and driver.
+   */
   async close(): Promise<void> {
     await this.session.close();
     await this.driver.close();
   }
 
+  /**
+   * Creates a new transaction.
+   * @returns A new transaction.
+   */
   async transaction(): Promise<Neo4j.Transaction> {
     return await this.session.beginTransaction();
   }
+
+  /**
+   * Runs Cypher directly on the session.
+   * @param command The Cypher command to execute. To put variables in here, don't use a template literal - instead, use `$name`, then pass a key of `name` into the parameters.
+   * @param params Parameters.
+   * @returns A list of records and raw Cypher.
+   */
   async cypher<Shape extends neo4j.RecordShape>(
     command: string,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
   ) {
     return await this.session.run<Shape>(command, params);
   }
 }
 
+/**
+ * Creates a new Kineo OGM client.
+ * @param opts Options for connecting to the database.
+ * @returns A new Kineo OGM client.
+ */
 export default function Kineo<TSchema extends Schema>(
-  opts: DatabaseOpts<TSchema>
+  opts: DatabaseOpts<TSchema>,
 ): KineoOGM<TSchema> {
   return new KineoClient(opts) as KineoOGM<TSchema>;
 }

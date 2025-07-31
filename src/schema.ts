@@ -82,7 +82,7 @@ type IsRequiredField<T> =
       ? Req
       : false;
 
-type InferNode<TNode extends Node, TSchema extends Schema> =
+export type InferNode<TNode extends Node, TSchema extends Schema> =
   // Required fields
   {
     [K in keyof TNode as IsRequiredField<TNode[K]> extends true

@@ -69,7 +69,7 @@ class KineoClient<TSchema extends Schema> {
 
     // Assign all models to `this`
     for (const key in opts.schema) {
-      const model = new Model(opts.schema[key], this.session);
+      const model = new Model(key, opts.schema[key], this.session);
       (this as unknown as Record<string, unknown>)[key] = model;
     }
   }

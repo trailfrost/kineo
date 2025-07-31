@@ -16,6 +16,14 @@
     "./model": {
       "default": "./dist/model.js",
       "types": "./dist/model.d.ts"
+    },
+    "./ir": {
+      "default": "./dist/ir.js",
+      "types": "./dist/ir.d.ts"
+    },
+    "./compiler": {
+      "default": "./dist/compiler.js",
+      "types": "./dist/compiler.d.ts"
     }
   },
   "scripts": {
@@ -28,6 +36,11 @@
     "object-graph-mapper",
     "ogm",
     "neo4j"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "author": "trailfrost",
   "license": "MIT",

@@ -1,20 +1,29 @@
 import type * as Neo4j from "neo4j-driver";
 import type { Schema, Node, InferNode, RelationshipDef } from "./schema";
-
-// TODO actually build and fire commands
+import {
+  parseMatch,
+  parseCreate,
+  parseMerge,
+  parseDelete,
+  parseConnect,
+  parseDisconnect,
+  parseRelationQuery,
+  IRStatement,
+} from "./ir";
+import compile from "./compiler";
 
 // Utility to extract relationship definitions
-type RelationshipKeys<N extends Node> = {
+export type RelationshipKeys<N extends Node> = {
   // eslint-disable-next-line
   [K in keyof N]: N[K] extends RelationshipDef<any> ? K : never;
 }[keyof N];
 
 // Extract the "To" key from a relationship field
-type GetRelationshipTargetLabel<N extends Node, R extends keyof N> =
+export type GetRelationshipTargetLabel<N extends Node, R extends keyof N> =
   N[R] extends RelationshipDef<infer To> ? To : never;
 
 // Get the full InferNode for the target node
-type GetTargetNodeType<
+export type GetTargetNodeType<
   S extends Schema,
   N extends Node,
   R extends RelationshipKeys<N>,
@@ -65,7 +74,7 @@ export type GetRelationOpts<
   where?: Partial<GetTargetNodeType<S, N, R>>;
 };
 
-type WhereField<T> = {
+export type WhereField<T> = {
   equals?: T;
   in?: T[];
   notIn?: T[];
@@ -79,7 +88,7 @@ type WhereField<T> = {
   not?: WhereField<T> | T;
 };
 
-type WhereNode<T> = {
+export type WhereNode<T> = {
   AND?: WhereNode<T>[];
   OR?: WhereNode<T>[];
   NOT?: WhereNode<T>;
@@ -143,99 +152,156 @@ export type DeleteOpts<
   where?: Partial<INode>;
 };
 
-export type CypherParams = Record<string, unknown>;
-
-export type CypherResult<T = unknown> = {
-  records: T[];
-  raw: unknown;
-};
-
 export default class Model<S extends Schema, N extends Node> {
-  node: N;
-  session: Neo4j.Session;
+  readonly label: string;
+  readonly node: N;
+  readonly session: Neo4j.Session;
 
-  constructor(node: N, session: Neo4j.Session) {
+  constructor(label: string, node: N, session: Neo4j.Session) {
+    this.label = label;
     this.node = node;
     this.session = session;
   }
 
+  private async run(ir: IRStatement): Promise<Neo4j.QueryResult> {
+    const { cypher, params } = compile({ statements: [ir] });
+    return this.session.run(cypher, params);
+  }
+
   async matchOne(opts?: QueryOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMatch(this.label, "n", opts ?? {});
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async matchMany(opts?: QueryOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMatch(this.label, "n", opts ?? {});
+    const result = await this.run(ir);
+    return result.records;
   }
 
   async exists(opts: Where<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMatch(this.label, "n", { where: opts, limit: 1 });
+    const result = await this.run(ir);
+    return result.records.length > 0;
   }
 
   async createOne(opts: CreateOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseCreate(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async createMany(opts: CreateOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseCreate(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records;
   }
 
   async mergeOne(opts: MergeOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMerge(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async mergeMany(opts: MergeOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMerge(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records;
   }
 
   async deleteOne(opts: DeleteOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseDelete(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async deleteMany(opts?: DeleteOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseDelete(this.label, "n", opts ?? {});
+    const result = await this.run(ir);
+    return result.records;
   }
 
   async connect(opts: ConnectOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseConnect(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async disconnect(opts: ConnectOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseDisconnect(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async isConnected(opts: IsConnectedOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseConnect(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records.length > 0;
   }
 
   async upsertRelation(opts: UpsertConnectOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseConnect(this.label, "n", opts); // Could differentiate based on `create?: true`
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async deleteRelation(opts: DeleteConnectionOpts<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseDisconnect(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records[0] ?? null;
   }
 
   async getRelations(opts: GetRelationOpts<S, N>) {
-    throw new Error("not implemented");
-  }
-
-  async getNodeLabels() {
-    throw new Error("not implemented");
-  }
-
-  async getRelationshipTypes() {
-    throw new Error("not implemented");
-  }
-
-  async getNodeProperties(label: string) {
-    throw new Error("not implemented");
-  }
-
-  async getRelationshipProperties(type: string) {
-    throw new Error("not implemented");
+    const ir = parseRelationQuery(this.label, "n", opts);
+    const result = await this.run(ir);
+    return result.records;
   }
 
   async count(opts?: Where<S, N>) {
-    throw new Error("not implemented");
+    const ir = parseMatch(this.label, "n", {
+      where: opts,
+      select: {}, // just match the node, then count
+    });
+    const { cypher, params } = compile({ statements: [ir] });
+    const countQuery = `CALL { ${cypher} } RETURN count(n) as count`;
+    const result = await this.session.run(countQuery, params);
+    return result.records[0]?.get("count").toInt?.() ?? 0;
+  }
+
+  async getNodeLabels(): Promise<string[]> {
+    const result = await this.session.run(`CALL db.labels()`);
+    return result.records.map((r) => r.get("label"));
+  }
+
+  async getRelationshipTypes(): Promise<string[]> {
+    const result = await this.session.run(`CALL db.relationshipTypes()`);
+    return result.records.map((r) => r.get("relationshipType"));
+  }
+
+  async getNodeProperties(label: string): Promise<string[]> {
+    const result = await this.session.run(
+      `
+    CALL db.schema.nodeTypeProperties()
+    YIELD nodeType, propertyName
+    WHERE $label IN nodeType
+    RETURN DISTINCT propertyName
+    `,
+      { label }
+    );
+    return result.records.map((r) => r.get("propertyName"));
+  }
+
+  async getRelationshipProperties(type: string): Promise<string[]> {
+    const result = await this.session.run(
+      `
+    CALL db.schema.relTypeProperties()
+    YIELD relType, propertyName
+    WHERE relType = $type
+    RETURN DISTINCT propertyName
+    `,
+      { type }
+    );
+    return result.records.map((r) => r.get("propertyName"));
   }
 }

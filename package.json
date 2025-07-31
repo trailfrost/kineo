@@ -28,8 +28,10 @@
   },
   "scripts": {
     "test": "vitest",
-    "format": "prettier --write .",
+    "format": "prettier .",
+    "format!": "prettier --write .",
     "lint": "eslint .",
+    "check": "tsc --noEmit",
     "build": "tsc -b"
   },
   "keywords": [

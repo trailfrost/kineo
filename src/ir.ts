@@ -117,7 +117,7 @@ export interface IR {
 
 // --------- WHERE CLAUSE PARSING ---------
 
-function parseWhereField(
+export function parseWhereField(
   field: string,
   fieldValue: Record<string, unknown>
 ): IRWhereClause[] {
@@ -170,7 +170,7 @@ function parseWhereField(
   return clauses;
 }
 
-function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
+export function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
   const result: IRWhereNode = {};
 
   if (node.AND) {

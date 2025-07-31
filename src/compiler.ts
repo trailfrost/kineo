@@ -122,6 +122,8 @@ function compileMerge(stmt: IRMerge, idx: number) {
     queryLines.push(`ON CREATE SET ${setLines.join(", ")}`);
   }
 
+  queryLines.push(`RETURN ${alias}`);
+
   return {
     cypher: queryLines.join("\n"),
     params,
@@ -135,10 +137,78 @@ function compileDelete(stmt: IRDelete, idx: number) {
   const matchClause = `MATCH (${alias}:${label})`;
   const whereClause = compileMatchObject(stmt.where || {}, alias, idx);
 
-  const query = `${matchClause}${whereClause.clause ? ` WHERE ${whereClause.clause}` : ""}\nDELETE ${alias}`;
+  const query = `
+    ${matchClause}${whereClause.clause ? ` WHERE ${whereClause.clause}` : ""}
+    DELETE ${alias}
+    RETURN ${alias}
+  `;
   return {
     cypher: query,
     params: whereClause.params,
+  };
+}
+
+function compileConnect(stmt: IRConnect, idx: number) {
+  const from = stmt.from;
+  const to = stmt.to;
+  const rel = stmt.relation;
+
+  const fromMatch = compileMatchObject(from.match, from.alias, idx);
+  const toMatch = compileMatchObject(to.match, to.alias, idx);
+
+  const clauses = [
+    `MATCH (${from.alias}:${from.label})`,
+    `WHERE ${fromMatch.clause}`,
+    `MATCH (${to.alias}:${to.label})`,
+    `WHERE ${toMatch.clause}`,
+  ];
+
+  const relOp = stmt.type === "CONNECT" ? "CREATE" : "DELETE";
+  const relClause = `${relOp} (${from.alias})-[:${rel}]->(${to.alias})`;
+  clauses.push(relClause);
+
+  clauses.push(`RETURN ${from.alias}`);
+
+  return {
+    cypher: clauses.join("\n"),
+    params: {
+      ...fromMatch.params,
+      ...toMatch.params,
+    },
+  };
+}
+
+function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
+  const from = stmt.from;
+  const rel = stmt.relation;
+  const alias = stmt.alias;
+
+  const matchFrom = compileMatchObject(from.match, from.alias, idx);
+  const relWhere = compileMatchObject(stmt.where || {}, alias, idx);
+
+  const cypherLines: string[] = [];
+
+  // MATCH the source node
+  cypherLines.push(`MATCH (${from.alias}:${from.label})`);
+  if (matchFrom.clause) {
+    cypherLines.push(`WHERE ${matchFrom.clause}`);
+  }
+
+  // MATCH the relationship
+  cypherLines.push(`MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`);
+  if (relWhere.clause) {
+    cypherLines.push(`WHERE ${relWhere.clause}`);
+  }
+
+  // RETURN the target node(s)
+  cypherLines.push(`RETURN ${alias}`);
+
+  return {
+    cypher: cypherLines.join("\n"),
+    params: {
+      ...matchFrom.params,
+      ...relWhere.params,
+    },
   };
 }
 
@@ -239,62 +309,5 @@ function compileMatchObject(
   return {
     clause: clauses.join(" AND "),
     params,
-  };
-}
-
-function compileConnect(stmt: IRConnect, idx: number) {
-  const from = stmt.from;
-  const to = stmt.to;
-  const rel = stmt.relation;
-
-  const fromMatch = compileMatchObject(from.match, from.alias + "_from", idx);
-  const toMatch = compileMatchObject(to.match, to.alias + "_to", idx);
-
-  const clauses = [
-    `MATCH (${from.alias}:${from.label})`,
-    `WHERE ${fromMatch.clause}`,
-    `MATCH (${to.alias}:${to.label})`,
-    `WHERE ${toMatch.clause}`,
-  ];
-
-  const relOp = stmt.type === "CONNECT" ? "CREATE" : "DELETE";
-  const relClause = `${relOp} (${from.alias})-[:${rel}]->(${to.alias})`;
-  clauses.push(relClause);
-
-  return {
-    cypher: clauses.join("\n"),
-    params: {
-      ...fromMatch.params,
-      ...toMatch.params,
-    },
-  };
-}
-
-function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
-  const from = stmt.from;
-  const rel = stmt.relation;
-  const alias = stmt.alias;
-
-  const matchFrom = compileMatchObject(from.match, from.alias + "_from", idx);
-  const relWhere = compileMatchObject(stmt.where || {}, alias, idx);
-
-  const cypherLines = [
-    `MATCH (${from.alias}:${from.label})`,
-    `WHERE ${matchFrom.clause}`,
-    `MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`,
-  ];
-
-  if (relWhere.clause) {
-    cypherLines.push(`WHERE ${relWhere.clause}`);
-  }
-
-  cypherLines.push(`RETURN ${alias}`);
-
-  return {
-    cypher: cypherLines.join("\n"),
-    params: {
-      ...matchFrom.params,
-      ...relWhere.params,
-    },
   };
 }

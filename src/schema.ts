@@ -148,6 +148,7 @@ export class FieldDef<
 
   array() {
     this.isArray = true;
+    if (!this.defaultValue) this.defaultValue = [];
     return this as FieldDef<TType, IsRequired, true, IsId>;
   }
 }

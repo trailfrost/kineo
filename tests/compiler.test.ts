@@ -42,7 +42,7 @@ describe("Compiler", () => {
     expect(result.params).toEqual({ u_age_0_0: 18 });
   });
 
-  test("compiles MERGE wtesth ON CREATE and ON MATCH", () => {
+  test("compiles MERGE with ON CREATE and ON MATCH", () => {
     const ir: IR = {
       statements: [
         {
@@ -98,8 +98,8 @@ describe("Compiler", () => {
     expect(result.cypher).toContain("MATCH (p:Post)");
     expect(result.cypher).toContain("CREATE (u)-[:WROTE]->(p)");
     expect(result.params).toEqual({
-      u_from_id_0_0: "user1",
-      p_to_id_0_0: "post1",
+      u_id_0_0: "user1",
+      p_id_0_0: "post1",
     });
   });
 
@@ -116,7 +116,7 @@ describe("Compiler", () => {
             alias: "u",
             match: { id: "user1" },
           },
-          where: { ttestle: "First Post" },
+          where: { title: "First Post" },
         },
       ],
     };
@@ -124,10 +124,10 @@ describe("Compiler", () => {
     const result = compile(ir);
     expect(result.cypher).toContain("MATCH (u:User)");
     expect(result.cypher).toContain("MATCH (u)-[:WROTE]->(p:Post)");
-    expect(result.cypher).toContain("WHERE p.ttestle = $p_ttestle_0_0");
+    expect(result.cypher).toContain("WHERE p.title = $p_title_0_0");
     expect(result.params).toEqual({
-      u_from_id_0_0: "user1",
-      p_ttestle_0_0: "First Post",
+      u_id_0_0: "user1",
+      p_title_0_0: "First Post",
     });
   });
 });

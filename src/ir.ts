@@ -1,4 +1,4 @@
-import type { Schema, Node } from "./schema";
+import type { Schema, Node, RelationshipDef } from "./schema";
 import type {
   QueryOpts,
   CreateOpts,
@@ -298,16 +298,19 @@ export function parseDisconnect<S extends Schema, N extends Node>(
 }
 
 export function parseRelationQuery<S extends Schema, N extends Node>(
-  label: string,
-  alias: string,
+  schema: S,
+  nodeLabel: string,
   opts: GetRelationOpts<S, N>
 ): IRRelationQuery {
+  const nodeDef = schema[nodeLabel] as N;
+  const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
+
   return {
     type: "RELATION_QUERY",
-    label,
-    alias,
+    label: relDef.refTo,
+    alias: "n",
     from: {
-      label,
+      label: nodeLabel,
       alias: "from",
       match: opts.from,
     },

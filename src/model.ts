@@ -152,52 +152,76 @@ export type DeleteOpts<
   where?: Partial<INode>;
 };
 
-function toNode<S extends Schema, N extends Node>(
-  record: Neo4j.Record
-): InferNode<N, S>;
-function toNode<S extends Schema, N extends Node>(
-  record: Neo4j.Record[]
-): InferNode<N, S>[];
-
-function toNode<S extends Schema, N extends Node>(
-  record: Neo4j.Record | Neo4j.Record[]
+function applyDefaults<N extends Node, S extends Schema>(
+  nodeDef: N,
+  record: Record<string, unknown>
 ) {
-  if (!record) return null;
+  for (const key in nodeDef) {
+    const def = nodeDef[key];
+    const hasValue = record[key as string] !== undefined;
 
-  if (Array.isArray(record)) {
-    return record.map(
-      (record) => (record.get("n") as Neo4j.Node).properties as InferNode<N, S>
-    );
+    if (!hasValue) {
+      if ("defaultValue" in def && def.defaultValue !== undefined) {
+        record[key] = def.defaultValue;
+      } else if (
+        "isArray" in def &&
+        def.isArray === true &&
+        def.defaultValue === undefined
+      ) {
+        // fallback to [] if array with no default explicitly set
+        record[key] = [];
+      }
+    }
   }
-  return (record.get("n") as Neo4j.Node).properties as InferNode<N, S>;
+  return record as InferNode<N, S>;
 }
 
 export default class Model<S extends Schema, N extends Node> {
   readonly label: string;
+  readonly schema: S;
   readonly node: N;
   readonly session: Neo4j.Session;
 
-  constructor(label: string, node: N, session: Neo4j.Session) {
+  constructor(label: string, schema: S, node: N, session: Neo4j.Session) {
     this.label = label;
+    this.schema = schema;
     this.node = node;
     this.session = session;
   }
 
   private async run(ir: IRStatement): Promise<Neo4j.QueryResult> {
     const { cypher, params } = compile({ statements: [ir] });
+    console.log("CYPHER:", cypher);
+    console.log("PARAMS:", params);
     return this.session.run(cypher, params);
+  }
+
+  private toNode(record: Neo4j.Record): InferNode<N, S> | null;
+  private toNode(record: Neo4j.Record[]): InferNode<N, S>[];
+
+  private toNode(record: Neo4j.Record | Neo4j.Record[]) {
+    if (!record) return null;
+
+    const apply = (rec: Neo4j.Record) =>
+      applyDefaults<N, S>(
+        this.node,
+        (rec.get("n") as Neo4j.Node).properties as InferNode<N, S>
+      );
+
+    if (Array.isArray(record)) return record.map(apply);
+    return apply(record);
   }
 
   async matchOne(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async matchMany(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return toNode<S, N>(result.records);
+    return this.toNode(result.records);
   }
 
   async exists(opts: Where<S, N>) {
@@ -209,49 +233,49 @@ export default class Model<S extends Schema, N extends Node> {
   async createOne(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async createMany(opts: CreateOpts<S, N>) {
     const ir = parseCreate(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records);
+    return this.toNode(result.records);
   }
 
   async mergeOne(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async mergeMany(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records);
+    return this.toNode(result.records);
   }
 
   async deleteOne(opts: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async deleteMany(opts?: DeleteOpts<S, N>) {
     const ir = parseDelete(this.label, "n", opts ?? {});
     const result = await this.run(ir);
-    return toNode<S, N>(result.records);
+    return this.toNode(result.records);
   }
 
   async connect(opts: ConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async disconnect(opts: ConnectOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async isConnected(opts: IsConnectedOpts<S, N>) {
@@ -263,19 +287,19 @@ export default class Model<S extends Schema, N extends Node> {
   async upsertRelation(opts: UpsertConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts); // Could differentiate based on `create?: true`
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async deleteRelation(opts: DeleteConnectionOpts<S, N>) {
     const ir = parseDisconnect(this.label, "n", opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records[0]);
+    return this.toNode(result.records[0]);
   }
 
   async getRelations(opts: GetRelationOpts<S, N>) {
-    const ir = parseRelationQuery(this.label, "n", opts);
+    const ir = parseRelationQuery(this.schema, this.label, opts);
     const result = await this.run(ir);
-    return toNode<S, N>(result.records) as unknown as GetTargetNodeType<
+    return this.toNode(result.records) as unknown as GetTargetNodeType<
       S,
       N,
       RelationshipKeys<N>

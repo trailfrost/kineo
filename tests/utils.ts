@@ -7,13 +7,13 @@ export const schema = defineSchema({
   User: node({
     name: field("STRING").id(),
     password: field("STRING").required(),
-    posts: relation("Post").outgoing("HAS_POST").array(),
+    posts: relation("Post").outgoing("posts").array(),
   }),
 
   Post: node({
     id: field("STRING").id(),
     title: field("STRING").required(),
-    author: relation("User").incoming("HAS_POST"),
+    author: relation("User").incoming("posts"),
   }),
 });
 

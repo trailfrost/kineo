@@ -1,0 +1,20 @@
+{
+  "name": "kineokit",
+  "version": "0.1.0",
+  "description": "Manager for `kineo`.",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "keywords": [
+    "ogm",
+    "object-graph-mapper",
+    "neo4j"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "commander": "^14.0.0",
+    "inquirer": "^12.9.0",
+    "kineo": "../kineo"
+  }
+}

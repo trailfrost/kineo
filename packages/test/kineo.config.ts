@@ -6,6 +6,7 @@ const config: Config = {
   dbExport: "default",
   schemaFile: "./src/db/schema.ts",
   schemaExport: "default",
+  migrationsDir: "./migrations",
 };
 
 export default config;

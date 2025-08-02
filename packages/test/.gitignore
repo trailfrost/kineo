@@ -1,0 +1,8 @@
+# This file exists for testing the `kineokit init` command.
+example/
+
+# Kineo state
+.kineo/
+
+# Kineo state
+.kineo/

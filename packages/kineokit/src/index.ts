@@ -5,14 +5,25 @@ import { Command } from "commander";
 import { createJiti } from "jiti";
 import inquirer from "inquirer";
 import fs from "node:fs/promises";
+import process from "node:process";
+import { existsSync } from "node:fs";
+import {
+  changes,
+  push,
+  pull,
+  generateMigrations,
+  sendMigrations,
+  getMigrationStatus,
+} from "./commands.js";
 
-const jiti = createJiti(import.meta.url);
+const jiti = createJiti(process.cwd());
 
 export type Config = {
   dbFile: string;
   dbExport: string;
   schemaFile: string;
   schemaExport: string;
+  migrationsDir: string;
 };
 
 async function tryImportConfig(): Promise<Config | null> {
@@ -27,7 +38,7 @@ async function tryImportConfig(): Promise<Config | null> {
 
   for (const possibleFile of possibleFiles) {
     try {
-      return await jiti.import(possibleFile, { default: true });
+      return (await jiti.import(possibleFile, { default: true })) || null;
     } catch {
       continue;
     }
@@ -54,7 +65,7 @@ async function setConfig(alwaysInquire: boolean): Promise<Config | null> {
       if (!canContinue) return null;
     }
 
-    const { dbFile, dbExport, schemaFile, schemaExport } =
+    const { dbFile, dbExport, schemaFile, schemaExport, migrationsDir } =
       await inquirer.prompt([
         {
           type: "input",
@@ -80,11 +91,20 @@ async function setConfig(alwaysInquire: boolean): Promise<Config | null> {
           message: "What is the export name?",
           default: "default",
         },
+        {
+          type: "input",
+          name: "migrationsDir",
+          message: "Where do you want migrations to be stored?",
+          default: "./migrations",
+        },
       ]);
 
-    await fs.writeFile(
-      "./kineo.config.ts",
-      `import type { Config } from "kineokit";
+    await fs.mkdir("./.kineo", { recursive: true });
+
+    await Promise.all([
+      fs.writeFile(
+        "./kineo.config.ts",
+        `import type { Config } from "kineokit";
 
 // https://kineo.trailfrost.com/config
 const config: Config = {
@@ -92,17 +112,41 @@ const config: Config = {
   dbExport: "${dbExport}",
   schemaFile: "${schemaFile}",
   schemaExport: "${schemaExport}",
+  migrationsDir: "${migrationsDir}",
 };
 
 export default config;
 `
-    );
+      ),
+      fs.writeFile("./.kineo/prevSchema.json", "{}"),
+      // Append to ignore files
+      existsSync("./.gitignore") &&
+        fs.appendFile("./.gitignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync("./.hgignore") &&
+        fs.appendFile("./.hgignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync("./.bzrignore") &&
+        fs.appendFile("./.bzrignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync("./.p4ignore") &&
+        fs.appendFile("./.p4ignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync("./cvsignore") &&
+        fs.appendFile("./.cvsignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync("./.fossil-settings/.ignore") &&
+        fs.appendFile(
+          "./.fossil-settings/.ignore",
+          "\n\n# Kineo state\n.kineo/\n"
+        ),
+      existsSync(".tfignore") &&
+        fs.appendFile(".tfignore", "\n\n# Kineo state\n.kineo/\n"),
+      existsSync(".rcsignroe") &&
+        fs.appendFile(".rcsignroe", "\n\n# Kineo state\n.kineo/\n"),
+    ]);
 
     return {
       dbFile: dbFile as string,
       dbExport: dbExport as string,
       schemaFile: schemaFile as string,
       schemaExport: schemaExport as string,
+      migrationsDir: migrationsDir as string,
     };
   }
 }
@@ -144,8 +188,43 @@ program.command("push").action(async () => {
   if (!config)
     return console.error("Program can't continue without configuration.");
 
+  const prevSchema = JSON.parse(
+    await fs.readFile("./.kineo/prevSchema.json", "utf-8")
+  );
   const { schema } = await importFiles(config);
-  console.log("push schema", schema, "to db");
+
+  if (!schema) {
+    console.warn(
+      `It seems like you don't have a schema. Make it's located at "${config.schemaFile}" and exported as ${config.schemaExport}.`
+    );
+    console.log("Push cancelled.");
+    return;
+  }
+
+  const { breaking } = changes(schema, prevSchema);
+  if (breaking) {
+    console.warn(
+      "WARNING: Breaking changes detected. THIS MIGHT CAUSE DATA LOSS."
+    );
+    console.warn(
+      "WARNING: A breaking change is making an optional field required, or removing a node, for example."
+    );
+    const { canContinue } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "canContinue",
+        message: "Are you sure you want to continue?",
+      },
+    ]);
+
+    if (!canContinue) {
+      console.log("Push cancelled.");
+      return;
+    }
+  }
+
+  await push(schema);
+  console.log("Schema successfully pushed.");
 });
 
 program.command("pull").action(async () => {
@@ -153,31 +232,61 @@ program.command("pull").action(async () => {
   if (!config)
     return console.error("Program can't continue without configuration.");
 
-  console.log("pull from db");
+  console.warn("WARNING: This will replace your current schema.");
+  const { canContinue } = await inquirer.prompt([
+    {
+      type: "confirm",
+      name: "canContinue",
+      message: "Are you sure you want to continue?",
+    },
+  ]);
+  if (!canContinue) return;
+
+  await pull(config.schemaFile, config.schemaExport);
+  console.log("Schema successfully pulled.");
 });
 
-const migration = program.command("migration").action(async () => {
+const migrate = program.command("migrate").action(async () => {
   const config = await setConfig(false);
   if (!config)
     return console.error("Program can't continue without configuration.");
 
-  console.log("generate migrations");
+  const { schema } = await importFiles(config);
+  const prevSchema = JSON.parse(
+    await fs.readFile("./.kineo/prevSchema.json", "utf-8")
+  );
+  if (!schema) {
+    console.warn(
+      `It seems like you don't have a schema. Make it's located at "${config.schemaFile}" and exported as ${config.schemaExport}.`
+    );
+    console.log("Migration generation cancelled.");
+    return;
+  }
+
+  await generateMigrations(config.migrationsDir, schema, prevSchema);
+  console.log(
+    "Migrations successfully generated. Use `kineokit migrate send` to push them to the database."
+  );
 });
 
-migration.command("send").action(async () => {
+migrate.command("send").action(async () => {
   const config = await setConfig(false);
   if (!config)
     return console.error("Program can't continue without configuration.");
 
-  console.log("send migrations");
+  await sendMigrations(config.migrationsDir);
+  console.log("Migrations successfully sent.");
 });
 
-migration.command("status").action(async () => {
+migrate.command("status").action(async () => {
   const config = await setConfig(false);
   if (!config)
     return console.error("Program can't continue without configuration.");
 
-  console.log("get migration status");
+  const statuses = await getMigrationStatus(config.migrationsDir);
+  for (const key in statuses) {
+    console.log(`${key}: ${statuses[key] ? "Already sent." : "Not sent yet."}`);
+  }
 });
 
 program.parseAsync();

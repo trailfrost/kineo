@@ -3,18 +3,31 @@
   "version": "0.1.0",
   "description": "Manager for `kineo`.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "bin": "dist/index.js",
+  "type": "module",
   "keywords": [
     "ogm",
     "object-graph-mapper",
     "neo4j"
   ],
+  "scripts": {
+    "run": "jiti src/index.ts"
+  },
   "author": "trailfrost",
   "license": "MIT",
   "packageManager": "pnpm@10.14.0",
   "dependencies": {
     "commander": "^14.0.0",
+    "dotenv": "^17.2.1",
     "inquirer": "^12.9.0",
-    "kineo": "../kineo"
+    "jiti": "^2.5.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "kineo": "workspace:kineo"
+  },
+  "peerDependencies": {
+    "kineo": "workspace:kineo"
   }
 }

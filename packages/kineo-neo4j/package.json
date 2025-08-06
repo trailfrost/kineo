@@ -1,0 +1,28 @@
+{
+  "name": "kineo-neo4j",
+  "version": "0.1.0",
+  "description": "Neo4j adapter for Kineo",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "neo4j",
+    "kineo"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "neo4j-driver": "^5.0.0"
+  },
+  "devDependencies": {
+    "kineo": "workspace:kineo"
+  },
+  "peerDependencies": {
+    "kineo": "workspace:kineo"
+  }
+}

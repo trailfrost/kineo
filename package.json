@@ -1,52 +1,15 @@
 {
-  "name": "kineo",
-  "version": "0.1.2",
-  "description": "Declarative, TypeScript-first Object-Graph Mapper for Neo4j.",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./schema": {
-      "default": "./dist/schema.js",
-      "types": "./dist/schema.d.ts"
-    },
-    "./model": {
-      "default": "./dist/model.js",
-      "types": "./dist/model.d.ts"
-    },
-    "./ir": {
-      "default": "./dist/ir.js",
-      "types": "./dist/ir.d.ts"
-    },
-    "./compiler": {
-      "default": "./dist/compiler.js",
-      "types": "./dist/compiler.d.ts"
-    }
-  },
+  "name": "kineo-monorepo",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
     "test": "vitest",
     "format": "prettier .",
     "format!": "prettier --write .",
     "lint": "eslint .",
-    "check": "tsc --noEmit",
-    "build": "tsc -b"
+    "check": "tsc --noEmit packages/*",
+    "build": "tsc -b packages/*"
   },
-  "keywords": [
-    "object-graph-mapper",
-    "ogm",
-    "neo4j"
-  ],
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "author": "trailfrost",
-  "license": "MIT",
-  "packageManager": "pnpm@10.13.1",
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "eslint": "^9.32.0",
@@ -56,8 +19,5 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.38.0",
     "vitest": "^3.2.4"
-  },
-  "dependencies": {
-    "neo4j-driver": "^5.28.1"
   }
 }

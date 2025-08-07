@@ -21,9 +21,9 @@
       "default": "./dist/ir.js",
       "types": "./dist/ir.d.ts"
     },
-    "./compiler": {
-      "default": "./dist/compiler.js",
-      "types": "./dist/compiler.d.ts"
+    "./adapter": {
+      "default": "./dist/adapter.js",
+      "types": "./dist/adapter.d.ts"
     }
   },
   "keywords": [

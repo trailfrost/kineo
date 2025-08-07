@@ -1,4 +1,19 @@
-import { Path, Point, Duration } from "neo4j-driver";
+// TODO path, point, duration
+
+/**
+ * A path.
+ */
+export type Path = {};
+
+/**
+ * A point.
+ */
+export type Point = {};
+
+/**
+ * A duration.
+ */
+export type Duration = {};
 
 /**
  * All supported Cypher types.
@@ -393,6 +408,3 @@ export function node<TNode extends Node>(def: TNode): TNode {
 export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
   return def;
 }
-
-// exporting constructs from Neo4j
-export { Duration, Point, Path };

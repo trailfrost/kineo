@@ -1,7 +1,7 @@
 // @ts-expect-error `process` is a Node.js module
 import process from "node:process";
-import { defineSchema, field, relation, node } from "../src/schema";
-import Kineo from "../src";
+import { defineSchema, field, relation, node } from "kineo/schema";
+import Kineo from "kineo";
 
 export const schema = defineSchema({
   User: node({

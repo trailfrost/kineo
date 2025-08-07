@@ -5,7 +5,7 @@ import {
   node,
   defineSchema,
   type InferSchema,
-} from "../src/schema"; // adjust path as needed
+} from "../src/schema";
 
 describe("FieldDef", () => {
   test("creates a simple field", () => {

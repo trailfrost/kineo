@@ -8,7 +8,7 @@ import type {
   IRRelationQuery,
   IRStatement,
   IRWhereNode,
-} from "./ir";
+} from "kineo/ir";
 
 /**
  * Compiles an intermediate representation to Cypher.
@@ -271,7 +271,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
 function compileWhere(
   node: IRWhereNode | undefined,
   alias: string,
-  idx: number,
+  idx: number
 ): {
   clauses: string[];
   params: Record<string, unknown>;
@@ -334,7 +334,7 @@ function compileWhere(
       inner.push(
         n.OR.map(walk)
           .map((s) => `(${s})`)
-          .join(" OR "),
+          .join(" OR ")
       );
     if (n.NOT) inner.push(`NOT (${walk(n.NOT)})`);
 
@@ -356,7 +356,7 @@ function compileWhere(
 function compileMatchObject(
   where: Record<string, unknown>,
   alias: string,
-  idx: number,
+  idx: number
 ) {
   const clauses: string[] = [];
   const params: Record<string, unknown> = {};

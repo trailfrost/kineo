@@ -1,6 +1,6 @@
+import type { IR } from "kineo/ir;
 import { describe, test, expect } from "vitest";
 import compile from "../src/compiler";
-import type { IR } from "../src/ir";
 
 describe("Compiler", () => {
   test("compiles a simple CREATE", () => {

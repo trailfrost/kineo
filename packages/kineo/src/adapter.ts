@@ -3,7 +3,7 @@ import type { IR } from "./ir";
 export type Params = Record<string, unknown>;
 export type Command = { command: string; params: Params };
 
-export type QueryRecord = Map<number, Node>;
+export type QueryRecord = Map<number | string, Node>;
 
 export type QueryResult = {
   records: QueryRecord[];
@@ -22,4 +22,21 @@ export type Adapter = {
   getRelationshipProperties(type: string): OptPromise<string[]>;
 };
 
-export class Node {}
+export class Node {
+  identity: number | bigint;
+  labels: string[];
+  properties: Params;
+  elementId: string;
+
+  constructor(
+    identity: number | bigint,
+    labels: string[],
+    properties: Params,
+    elementId: string
+  ) {
+    this.identity = identity;
+    this.labels = labels;
+    this.properties = properties;
+    this.elementId = elementId;
+  }
+}

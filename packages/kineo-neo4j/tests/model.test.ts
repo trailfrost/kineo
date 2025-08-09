@@ -1,8 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { db } from "./utils";
 
-// TODO fix test fails
-
 describe("Model", () => {
   test("createOne: creates a user", async () => {
     const result = await db.User.createOne({

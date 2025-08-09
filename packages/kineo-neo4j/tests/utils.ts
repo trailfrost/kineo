@@ -2,6 +2,7 @@
 import process from "node:process";
 import { defineSchema, field, relation, node } from "kineo/schema";
 import Kineo from "kineo";
+import Neo4jAdapter from "../src";
 
 export const schema = defineSchema({
   User: node({
@@ -17,18 +18,23 @@ export const schema = defineSchema({
   }),
 });
 
-export const db = Kineo({
-  url: "bolt://localhost:7687",
-  auth: {
-    username: "neo4j",
-    password: "password",
-  },
-  schema,
-});
+export const db = Kineo(
+  Neo4jAdapter({
+    url: "bolt://localhost:7687",
+    auth: {
+      username: "neo4j",
+      password: "password",
+    },
+  }),
+  schema
+);
 
-await db.cypher(`
+await db.adapter.run(
+  `
   MATCH (n)
   DETACH DELETE n
-`);
+  `,
+  {}
+);
 
 process.on("exit", db.close);

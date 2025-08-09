@@ -9,8 +9,27 @@ import {
   parseRelationQuery,
   parseWhereNode,
 } from "../src/ir";
-import { schema } from "./utils";
-import { InferNode } from "../src/schema";
+import {
+  defineSchema,
+  node,
+  field,
+  relation,
+  type InferNode,
+} from "../src/schema";
+
+export const schema = defineSchema({
+  User: node({
+    name: field("STRING").id(),
+    password: field("STRING").required(),
+    posts: relation("Post").outgoing("posts").array(),
+  }),
+
+  Post: node({
+    id: field("STRING").id(),
+    title: field("STRING").required(),
+    author: relation("User").incoming("posts"),
+  }),
+});
 
 // Simplified types for test readability
 type Schema = typeof schema;
@@ -126,7 +145,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post,
+      schema.Post
     );
 
     expect(connect).toEqual({
@@ -156,7 +175,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post,
+      schema.Post
     );
 
     expect(disconnect.type).toBe("DISCONNECT");

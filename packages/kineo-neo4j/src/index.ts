@@ -7,6 +7,7 @@ import type {
   ServerInfo,
 } from "neo4j-driver";
 import neo4j from "neo4j-driver";
+import compile from "./compiler";
 
 /**
  * Neo4j authentication options.
@@ -82,6 +83,7 @@ function createDriver(config: AdapterConfig): Driver {
 }
 
 export type Kineo4j = Adapter & {
+  driver: Driver;
   session: Session;
   serverInfo?: ServerInfo;
 };
@@ -94,6 +96,17 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
     driver,
     session,
     serverInfo: undefined,
+
+    async run(command, params) {
+      const result = await session.run(command, params);
+      return {
+        records: result.records.map((record) => record.get(0)),
+      };
+    },
+
+    compile(ir) {
+      return compile(ir);
+    },
 
     async getRelationshipTypes() {
       const result = await session.run(`CALL db.relationshipTypes()`);
@@ -129,13 +142,18 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
     async count(command: string, params: Params) {
       const countQuery = `CALL { ${command} } RETURN count(n) as count`;
-      const result = await this.run(countQuery, params);
-      return result.records[0]?.get("count").toInt?.() ?? 0;
+      const result = await session.run(countQuery, params);
+      return result.records[0].get("count")?.toInt?.() || 0;
     },
 
     async getNodeLabels() {
       const result = await session.run(`CALL db.labels()`);
       return result.records.map((r) => r.get("label"));
+    },
+
+    async close() {
+      await session.close();
+      await driver.close();
     },
   };
 }

@@ -290,7 +290,7 @@ export default class Model<
     if (!record) return null;
 
     const apply = (rec: QueryRecord) => {
-      const node = rec.get(0) as AdapterNode;
+      const node = "get" in rec ? rec.get(0)! : (rec as AdapterNode);
       if (!("properties" in node)) {
         return null;
       }

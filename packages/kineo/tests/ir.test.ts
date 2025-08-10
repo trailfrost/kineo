@@ -11,23 +11,23 @@ import {
 } from "../src/ir";
 import {
   defineSchema,
-  node,
+  model,
   field,
   relation,
   type InferNode,
 } from "../src/schema";
 
 export const schema = defineSchema({
-  User: node({
-    name: field("STRING").id(),
-    password: field("STRING").required(),
-    posts: relation("Post").outgoing("posts").array(),
+  User: model({
+    name: field.string().id(),
+    password: field.string().required(),
+    posts: relation.to("Post").outgoing("posts").array(),
   }),
 
-  Post: node({
-    id: field("STRING").id(),
-    title: field("STRING").required(),
-    author: relation("User").incoming("posts"),
+  Post: model({
+    id: field.string().id(),
+    title: field.string().required(),
+    author: relation.to("User").incoming("posts"),
   }),
 });
 

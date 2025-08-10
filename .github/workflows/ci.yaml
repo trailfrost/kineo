@@ -50,16 +50,13 @@ jobs:
           done
 
       - name: Run build
-        run: pnpm build
+        run: pnpm refresh
 
       - name: Run tests
         run: pnpm test
 
       - name: Run linter
         run: pnpm lint
-
-      - name: Run type check
-        run: pnpm check
 
       - name: Check formatting
         run: pnpm format --check

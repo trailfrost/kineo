@@ -9,8 +9,27 @@ import {
   parseRelationQuery,
   parseWhereNode,
 } from "../src/ir";
-import { schema } from "./utils";
-import { InferNode } from "../src/schema";
+import {
+  defineSchema,
+  model,
+  field,
+  relation,
+  type InferNode,
+} from "../src/schema";
+
+export const schema = defineSchema({
+  User: model({
+    name: field.string().id(),
+    password: field.string().required(),
+    posts: relation.to("Post").outgoing("posts").array(),
+  }),
+
+  Post: model({
+    id: field.string().id(),
+    title: field.string().required(),
+    author: relation.to("User").incoming("posts"),
+  }),
+});
 
 // Simplified types for test readability
 type Schema = typeof schema;

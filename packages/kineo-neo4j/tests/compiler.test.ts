@@ -1,6 +1,6 @@
+import type { IR } from "kineo/ir";
 import { describe, test, expect } from "vitest";
 import compile from "../src/compiler";
-import type { IR } from "../src/ir";
 
 describe("Compiler", () => {
   test("compiles a simple CREATE", () => {
@@ -16,7 +16,7 @@ describe("Compiler", () => {
     };
 
     const result = compile(ir);
-    expect(result.cypher).toMatch(/CREATE \(u:User \$props0\)/);
+    expect(result.command).toMatch(/CREATE \(u:User \$props0\)/);
     expect(result.params).toEqual({ props0: { name: "Alice", age: 30 } });
   });
 
@@ -36,9 +36,9 @@ describe("Compiler", () => {
     };
 
     const result = compile(ir);
-    expect(result.cypher).toContain("MATCH (u:User)");
-    expect(result.cypher).toContain("WHERE u.age >= $u_age_0_0");
-    expect(result.cypher).toContain("RETURN u.name, u.age");
+    expect(result.command).toContain("MATCH (u:User)");
+    expect(result.command).toContain("WHERE u.age >= $u_age_0_0");
+    expect(result.command).toContain("RETURN u.name, u.age");
     expect(result.params).toEqual({ u_age_0_0: 18 });
   });
 
@@ -57,12 +57,12 @@ describe("Compiler", () => {
     };
 
     const result = compile(ir);
-    expect(result.cypher).toContain("MERGE (u:User { id: $u_id_0_0 })");
-    expect(result.cypher).toContain(
-      "ON MATCH SET u.lastLogin = $u_update_lastLogin_0_0",
+    expect(result.command).toContain("MERGE (u:User { id: $u_id_0_0 })");
+    expect(result.command).toContain(
+      "ON MATCH SET u.lastLogin = $u_update_lastLogin_0_0"
     );
-    expect(result.cypher).toContain(
-      "ON CREATE SET u.createdAt = $u_create_createdAt_0_0",
+    expect(result.command).toContain(
+      "ON CREATE SET u.createdAt = $u_create_createdAt_0_0"
     );
     expect(result.params).toMatchObject({
       u_id_0_0: "123",
@@ -94,9 +94,9 @@ describe("Compiler", () => {
     };
 
     const result = compile(ir);
-    expect(result.cypher).toContain("MATCH (u:User)");
-    expect(result.cypher).toContain("MATCH (p:Post)");
-    expect(result.cypher).toContain("CREATE (u)-[:WROTE]->(p)");
+    expect(result.command).toContain("MATCH (u:User)");
+    expect(result.command).toContain("MATCH (p:Post)");
+    expect(result.command).toContain("CREATE (u)-[:WROTE]->(p)");
     expect(result.params).toEqual({
       u_id_0_0: "user1",
       p_id_0_0: "post1",
@@ -122,9 +122,9 @@ describe("Compiler", () => {
     };
 
     const result = compile(ir);
-    expect(result.cypher).toContain("MATCH (u:User)");
-    expect(result.cypher).toContain("MATCH (u)-[:WROTE]->(p:Post)");
-    expect(result.cypher).toContain("WHERE p.title = $p_title_0_0");
+    expect(result.command).toContain("MATCH (u:User)");
+    expect(result.command).toContain("MATCH (u)-[:WROTE]->(p:Post)");
+    expect(result.command).toContain("WHERE p.title = $p_title_0_0");
     expect(result.params).toEqual({
       u_id_0_0: "user1",
       p_title_0_0: "First Post",

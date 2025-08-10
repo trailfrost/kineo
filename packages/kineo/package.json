@@ -1,0 +1,43 @@
+{
+  "name": "kineo",
+  "version": "0.2.0",
+  "description": "Declarative, TypeScript-first Object-Graph Mapper.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./schema": {
+      "default": "./dist/schema.js",
+      "types": "./dist/schema.d.ts"
+    },
+    "./model": {
+      "default": "./dist/model.js",
+      "types": "./dist/model.d.ts"
+    },
+    "./ir": {
+      "default": "./dist/ir.js",
+      "types": "./dist/ir.d.ts"
+    },
+    "./adapter": {
+      "default": "./dist/adapter.js",
+      "types": "./dist/adapter.d.ts"
+    }
+  },
+  "keywords": [
+    "object-graph-mapper",
+    "ogm",
+    "graph-database",
+    "graph-db"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.14.0"
+}

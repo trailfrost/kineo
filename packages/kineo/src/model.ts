@@ -1,5 +1,5 @@
-import type * as Neo4j from "neo4j-driver";
 import type { Schema, Node, InferNode, RelationshipDef } from "./schema";
+import type { QueryResult, QueryRecord, Node as AdapterNode } from "./adapter";
 import {
   parseMatch,
   parseCreate,
@@ -10,7 +10,7 @@ import {
   parseRelationQuery,
   IRStatement,
 } from "./ir";
-import compile from "./compiler";
+import { Adapter } from "./adapter";
 
 /**
  * Utility to extract relationship definitions.
@@ -202,7 +202,7 @@ export type DeleteOpts<
  */
 function applyDefaults<N extends Node, S extends Schema>(
   nodeDef: N,
-  record: Record<string, unknown>,
+  record: Record<string, unknown>
 ) {
   for (const key in nodeDef) {
     const def = nodeDef[key];
@@ -227,7 +227,11 @@ function applyDefaults<N extends Node, S extends Schema>(
 /**
  * A model, created when instantiating the OGM. Provides functions for interacting with the database.
  */
-export default class Model<S extends Schema, N extends Node> {
+export default class Model<
+  S extends Schema,
+  N extends Node,
+  A extends Adapter,
+> {
   /**
    * The label of the node this model applies to.
    */
@@ -243,7 +247,7 @@ export default class Model<S extends Schema, N extends Node> {
   /**
    * Session to run commands in.
    */
-  readonly session: Neo4j.Session;
+  readonly adapter: A;
 
   /**
    * Creates a new model.
@@ -252,11 +256,11 @@ export default class Model<S extends Schema, N extends Node> {
    * @param node Node this model applies to.
    * @param session Session to run commands in.
    */
-  constructor(label: string, schema: S, node: N, session: Neo4j.Session) {
+  constructor(label: string, schema: S, node: N, adapter: A) {
     this.label = label;
     this.schema = schema;
     this.node = node;
-    this.session = session;
+    this.adapter = adapter;
   }
 
   /**
@@ -264,27 +268,29 @@ export default class Model<S extends Schema, N extends Node> {
    * @param ir The IR to compile and run.
    * @returns The result of running the IR.
    */
-  private async run(ir: IRStatement): Promise<Neo4j.QueryResult> {
-    const { cypher, params } = compile({ statements: [ir] });
-    return this.session.run(cypher, params);
+  private async run(ir: IRStatement): Promise<QueryResult> {
+    const { command, params } = await this.adapter.compile({
+      statements: [ir],
+    });
+    return await this.adapter.run(command, params);
   }
 
   /**
    * Gets the properties from a record.
    * @param record The record.
    */
-  private toNodeProperties(record: Neo4j.Record): InferNode<N, S> | null;
+  private toNodeProperties(record: QueryRecord): InferNode<N, S> | null;
   /**
    * Gets all properties from a list of records.
    * @param record The records.
    */
-  private toNodeProperties(record: Neo4j.Record[]): InferNode<N, S>[];
+  private toNodeProperties(record: QueryRecord[]): InferNode<N, S>[];
 
-  private toNodeProperties(record: Neo4j.Record | Neo4j.Record[]) {
+  private toNodeProperties(record: QueryRecord | QueryRecord[]) {
     if (!record) return null;
 
-    const apply = (rec: Neo4j.Record) => {
-      const node = rec.get(0) as Neo4j.Node;
+    const apply = (rec: QueryRecord) => {
+      const node = "get" in rec ? rec.get(0)! : (rec as AdapterNode);
       if (!("properties" in node)) {
         return null;
       }
@@ -458,7 +464,7 @@ export default class Model<S extends Schema, N extends Node> {
     const ir = parseRelationQuery(this.schema, this.label, opts);
     const result = await this.run(ir);
     return this.toNodeProperties(
-      result.records,
+      result.records
     ) as unknown as GetTargetNodeType<S, N, RelationshipKeys<N>>[];
   }
 
@@ -472,10 +478,11 @@ export default class Model<S extends Schema, N extends Node> {
       where: opts,
       select: {}, // just match the node, then count
     });
-    const { cypher, params } = compile({ statements: [ir] });
-    const countQuery = `CALL { ${cypher} } RETURN count(n) as count`;
-    const result = await this.session.run(countQuery, params);
-    return result.records[0]?.get("count").toInt?.() ?? 0;
+    const { command, params } = await this.adapter.compile({
+      statements: [ir],
+    });
+    const result = await this.adapter.count(command, params);
+    return result;
   }
 
   /**
@@ -483,8 +490,7 @@ export default class Model<S extends Schema, N extends Node> {
    * @returns Labels.
    */
   async getNodeLabels(): Promise<string[]> {
-    const result = await this.session.run(`CALL db.labels()`);
-    return result.records.map((r) => r.get("label"));
+    return await this.adapter.getNodeLabels();
   }
 
   /**
@@ -492,8 +498,7 @@ export default class Model<S extends Schema, N extends Node> {
    * @returns Types.
    */
   async getRelationshipTypes(): Promise<string[]> {
-    const result = await this.session.run(`CALL db.relationshipTypes()`);
-    return result.records.map((r) => r.get("relationshipType"));
+    return await this.adapter.getRelationshipTypes();
   }
 
   /**
@@ -502,20 +507,8 @@ export default class Model<S extends Schema, N extends Node> {
    * @param arrayType Only enable this if node types are arrays.
    * @returns Node properties.
    */
-  async getNodeProperties(
-    label: string,
-    arrayType?: boolean,
-  ): Promise<string[]> {
-    const result = await this.session.run(
-      `
-      CALL db.schema.nodeTypeProperties()
-      YIELD nodeType, propertyName
-      WHERE ${arrayType ? "$label IN nodeType" : "$label = nodeType"}
-      RETURN DISTINCT propertyName
-      `,
-      { label },
-    );
-    return result.records.map((r) => r.get("propertyName"));
+  async getNodeProperties(label: string): Promise<string[]> {
+    return await this.adapter.getNodeProperties(label);
   }
 
   /**
@@ -524,15 +517,6 @@ export default class Model<S extends Schema, N extends Node> {
    * @returns Relationship properties.
    */
   async getRelationshipProperties(type: string): Promise<string[]> {
-    const result = await this.session.run(
-      `
-      CALL db.schema.relTypeProperties()
-      YIELD relType, propertyName
-      WHERE relType = $type
-      RETURN DISTINCT propertyName
-      `,
-      { type },
-    );
-    return result.records.map((r) => r.get("propertyName"));
+    return await this.adapter.getRelationshipProperties(type);
   }
 }

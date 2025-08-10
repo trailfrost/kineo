@@ -8,7 +8,7 @@ import type {
   IRRelationQuery,
   IRStatement,
   IRWhereNode,
-} from "./ir";
+} from "kineo/ir";
 
 /**
  * Compiles an intermediate representation to Cypher.
@@ -21,12 +21,12 @@ export default function compile(ir: IR) {
 
   ir.statements.forEach((stmt, i) => {
     const result = compileStatement(stmt, i);
-    parts.push(result.cypher);
+    parts.push(result.command);
     Object.assign(params, result.params);
   });
 
   return {
-    cypher: parts.join("\n"),
+    command: parts.join("\n"),
     params,
   };
 }
@@ -84,7 +84,7 @@ function compileMatch(stmt: IRMatch, idx: number) {
   if (stmt.limit !== undefined) query += ` LIMIT $limit${idx}`;
 
   return {
-    cypher: query,
+    command: query,
     params: {
       ...whereRes.params,
       ...(stmt.skip !== undefined ? { [`skip${idx}`]: stmt.skip } : {}),
@@ -104,12 +104,12 @@ function compileCreate(stmt: IRCreate, idx: number) {
   const label = stmt.label;
   const propsKey = `props${idx}`;
 
-  const cypher = `
+  const command = `
     CREATE (${alias}:${label} $${propsKey})
     RETURN ${alias}
   `;
   return {
-    cypher,
+    command,
     params: { [propsKey]: stmt.data },
   };
 }
@@ -154,7 +154,7 @@ function compileMerge(stmt: IRMerge, idx: number) {
   queryLines.push(`RETURN ${alias}`);
 
   return {
-    cypher: queryLines.join("\n"),
+    command: queryLines.join("\n"),
     params,
   };
 }
@@ -178,7 +178,7 @@ function compileDelete(stmt: IRDelete, idx: number) {
     RETURN ${alias}
   `;
   return {
-    cypher: query,
+    command: query,
     params: whereClause.params,
   };
 }
@@ -214,7 +214,7 @@ function compileConnect(stmt: IRConnect, idx: number) {
   clauses.push(`RETURN ${from.alias}`);
 
   return {
-    cypher: clauses.join("\n"),
+    command: clauses.join("\n"),
     params: {
       ...fromMatch.params,
       ...toMatch.params,
@@ -236,25 +236,27 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
   const matchFrom = compileMatchObject(from.match, from.alias, idx);
   const relWhere = compileMatchObject(stmt.where || {}, alias, idx);
 
-  const cypherLines: string[] = [];
+  const commandLines: string[] = [];
 
   // MATCH the source node
-  cypherLines.push(`MATCH (${from.alias}:${from.label})`);
+  commandLines.push(`MATCH (${from.alias}:${from.label})`);
   if (matchFrom.clause) {
-    cypherLines.push(`WHERE ${matchFrom.clause}`);
+    commandLines.push(`WHERE ${matchFrom.clause}`);
   }
 
   // MATCH the relationship
-  cypherLines.push(`MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`);
+  commandLines.push(
+    `MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`
+  );
   if (relWhere.clause) {
-    cypherLines.push(`WHERE ${relWhere.clause}`);
+    commandLines.push(`WHERE ${relWhere.clause}`);
   }
 
   // RETURN the target node(s)
-  cypherLines.push(`RETURN ${alias}`);
+  commandLines.push(`RETURN ${alias}`);
 
   return {
-    cypher: cypherLines.join("\n"),
+    command: commandLines.join("\n"),
     params: {
       ...matchFrom.params,
       ...relWhere.params,
@@ -271,7 +273,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
 function compileWhere(
   node: IRWhereNode | undefined,
   alias: string,
-  idx: number,
+  idx: number
 ): {
   clauses: string[];
   params: Record<string, unknown>;
@@ -334,7 +336,7 @@ function compileWhere(
       inner.push(
         n.OR.map(walk)
           .map((s) => `(${s})`)
-          .join(" OR "),
+          .join(" OR ")
       );
     if (n.NOT) inner.push(`NOT (${walk(n.NOT)})`);
 
@@ -356,7 +358,7 @@ function compileWhere(
 function compileMatchObject(
   where: Record<string, unknown>,
   alias: string,
-  idx: number,
+  idx: number
 ) {
   const clauses: string[] = [];
   const params: Record<string, unknown> = {};

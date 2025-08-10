@@ -1,9 +1,7 @@
-import { Path, Point, Duration } from "neo4j-driver";
-
 /**
- * All supported Cypher types.
+ * All supported Kineo types.
  */
-export type CypherType =
+export type KineoType =
   | "ANY"
   | "BOOLEAN"
   | "DATE"
@@ -30,7 +28,7 @@ export type Direction = "IN" | "OUT" | "BOTH";
  */
 export type Node = Record<
   string,
-  FieldDef<CypherType> | RelationshipDef<string>
+  FieldDef<KineoType> | RelationshipDef<string>
 >;
 
 /**
@@ -39,9 +37,9 @@ export type Node = Record<
 export type Schema = Record<string, Node>;
 
 /**
- * Converts a Cypher type to a TypeScript type.
+ * Converts a Kineo type to a TypeScript type.
  */
-type CypherToTs<T extends CypherType> = T extends "ANY"
+type KineoToTs<T extends KineoType> = T extends "ANY"
   ? unknown
   : T extends
         | "ZONED DATETIME"
@@ -69,17 +67,17 @@ type CypherToTs<T extends CypherType> = T extends "ANY"
                     : never;
 
 /**
- * Infers a value from a Cypher type.
+ * Infers a value from a Kineo type.
  */
 type InferValue<
-  T extends CypherType,
+  T extends KineoType,
   IsRequired extends boolean,
   IsArray extends boolean,
 > = IsArray extends true
-  ? Array<CypherToTs<T>>
+  ? Array<KineoToTs<T>>
   : IsRequired extends true
-    ? CypherToTs<T>
-    : CypherToTs<T> | undefined;
+    ? KineoToTs<T>
+    : KineoToTs<T> | undefined;
 
 /**
  * Infers a relationship from a schema.
@@ -142,15 +140,15 @@ export type InferSchema<T extends Schema> = {
  * Field definition.
  */
 export class FieldDef<
-  TType extends CypherType,
+  TType extends KineoType,
   IsRequired extends boolean = false,
   IsArray extends boolean = false,
   IsId extends boolean = false,
 > {
   /**
-   * Cypher type this field maps to.
+   * Kineo type this field maps to.
    */
-  cypherType: TType;
+  fieldType: TType;
   /**
    * Default value.
    */
@@ -174,10 +172,10 @@ export class FieldDef<
 
   /**
    * Creates a new field.
-   * @param type The Cypher type of this field.
+   * @param type The Kineo type of this field.
    */
   constructor(type: TType) {
-    this.cypherType = type;
+    this.fieldType = type;
   }
 
   /**
@@ -359,29 +357,109 @@ export class RelationshipDef<
 }
 
 /**
- * Creates a field definition.
- * @param type The field type.
- * @returns A new field definition.
+ * Utility for creating field definitions.
  */
-export function field<T extends CypherType>(type: T): FieldDef<T> {
-  return new FieldDef(type);
-}
+export const field = {
+  /**
+   * Returns a field definition for any type.
+   * @returns A new field definition.
+   */
+  any: () => new FieldDef("ANY"),
+  /**
+   * Returns a boolean field definition.
+   * @returns A new field definition.
+   */
+  bool: () => new FieldDef("BOOLEAN"),
+  /**
+   * Returns a boolean field definition.
+   * @returns A new field definition.
+   */
+  boolean: () => new FieldDef("BOOLEAN"),
+  /**
+   * Returns a date field definition.
+   * @returns A new field definition.
+   */
+  date: () => new FieldDef("DATE"),
+  /**
+   * Returns a duration field definition.
+   * @returns A new field definition.
+   */
+  duration: () => new FieldDef("DURATION"),
+  /**
+   * Returns a float field definition.
+   * @returns A new field definition.
+   */
+  float: () => new FieldDef("FLOAT"),
+  /**
+   * Returns an integer field definition.
+   * @returns A new field definition.
+   */
+  integer: () => new FieldDef("INTEGER"),
+  /**
+   * Returns a local date time field definition.
+   * @returns A new field definition.
+   */
+  localDatetime: () => new FieldDef("LOCAL DATETIME"),
+  /**
+   * Returns a local time field definition.
+   * @returns A new field definition.
+   */
+  localTime: () => new FieldDef("LOCAL TIME"),
+  /**
+   * Returns a map field definition.
+   * @returns A new field definition.
+   */
+  map: () => new FieldDef("MAP"),
+  /**
+   * Returns a nothing or null field definition.
+   * @returns A new field definition.
+   */
+  nothing: () => new FieldDef("NOTHING"),
+  /**
+   * Returns a path field definition (graph only).
+   * @returns A new field definition.
+   */
+  path: () => new FieldDef("PATH"),
+  /**
+   * Returns a point field definition (graph only).
+   * @returns A new field definition.
+   */
+  point: () => new FieldDef("POINT"),
+  /**
+   * Returns a string field definition.
+   * @returns A new field definition.
+   */
+  string: () => new FieldDef("STRING"),
+  /**
+   * Returns a zoned date time field definition.
+   * @returns A new field definition.
+   */
+  zonedDatetime: () => new FieldDef("ZONED DATETIME"),
+  /**
+   * Returns a zoned time field definition.
+   * @returns A new field definition.
+   */
+  zonedTime: () => new FieldDef("ZONED TIME"),
+};
 
 /**
- * Creates a new relationship definition.
- * @param to The node this is referencing.
- * @returns A new relationship definition.
+ * Utility for creating relationship definitions.
  */
-export function relation<T extends string>(to: T): RelationshipDef<T> {
-  return new RelationshipDef(to);
-}
+export const relation = {
+  /**
+   * Creates a new relationship definition.
+   * @param model The model to target.
+   * @returns A new relationship definition.
+   */
+  to: <T extends string>(model: T) => new RelationshipDef(model),
+};
 
 /**
  * Defines a new node.
  * @param def The node schema.
  * @returns The same object, with types.
  */
-export function node<TNode extends Node>(def: TNode): TNode {
+export function model<TNode extends Node>(def: TNode): TNode {
   return def;
 }
 
@@ -394,5 +472,14 @@ export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
   return def;
 }
 
-// exporting constructs from Neo4j
-export { Duration, Point, Path };
+export class Path {
+  // TODO
+}
+
+export class Point {
+  // TODO
+}
+
+export class Duration {
+  // TODO
+}

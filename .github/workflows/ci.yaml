@@ -49,6 +49,9 @@ jobs:
             sleep 2
           done
 
+      - name: Run build
+        run: pnpm build
+
       - name: Run tests
         run: pnpm test
 

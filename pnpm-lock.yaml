@@ -35,7 +35,7 @@ importers:
 
   packages/kineo: {}
 
-  packages/kineo-neo4j:
+  packages/kineo-cypher:
     dependencies:
       neo4j-driver:
         specifier: ^5.0.0

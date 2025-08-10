@@ -32,7 +32,7 @@ export class Node {
     identity: number | bigint,
     labels: string[],
     properties: Params,
-    elementId: string
+    elementId: string,
   ) {
     this.identity = identity;
     this.labels = labels;

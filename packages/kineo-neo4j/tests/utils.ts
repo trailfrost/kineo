@@ -26,7 +26,7 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema
+  schema,
 );
 
 await db.adapter.run(
@@ -34,7 +34,7 @@ await db.adapter.run(
   MATCH (n)
   DETACH DELETE n
   `,
-  {}
+  {},
 );
 
 process.on("exit", db.close);

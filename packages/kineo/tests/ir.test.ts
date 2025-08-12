@@ -8,6 +8,11 @@ import {
   parseDisconnect,
   parseRelationQuery,
   parseWhereNode,
+  parseCount,
+  parseGetNodeLabels,
+  parseGetRelationshipTypes,
+  parseGetNodeProperties,
+  parseGetRelationshipProperties,
 } from "../src/ir";
 import {
   defineSchema,
@@ -93,6 +98,23 @@ describe("IR Parsers", () => {
     });
   });
 
+  test("parseCount", () => {
+    const count = parseCount<Schema, User>("User", "u", {
+      name: {
+        equals: "Bob",
+      },
+    });
+
+    expect(count).toEqual({
+      type: "COUNT",
+      label: "User",
+      alias: "u",
+      where: {
+        conditions: [{ field: "name", operator: "EQUALS", value: "Bob" }],
+      },
+    });
+  });
+
   test("parseCreate", () => {
     const create = parseCreate<Schema, User>("User", "u", {
       data: { name: "Bob", password: "pass123" },
@@ -145,7 +167,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post,
+      schema.Post
     );
 
     expect(connect).toEqual({
@@ -175,7 +197,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post,
+      schema.Post
     );
 
     expect(disconnect.type).toBe("DISCONNECT");
@@ -256,6 +278,47 @@ describe("IR Parsers", () => {
           conditions: [{ field: "name", operator: "ENDS_WITH", value: "Z" }],
         },
       ],
+    });
+  });
+
+  test("parseGetNodeLabels", () => {
+    const result = parseGetNodeLabels("User", "u");
+
+    expect(result).toEqual({
+      type: "GET_NODE_LABELS",
+      label: "User",
+      alias: "u",
+    });
+  });
+
+  test("parseGetRelationshipTypes", () => {
+    const result = parseGetRelationshipTypes("User", "u");
+
+    expect(result).toEqual({
+      type: "GET_RELATIONSHIP_TYPES",
+      label: "User",
+      alias: "u",
+    });
+  });
+
+  test("parseGetNodeProperties", () => {
+    const result = parseGetNodeProperties("User", "u");
+
+    expect(result).toEqual({
+      type: "GET_NODE_PROPERTIES",
+      label: "User",
+      alias: "u",
+    });
+  });
+
+  test("parseGetRelationshipProperties", () => {
+    const result = parseGetRelationshipProperties("User", "u", "HAS_FRIENDS");
+
+    expect(result).toEqual({
+      type: "GET_RELATIONSHIP_PROPERTIES",
+      label: "User",
+      alias: "u",
+      relationType: "HAS_FRIENDS",
     });
   });
 });

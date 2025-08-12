@@ -77,7 +77,6 @@ describe("Model", () => {
   });
 
   test("getRelations: get posts for user", async () => {
-    console.log("GET RELATIONS");
     const posts = await db.User.getRelations({
       from: { name: "alice" },
       relation: "posts",
@@ -85,8 +84,6 @@ describe("Model", () => {
         title: "Hello World",
       },
     });
-
-    console.log(posts);
 
     expect(posts.length).toBeGreaterThanOrEqual(1);
     expect(posts[0].title).toBe("Hello World");

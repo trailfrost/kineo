@@ -74,7 +74,7 @@ function createDriver(config: AdapterConfig): Driver {
         config.auth.credentials,
         config.auth.realm,
         config.auth.scheme,
-        config.auth.parameters,
+        config.auth.parameters
       );
       break;
   }
@@ -95,7 +95,8 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
   return {
     driver,
     session,
-    serverInfo: undefined,
+
+    schemaIntrospection: [], // TODO
 
     async run(command, params) {
       const result = await session.run(command, params);
@@ -107,6 +108,8 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
     compile(ir) {
       return compile(ir);
     },
+
+    // TODO remove functions below
 
     async getRelationshipTypes() {
       const result = await session.run(`CALL db.relationshipTypes()`);
@@ -122,7 +125,7 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
         WHERE $label = nodeType
         RETURN DISTINCT propertyName
         `,
-        { label },
+        { label }
       );
       return result.records.map((r) => r.get("propertyName"));
     },
@@ -135,7 +138,7 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
         WHERE relType = $type
         RETURN DISTINCT propertyName
         `,
-        { type },
+        { type }
       );
       return result.records.map((r) => r.get("propertyName"));
     },

@@ -8,6 +8,11 @@ import type {
   IRRelationQuery,
   IRStatement,
   IRWhereNode,
+  IRCountQuery,
+  IRGetNodeLabels,
+  IRGetNodeProperties,
+  IRGetRelationshipTypes,
+  IRGetRelationshipProperties,
 } from "kineo/ir";
 
 /**
@@ -26,7 +31,7 @@ export default function compile(ir: IR) {
   });
 
   return {
-    command: parts.join("\n"),
+    command: parts.join(" "),
     params,
   };
 }
@@ -41,6 +46,8 @@ function compileStatement(stmt: IRStatement, index: number) {
   switch (stmt.type) {
     case "MATCH":
       return compileMatch(stmt, index);
+    case "COUNT":
+      return compileCount(stmt, index);
     case "CREATE":
       return compileCreate(stmt, index);
     case "MERGE":
@@ -52,6 +59,14 @@ function compileStatement(stmt: IRStatement, index: number) {
       return compileConnect(stmt, index);
     case "RELATION_QUERY":
       return compileRelationQuery(stmt, index);
+    case "GET_NODE_LABELS":
+      return compileGetNodeLabels(stmt);
+    case "GET_NODE_PROPERTIES":
+      return compileGetNodeProperties(stmt);
+    case "GET_RELATIONSHIP_PROPERTIES":
+      return compileGetRelationshipProperties(stmt);
+    case "GET_RELATIONSHIP_TYPES":
+      return compileGetRelationshipTypes(stmt);
     default:
       throw new Error(`Unsupported IR statement: ${stmt}`);
   }
@@ -90,6 +105,28 @@ function compileMatch(stmt: IRMatch, idx: number) {
       ...(stmt.skip !== undefined ? { [`skip${idx}`]: stmt.skip } : {}),
       ...(stmt.limit !== undefined ? { [`limit${idx}`]: stmt.limit } : {}),
     },
+  };
+}
+
+/**
+ * Compiles a `COUNT` statement into Cypher.
+ * @param stmt The `COUNT` statement.
+ * @param idx The index of the statement.
+ * @returns Compiled Cypher.
+ */
+function compileCount(stmt: IRCountQuery, idx: number) {
+  const whereRes = compileWhere(stmt.where, stmt.alias, idx);
+
+  let query = `MATCH (${stmt.alias}:${stmt.label})`;
+  if (whereRes.clauses.length)
+    query += ` WHERE ${whereRes.clauses.join(" AND ")}`;
+
+  // Just count directly
+  query += ` RETURN count(${stmt.alias}) AS ${stmt.alias}_count`;
+
+  return {
+    command: query,
+    params: whereRes.params,
   };
 }
 
@@ -154,7 +191,7 @@ function compileMerge(stmt: IRMerge, idx: number) {
   queryLines.push(`RETURN ${alias}`);
 
   return {
-    command: queryLines.join("\n"),
+    command: queryLines.join(" "),
     params,
   };
 }
@@ -214,7 +251,7 @@ function compileConnect(stmt: IRConnect, idx: number) {
   clauses.push(`RETURN ${from.alias}`);
 
   return {
-    command: clauses.join("\n"),
+    command: clauses.join(" "),
     params: {
       ...fromMatch.params,
       ...toMatch.params,
@@ -246,7 +283,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
 
   // MATCH the relationship
   commandLines.push(
-    `MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`,
+    `MATCH (${from.alias})-[:${rel}]->(${alias}:${stmt.label})`
   );
   if (relWhere.clause) {
     commandLines.push(`WHERE ${relWhere.clause}`);
@@ -256,7 +293,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
   commandLines.push(`RETURN ${alias}`);
 
   return {
-    command: commandLines.join("\n"),
+    command: commandLines.join(" "),
     params: {
       ...matchFrom.params,
       ...relWhere.params,
@@ -273,7 +310,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
 function compileWhere(
   node: IRWhereNode | undefined,
   alias: string,
-  idx: number,
+  idx: number
 ): {
   clauses: string[];
   params: Record<string, unknown>;
@@ -336,7 +373,7 @@ function compileWhere(
       inner.push(
         n.OR.map(walk)
           .map((s) => `(${s})`)
-          .join(" OR "),
+          .join(" OR ")
       );
     if (n.NOT) inner.push(`NOT (${walk(n.NOT)})`);
 
@@ -358,7 +395,7 @@ function compileWhere(
 function compileMatchObject(
   where: Record<string, unknown>,
   alias: string,
-  idx: number,
+  idx: number
 ) {
   const clauses: string[] = [];
   const params: Record<string, unknown> = {};
@@ -373,5 +410,43 @@ function compileMatchObject(
   return {
     clause: clauses.join(" AND "),
     params,
+  };
+}
+
+/**
+ * Compiles a `GET_NODE_LABELS` statement.
+ * @param stmt The statement to compile.
+ * @returns A Cypher query.
+ */
+function compileGetNodeLabels(stmt: IRGetNodeLabels) {
+  return {
+    command: `CALL db.labels() YIELD label as ${stmt.alias}`,
+    params: {},
+  };
+}
+
+/**
+ * Compiles a `GET_NODE_PROPERTIES` statement.
+ * @param stmt The statement to compile.
+ * @returns A Cypher query.
+ */
+function compileGetNodeProperties(stmt: IRGetNodeProperties) {
+  return {
+    command: `CALL db.schema.nodeTypeProperties() YIELD nodeLabels, propertyName WHERE $label IN nodeLabels RETURN DISTINCT propertyName AS ${stmt.alias}`,
+    params: { label: stmt.label },
+  };
+}
+
+function compileGetRelationshipTypes(stmt: IRGetRelationshipTypes) {
+  return {
+    command: `CALL db.relationshipTypes() YIELD relationshipType as ${stmt.alias}`,
+    params: {},
+  };
+}
+
+function compileGetRelationshipProperties(stmt: IRGetRelationshipProperties) {
+  return {
+    command: `CALL db.schema.relTypeProperties() YIELD relType, propertyName WHERE relType = $type RETURN DISTINCT propertyName as ${stmt.alias}`,
+    params: { type: stmt.relationType },
   };
 }

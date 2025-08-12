@@ -149,7 +149,7 @@ describe("Model", () => {
   test("metadata: labels, types, props", async () => {
     const labels = await db.User.getNodeLabels();
     const relTypes = await db.User.getRelationshipTypes();
-    const props = await db.User.getNodeProperties("User");
+    const props = await db.User.getNodeProperties();
     const relProps = await db.User.getRelationshipProperties("HAS_POST");
 
     expect(Array.isArray(labels)).toBe(true);

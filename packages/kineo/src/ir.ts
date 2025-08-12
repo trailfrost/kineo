@@ -7,6 +7,7 @@ import type {
   ConnectOpts,
   GetRelationOpts,
   WhereNode as SchemaWhereNode,
+  Where,
 } from "./model";
 
 /**
@@ -14,12 +15,17 @@ import type {
  */
 export type IRQueryType =
   | "MATCH"
+  | "COUNT"
   | "CREATE"
   | "MERGE"
   | "DELETE"
   | "CONNECT"
   | "DISCONNECT"
-  | "RELATION_QUERY";
+  | "RELATION_QUERY"
+  | "GET_NODE_LABELS"
+  | "GET_RELATIONSHIP_TYPES"
+  | "GET_NODE_PROPERTIES"
+  | "GET_RELATIONSHIP_PROPERTIES";
 
 /**
  * A `WHERE` clause.
@@ -73,6 +79,14 @@ export interface IRMatch extends IRBase {
   skip?: number;
   include?: string[];
   select?: string[];
+}
+
+/**
+ * Count statement.
+ */
+export interface IRCountQuery extends IRBase {
+  type: "COUNT";
+  where?: IRWhereNode;
 }
 
 /**
@@ -134,15 +148,49 @@ export interface IRRelationQuery extends IRBase {
 }
 
 /**
+ * A query to get all node labels.
+ */
+export interface IRGetNodeLabels extends IRBase {
+  type: "GET_NODE_LABELS";
+}
+
+/**
+ * A query to get relationship types.
+ */
+export interface IRGetRelationshipTypes extends IRBase {
+  type: "GET_RELATIONSHIP_TYPES";
+}
+
+/**
+ * A query to get properties from a node.
+ */
+export interface IRGetNodeProperties extends IRBase {
+  type: "GET_NODE_PROPERTIES";
+}
+
+/**
+ * A query to get properties from a relationship.
+ */
+export interface IRGetRelationshipProperties extends IRBase {
+  type: "GET_RELATIONSHIP_PROPERTIES";
+  relationType: string;
+}
+
+/**
  * All types of statements.
  */
 export type IRStatement =
   | IRMatch
+  | IRCountQuery
   | IRCreate
   | IRMerge
   | IRDelete
   | IRConnect
-  | IRRelationQuery;
+  | IRRelationQuery
+  | IRGetNodeLabels
+  | IRGetRelationshipTypes
+  | IRGetNodeProperties
+  | IRGetRelationshipProperties;
 
 /**
  * Intermediate representation, built for compiling into a query language.
@@ -161,7 +209,7 @@ export interface IR {
  */
 export function parseWhereField(
   field: string,
-  fieldValue: Record<string, unknown>,
+  fieldValue: Record<string, unknown>
 ): IRWhereClause[] {
   const clauses: IRWhereClause[] = [];
 
@@ -261,7 +309,7 @@ export function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
 export function parseMatch<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: QueryOpts<S, N>,
+  opts: QueryOpts<S, N>
 ): IRMatch {
   return {
     type: "MATCH",
@@ -277,6 +325,26 @@ export function parseMatch<S extends Schema, N extends Node>(
 }
 
 /**
+ * Parses a count statement.
+ * @param label The label of the statement.
+ * @param alias Name of the return.
+ * @param opts Options passed into the model.
+ * @returns A `COUNT` statement.
+ */
+export function parseCount<S extends Schema, N extends Node>(
+  label: string,
+  alias: string,
+  opts?: Where<S, N>
+): IRCountQuery {
+  return {
+    type: "COUNT",
+    label,
+    alias,
+    where: opts ? parseWhereNode(opts) : undefined,
+  };
+}
+
+/**
  * Parses a `CREATE` statement.
  * @param label The label of the command.
  * @param alias Name of return value.
@@ -286,7 +354,7 @@ export function parseMatch<S extends Schema, N extends Node>(
 export function parseCreate<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: CreateOpts<S, N>,
+  opts: CreateOpts<S, N>
 ): IRCreate {
   return {
     type: "CREATE",
@@ -306,7 +374,7 @@ export function parseCreate<S extends Schema, N extends Node>(
 export function parseMerge<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: MergeOpts<S, N>,
+  opts: MergeOpts<S, N>
 ): IRMerge {
   return {
     type: "MERGE",
@@ -328,7 +396,7 @@ export function parseMerge<S extends Schema, N extends Node>(
 export function parseDelete<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: DeleteOpts<S, N>,
+  opts: DeleteOpts<S, N>
 ): IRDelete {
   return {
     type: "DELETE",
@@ -350,7 +418,7 @@ export function parseConnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N,
+  nodeDef: N
 ): IRConnect {
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
   const toLabel = relDef.refTo;
@@ -385,7 +453,7 @@ export function parseDisconnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N,
+  nodeDef: N
 ): IRConnect {
   return {
     ...parseConnect(label, alias, opts, nodeDef),
@@ -403,7 +471,7 @@ export function parseDisconnect<S extends Schema, N extends Node>(
 export function parseRelationQuery<S extends Schema, N extends Node>(
   schema: S,
   nodeLabel: string,
-  opts: GetRelationOpts<S, N>,
+  opts: GetRelationOpts<S, N>
 ): IRRelationQuery {
   const nodeDef = schema[nodeLabel] as N;
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
@@ -419,5 +487,69 @@ export function parseRelationQuery<S extends Schema, N extends Node>(
     },
     relation: opts.relation as string,
     where: opts.where ?? undefined,
+  };
+}
+
+/**
+ * Parses a "get node labels" query.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @returns A `GET_NODE_LABELS` statement.
+ */
+export function parseGetNodeLabels(
+  label: string,
+  alias: string
+): IRGetNodeLabels {
+  return {
+    type: "GET_NODE_LABELS",
+    label,
+    alias,
+  };
+}
+
+/**
+ * Parse a "get relationship types" query.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @returns A `GET_RELATIONSHIP_TYPES` query.
+ */
+export function parseGetRelationshipTypes(
+  label: string,
+  alias: string
+): IRGetRelationshipTypes {
+  return {
+    type: "GET_RELATIONSHIP_TYPES",
+    label,
+    alias,
+  };
+}
+
+/**
+ * Parses a "get node properties" statement.
+ * @param label The label of the statement.
+ * @param alias Name of return value.
+ * @returns A `GET_NODE_PROPERTIES` statement.
+ */
+export function parseGetNodeProperties(
+  label: string,
+  alias: string
+): IRGetNodeProperties {
+  return {
+    type: "GET_NODE_PROPERTIES",
+    label,
+    alias,
+  };
+}
+
+export function parseGetRelationshipProperties(
+  label: string,
+  alias: string,
+  relationType: string
+): IRGetRelationshipProperties {
+  return {
+    type: "GET_RELATIONSHIP_PROPERTIES",
+    label,
+    alias,
+    relationType,
   };
 }

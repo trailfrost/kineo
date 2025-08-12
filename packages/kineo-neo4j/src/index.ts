@@ -1,4 +1,4 @@
-import type { Adapter, Params } from "kineo/adapter";
+import type { Adapter } from "kineo/adapter";
 import type {
   Config,
   Driver,
@@ -98,6 +98,11 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
     schemaIntrospection: [], // TODO
 
+    async close() {
+      await session.close();
+      await driver.close();
+    },
+
     async run(command, params) {
       const result = await session.run(command, params);
       return {
@@ -109,54 +114,20 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
       return compile(ir);
     },
 
-    // TODO remove functions below
-
-    async getRelationshipTypes() {
-      const result = await session.run(`CALL db.relationshipTypes()`);
-      return result.records.map((r) => r.get("relationshipType"));
+    push() {
+      throw new Error("This adapter does not support pushing."); // TODO
     },
 
-    async getNodeProperties(label: string) {
-      if (!this.serverInfo) this.serverInfo = await driver.getServerInfo();
-      const result = await session.run(
-        `
-        CALL db.schema.nodeTypeProperties()
-        YIELD nodeType, propertyName
-        WHERE $label = nodeType
-        RETURN DISTINCT propertyName
-        `,
-        { label }
-      );
-      return result.records.map((r) => r.get("propertyName"));
+    deploy() {
+      throw new Error("This adapter does not support deploying."); // TODO
     },
 
-    async getRelationshipProperties(type: string) {
-      const result = await session.run(
-        `
-        CALL db.schema.relTypeProperties()
-        YIELD relType, propertyName
-        WHERE relType = $type
-        RETURN DISTINCT propertyName
-        `,
-        { type }
-      );
-      return result.records.map((r) => r.get("propertyName"));
+    migrate() {
+      throw new Error("This adapter does not support migrations."); // TODO
     },
 
-    async count(command: string, params: Params) {
-      const countQuery = `CALL { ${command} } RETURN count(n) as count`;
-      const result = await session.run(countQuery, params);
-      return result.records[0].get("count")?.toInt?.() || 0;
-    },
-
-    async getNodeLabels() {
-      const result = await session.run(`CALL db.labels()`);
-      return result.records.map((r) => r.get("label"));
-    },
-
-    async close() {
-      await session.close();
-      await driver.close();
+    pull() {
+      throw new Error("This adapter does not support pulling."); // TODO
     },
   };
 }

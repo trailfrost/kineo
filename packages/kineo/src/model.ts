@@ -481,7 +481,7 @@ export default class Model<
   async count(opts?: Where<S, N>): Promise<number> {
     const ir = parseCount(this.label, "n", opts);
     const result = await this.run(ir);
-    return (result.records[0].get(0)?.properties["n"] as number) || 0;
+    return (result.records[0]?.get?.(0)?.properties["n_count"] as number) || 0;
   }
 
   /**
@@ -491,7 +491,7 @@ export default class Model<
   async getNodeLabels(): Promise<string[]> {
     const ir = parseGetNodeLabels(this.label, "l");
     const result = await this.run(ir);
-    return (result.records[0].get(0)?.properties["l"] as string[]) || [];
+    return (result.records[0]?.get?.(0)?.properties["l"] as string[]) || [];
   }
 
   /**
@@ -501,7 +501,7 @@ export default class Model<
   async getRelationshipTypes(): Promise<string[]> {
     const ir = parseGetRelationshipTypes(this.label, "t");
     const result = await this.run(ir);
-    return (result.records[0].get(0)?.properties["t"] as string[]) || [];
+    return (result.records[0]?.get?.(0)?.properties["t"] as string[]) || [];
   }
 
   /**
@@ -513,7 +513,7 @@ export default class Model<
   async getNodeProperties(): Promise<string[]> {
     const ir = parseGetNodeProperties(this.label, "p");
     const result = await this.run(ir);
-    return (result.records[0].get(0)?.properties["p"] as string[]) || [];
+    return (result.records[0]?.get?.(0)?.properties["p"] as string[]) || [];
   }
 
   /**
@@ -524,6 +524,6 @@ export default class Model<
   async getRelationshipProperties(type: string): Promise<string[]> {
     const ir = parseGetRelationshipProperties(this.label, "p", type);
     const result = await this.run(ir);
-    return (result.records[0].get(0)?.properties["p"] as string[]) || [];
+    return (result.records[0]?.get?.(0)?.properties["p"] as string[]) || [];
   }
 }

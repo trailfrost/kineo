@@ -8,7 +8,6 @@ import {
   parseDisconnect,
   parseRelationQuery,
   parseWhereNode,
-  parseCount,
   parseGetNodeLabels,
   parseGetRelationshipTypes,
   parseGetNodeProperties,
@@ -95,23 +94,6 @@ describe("IR Parsers", () => {
       skip: 5,
       include: ["posts"],
       select: ["name"],
-    });
-  });
-
-  test("parseCount", () => {
-    const count = parseCount<Schema, User>("User", "u", {
-      name: {
-        equals: "Bob",
-      },
-    });
-
-    expect(count).toEqual({
-      type: "COUNT",
-      label: "User",
-      alias: "u",
-      where: {
-        conditions: [{ field: "name", operator: "EQUALS", value: "Bob" }],
-      },
     });
   });
 

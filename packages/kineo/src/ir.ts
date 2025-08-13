@@ -7,7 +7,6 @@ import type {
   ConnectOpts,
   GetRelationOpts,
   WhereNode as SchemaWhereNode,
-  Where,
 } from "./model";
 
 /**
@@ -80,15 +79,6 @@ export interface IRMatch extends IRBase {
   include?: string[];
   select?: string[];
 }
-
-/**
- * Count statement.
- */
-export interface IRCountQuery extends IRBase {
-  type: "COUNT";
-  where?: IRWhereNode;
-}
-
 /**
  * Create statement.
  */
@@ -181,7 +171,6 @@ export interface IRGetRelationshipProperties extends IRBase {
  */
 export type IRStatement =
   | IRMatch
-  | IRCountQuery
   | IRCreate
   | IRMerge
   | IRDelete
@@ -321,26 +310,6 @@ export function parseMatch<S extends Schema, N extends Node>(
     skip: opts.skip,
     include: opts.include ? Object.keys(opts.include) : undefined,
     select: opts.select ? Object.keys(opts.select) : undefined,
-  };
-}
-
-/**
- * Parses a count statement.
- * @param label The label of the statement.
- * @param alias Name of the return.
- * @param opts Options passed into the model.
- * @returns A `COUNT` statement.
- */
-export function parseCount<S extends Schema, N extends Node>(
-  label: string,
-  alias: string,
-  opts?: Where<S, N>
-): IRCountQuery {
-  return {
-    type: "COUNT",
-    label,
-    alias,
-    where: opts ? parseWhereNode(opts) : undefined,
   };
 }
 

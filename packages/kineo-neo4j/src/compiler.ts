@@ -8,7 +8,6 @@ import type {
   IRRelationQuery,
   IRStatement,
   IRWhereNode,
-  IRCountQuery,
   IRGetNodeLabels,
   IRGetNodeProperties,
   IRGetRelationshipTypes,
@@ -46,8 +45,6 @@ function compileStatement(stmt: IRStatement, index: number) {
   switch (stmt.type) {
     case "MATCH":
       return compileMatch(stmt, index);
-    case "COUNT":
-      return compileCount(stmt, index);
     case "CREATE":
       return compileCreate(stmt, index);
     case "MERGE":
@@ -86,7 +83,6 @@ function compileMatch(stmt: IRMatch, idx: number) {
   let query = `MATCH (${alias}:${label})`;
   if (whereRes.clauses.length)
     query += ` WHERE ${whereRes.clauses.join(" AND ")}`;
-  query += ` RETURN ${stmt.select?.join(", ") || alias}`;
 
   if (stmt.orderBy) {
     const order = Object.entries(stmt.orderBy)
@@ -97,6 +93,7 @@ function compileMatch(stmt: IRMatch, idx: number) {
 
   if (stmt.skip !== undefined) query += ` SKIP $skip${idx}`;
   if (stmt.limit !== undefined) query += ` LIMIT $limit${idx}`;
+  query += ` RETURN ${stmt.select?.join(", ") || alias}`;
 
   return {
     command: query,
@@ -105,28 +102,6 @@ function compileMatch(stmt: IRMatch, idx: number) {
       ...(stmt.skip !== undefined ? { [`skip${idx}`]: stmt.skip } : {}),
       ...(stmt.limit !== undefined ? { [`limit${idx}`]: stmt.limit } : {}),
     },
-  };
-}
-
-/**
- * Compiles a `COUNT` statement into Cypher.
- * @param stmt The `COUNT` statement.
- * @param idx The index of the statement.
- * @returns Compiled Cypher.
- */
-function compileCount(stmt: IRCountQuery, idx: number) {
-  const whereRes = compileWhere(stmt.where, stmt.alias, idx);
-
-  let query = `MATCH (${stmt.alias}:${stmt.label})`;
-  if (whereRes.clauses.length)
-    query += ` WHERE ${whereRes.clauses.join(" AND ")}`;
-
-  // Just count directly
-  query += ` RETURN count(${stmt.alias}) AS ${stmt.alias}_count`;
-
-  return {
-    command: query,
-    params: whereRes.params,
   };
 }
 
@@ -207,7 +182,7 @@ function compileDelete(stmt: IRDelete, idx: number) {
   const label = stmt.label;
 
   const matchClause = `MATCH (${alias}:${label})`;
-  const whereClause = compileMatchObject(stmt.where || {}, alias, idx);
+  const whereClause = compileMatchObject(stmt.where ?? {}, alias, idx);
 
   const query = `
     ${matchClause}${whereClause.clause ? ` WHERE ${whereClause.clause}` : ""}
@@ -271,7 +246,7 @@ function compileRelationQuery(stmt: IRRelationQuery, idx: number) {
   const alias = stmt.alias;
 
   const matchFrom = compileMatchObject(from.match, from.alias, idx);
-  const relWhere = compileMatchObject(stmt.where || {}, alias, idx);
+  const relWhere = compileMatchObject(stmt.where ?? {}, alias, idx);
 
   const commandLines: string[] = [];
 

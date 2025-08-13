@@ -12,9 +12,27 @@ export type Params = Record<string, unknown>;
 export type Command = { command: string; params: Params };
 
 /**
+ * All supported scalar types.
+ */
+export type Scalar =
+  | null
+  | boolean
+  | number
+  | bigint
+  | string
+  | string[]
+  | number[]
+  | boolean[];
+
+/**
+ * A node or a scalar type.
+ */
+export type Cell = Node | Scalar;
+
+/**
  * A query record. Contains all return values for a command.
  */
-export type QueryRecord = Map<number | string, Node>;
+export type QueryRecord = Map<number | string, Cell>;
 
 /**
  * The result of a query.
@@ -97,6 +115,26 @@ export type Adapter = {
    * @param migrations The migrations queries to deploy.
    */
   deploy(migrations: string[]): OptPromise<void>;
+};
+
+// tiny helpers to safely read values
+export const isNode = (v: unknown): v is Node => v instanceof Node;
+
+export const getScalar = <T extends Scalar>(
+  rec: QueryRecord | undefined,
+  key: string | number
+): T | undefined => {
+  const v = rec?.get?.(key);
+  return isNode(v) ? undefined : (v as T | undefined);
+};
+
+export const getNodeProp = <T>(
+  rec: QueryRecord | undefined,
+  idx: number | string,
+  prop: string
+): T | undefined => {
+  const v = rec?.get?.(idx);
+  return isNode(v) ? (v.properties[prop] as T | undefined) : undefined;
 };
 
 export class Node {

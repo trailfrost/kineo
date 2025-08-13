@@ -9,13 +9,12 @@ import {
   parseDisconnect,
   parseRelationQuery,
   IRStatement,
-  parseCount,
   parseGetNodeLabels,
   parseGetRelationshipTypes,
   parseGetNodeProperties,
   parseGetRelationshipProperties,
 } from "./ir";
-import { Adapter } from "./adapter";
+import { Adapter, getNodeProp, getScalar } from "./adapter";
 
 /**
  * Utility to extract relationship definitions.
@@ -296,6 +295,8 @@ export default class Model<
 
     const apply = (rec: QueryRecord) => {
       const node = "get" in rec ? rec.get(0)! : (rec as AdapterNode);
+      if (typeof node !== "object") return node;
+
       if (!("properties" in node)) {
         return null;
       }
@@ -479,9 +480,10 @@ export default class Model<
    * @returns Number of nodes that match.
    */
   async count(opts?: Where<S, N>): Promise<number> {
-    const ir = parseCount(this.label, "n", opts);
-    const result = await this.run(ir);
-    return (result.records[0]?.get?.(0)?.properties["n_count"] as number) || 0;
+    return this.matchMany({
+      where: opts,
+      select: {},
+    }).then((result) => result.length);
   }
 
   /**
@@ -490,8 +492,11 @@ export default class Model<
    */
   async getNodeLabels(): Promise<string[]> {
     const ir = parseGetNodeLabels(this.label, "l");
-    const result = await this.run(ir);
-    return (result.records[0]?.get?.(0)?.properties["l"] as string[]) || [];
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "l") ?? getNodeProp<string[]>(row, 0, "l") ?? []
+    );
   }
 
   /**
@@ -500,8 +505,11 @@ export default class Model<
    */
   async getRelationshipTypes(): Promise<string[]> {
     const ir = parseGetRelationshipTypes(this.label, "t");
-    const result = await this.run(ir);
-    return (result.records[0]?.get?.(0)?.properties["t"] as string[]) || [];
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "t") ?? getNodeProp<string[]>(row, 0, "t") ?? []
+    );
   }
 
   /**
@@ -512,8 +520,11 @@ export default class Model<
    */
   async getNodeProperties(): Promise<string[]> {
     const ir = parseGetNodeProperties(this.label, "p");
-    const result = await this.run(ir);
-    return (result.records[0]?.get?.(0)?.properties["p"] as string[]) || [];
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
+    );
   }
 
   /**
@@ -523,7 +534,10 @@ export default class Model<
    */
   async getRelationshipProperties(type: string): Promise<string[]> {
     const ir = parseGetRelationshipProperties(this.label, "p", type);
-    const result = await this.run(ir);
-    return (result.records[0]?.get?.(0)?.properties["p"] as string[]) || [];
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
+    );
   }
 }

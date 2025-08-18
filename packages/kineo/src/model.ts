@@ -1,4 +1,9 @@
-import type { Schema, Node, InferNode, RelationshipDef } from "./schema";
+import type {
+  Schema,
+  Node as SchemaNode,
+  InferNode,
+  RelationshipDef,
+} from "./schema";
 import type { QueryResult, QueryRecord, Node as AdapterNode } from "./adapter";
 import {
   parseMatch,
@@ -19,7 +24,7 @@ import { Adapter, getNodeProp, getScalar } from "./adapter";
 /**
  * Utility to extract relationship definitions.
  */
-export type RelationshipKeys<N extends Node> = {
+export type RelationshipKeys<N extends SchemaNode> = {
   // eslint-disable-next-line
   [K in keyof N]: N[K] extends RelationshipDef<any> ? K : never;
 }[keyof N];
@@ -27,17 +32,19 @@ export type RelationshipKeys<N extends Node> = {
 /**
  * Gets a relationship target.
  */
-export type GetRelationshipTargetLabel<N extends Node, R extends keyof N> =
-  N[R] extends RelationshipDef<infer To> ? To : never;
+export type GetRelationshipTargetLabel<
+  N extends SchemaNode,
+  R extends keyof N,
+> = N[R] extends RelationshipDef<infer To> ? To : never;
 
 /**
  * Gets the type of a relationship target.
  */
 export type GetTargetNodeType<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N>,
-> = S[GetRelationshipTargetLabel<N, R>] extends Node
+> = S[GetRelationshipTargetLabel<N, R>] extends SchemaNode
   ? InferNode<S[GetRelationshipTargetLabel<N, R>], S>
   : never;
 
@@ -46,7 +53,7 @@ export type GetTargetNodeType<
  */
 export type ConnectOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
   FromNode = InferNode<N, S>,
   ToNode = GetTargetNodeType<S, N, R>,
@@ -61,7 +68,7 @@ export type ConnectOpts<
  */
 export type IsConnectedOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
 > = ConnectOpts<S, N, R>;
 
@@ -70,7 +77,7 @@ export type IsConnectedOpts<
  */
 export type UpsertConnectOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
 > = ConnectOpts<S, N, R> & {
   create?: boolean;
@@ -81,7 +88,7 @@ export type UpsertConnectOpts<
  */
 export type DeleteConnectionOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
 > = ConnectOpts<S, N, R>;
 
@@ -90,7 +97,7 @@ export type DeleteConnectionOpts<
  */
 export type GetRelationOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   R extends RelationshipKeys<N> = RelationshipKeys<N>,
   FromNode = InferNode<N, S>,
 > = {
@@ -136,7 +143,7 @@ export type WhereNode<T> = {
 /**
  * A `WHERE` clause.
  */
-export type Where<S extends Schema, N extends Node> = WhereNode<
+export type Where<S extends Schema, N extends SchemaNode> = WhereNode<
   InferNode<N, S>
 >;
 
@@ -145,7 +152,7 @@ export type Where<S extends Schema, N extends Node> = WhereNode<
  */
 export interface QueryOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   INode = InferNode<N, S>,
 > {
   where?: Where<S, N>;
@@ -168,7 +175,7 @@ export interface QueryOpts<
  */
 export type CreateOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   INode = InferNode<N, S>,
 > = {
   data: INode;
@@ -179,7 +186,7 @@ export type CreateOpts<
  */
 export type MergeOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   INode = InferNode<N, S>,
 > = {
   where: Partial<INode>;
@@ -192,7 +199,7 @@ export type MergeOpts<
  */
 export type DeleteOpts<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   INode = InferNode<N, S>,
 > = {
   where?: Partial<INode>;
@@ -204,7 +211,7 @@ export type DeleteOpts<
  * @param record The record to apply to.
  * @returns The record, with defaults applied.
  */
-function applyDefaults<N extends Node, S extends Schema>(
+function applyDefaults<N extends SchemaNode, S extends Schema>(
   nodeDef: N,
   record: Record<string, unknown>
 ) {
@@ -233,7 +240,7 @@ function applyDefaults<N extends Node, S extends Schema>(
  */
 export default class Model<
   S extends Schema,
-  N extends Node,
+  N extends SchemaNode,
   A extends Adapter,
 > {
   /**
@@ -308,29 +315,29 @@ export default class Model<
   }
 
   /**
-   * Runs a `MATCH` query and returns a single node.
+   * A find query that returns a single node.
    * @param opts Match options.
    * @returns Properties of the matched node.
    */
-  async matchOne(opts?: QueryOpts<S, N>) {
+  async findOne(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
   /**
-   * Runs a `MATCH` query and returns multiple nodes.
+   * A find query that returns multiple nodes.
    * @param opts Match options.
    * @returns Properties of the matched nodes.
    */
-  async matchMany(opts?: QueryOpts<S, N>) {
+  async findMany(opts?: QueryOpts<S, N>) {
     const ir = parseMatch(this.label, "n", opts ?? {});
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
   /**
-   * Runs a `MATCH` query to check if a node exists.
+   * Checks if a node exists.
    * @param opts Match options.
    * @returns If the node exists.
    */
@@ -341,7 +348,7 @@ export default class Model<
   }
 
   /**
-   * Runs a `CREATE` query and returns one node.
+   * Creates a single node.
    * @param opts Create options.
    * @returns Properties of the created node.
    */
@@ -352,7 +359,7 @@ export default class Model<
   }
 
   /**
-   * Runs a `CREATE` query and returns multiple nodes.
+   * Creates multiple nodes.
    * @param opts Create options.
    * @returns Properties of the created nodes.
    */
@@ -363,29 +370,29 @@ export default class Model<
   }
 
   /**
-   * Runs a `MERGE` query and returns one node.
-   * @param opts Create options.
+   * An upsert query that returns one node.
+   * @param opts Upsert options.
    * @returns Properties of the merged node.
    */
-  async mergeOne(opts: MergeOpts<S, N>) {
+  async upsertOne(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records[0]);
   }
 
   /**
-   * Runs a `MERGE` query and returns multiple node.
+   * An upsert query that returns multiple node.
    * @param opts Create options.
    * @returns Properties of the merged nodes.
    */
-  async mergeMany(opts: MergeOpts<S, N>) {
+  async upsertMany(opts: MergeOpts<S, N>) {
     const ir = parseMerge(this.label, "n", opts);
     const result = await this.run(ir);
     return this.toNodeProperties(result.records);
   }
 
   /**
-   * Runs a `DELETE` query and returns one node.
+   * A delete query that returns one node.
    * @param opts Create options.
    * @returns Properties of the deleted node.
    */
@@ -396,7 +403,7 @@ export default class Model<
   }
 
   /**
-   * Runs a `DELETE` query and returns multiple node.
+   * A delete query that returns multiple node.
    * @param opts Create options.
    * @returns Properties of the deleted nodes.
    */
@@ -407,7 +414,7 @@ export default class Model<
   }
 
   /**
-   * Connects two nodes together.
+   * Connects two nodes together (graph database specific).
    * @param opts Connection options.
    * @returns The first node.
    */
@@ -418,7 +425,7 @@ export default class Model<
   }
 
   /**
-   * Disconnects two nodes.
+   * Disconnects two nodes (graph database specific).
    * @param opts Disconnection options.
    * @returns The first node.
    */
@@ -429,7 +436,7 @@ export default class Model<
   }
 
   /**
-   * Checks if two nodes are connected.
+   * Checks if two nodes are connected (graph database specific).
    * @param opts Connection options.
    * @returns The first node.
    */
@@ -440,7 +447,7 @@ export default class Model<
   }
 
   /**
-   * Upserts a relationship.
+   * Upserts a relationship (graph database specific).
    * @param opts Connection options.
    * @returns The first node.
    */
@@ -451,7 +458,7 @@ export default class Model<
   }
 
   /**
-   * Removes a relationship.
+   * Removes a relationship (graph database specific).
    * @param opts Connection options.
    * @returns The first node.
    */
@@ -462,7 +469,7 @@ export default class Model<
   }
 
   /**
-   * Gets all relationships.
+   * Gets all relationships (graph database specific).
    * @param opts What relations to get
    * @returns The relations.
    */
@@ -480,14 +487,14 @@ export default class Model<
    * @returns Number of nodes that match.
    */
   async count(opts?: Where<S, N>): Promise<number> {
-    return this.matchMany({
+    return await this.findMany({
       where: opts,
       select: {},
     }).then((result) => result.length);
   }
 
   /**
-   * Gets all labels.
+   * Gets all labels (graph database specific).
    * @returns Labels.
    */
   async getNodeLabels(): Promise<string[]> {
@@ -500,7 +507,7 @@ export default class Model<
   }
 
   /**
-   * Gets all relationship types.
+   * Gets all relationship types (graph database specific).
    * @returns Types.
    */
   async getRelationshipTypes(): Promise<string[]> {
@@ -513,7 +520,7 @@ export default class Model<
   }
 
   /**
-   * Gets properties of a node.
+   * Gets properties of a node (graph database specific).
    * @param label The label to get properties of.
    * @param arrayType Only enable this if node types are arrays.
    * @returns Node properties.
@@ -528,7 +535,7 @@ export default class Model<
   }
 
   /**
-   * Gets relationship properties.
+   * Gets relationship properties (graph database specific).
    * @param type The relationship type.
    * @returns Relationship properties.
    */
@@ -539,5 +546,57 @@ export default class Model<
     return (
       getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
     );
+  }
+}
+
+type Properties = Record<string, unknown>;
+
+export class Node {
+  identity: number;
+  labels: string[];
+  properties: Properties;
+  elementId: string;
+
+  constructor(
+    identity: number,
+    labels: string[],
+    properties: Properties,
+    elementId?: string
+  ) {
+    this.identity = identity;
+    this.labels = labels;
+    this.properties = properties;
+    this.elementId = elementId || labels[0];
+  }
+}
+
+export class Relationship {
+  identity: number;
+  start: number;
+  end: number;
+  type: string;
+  properties: Properties;
+  elementId: string;
+  startNodeElementId: string;
+  endNodeElementId: string;
+
+  constructor(
+    identity: number,
+    start: number,
+    end: number,
+    type: string,
+    properties: Properties,
+    elementId: string,
+    startNodeElementId: string,
+    endNodeElementId: string
+  ) {
+    this.identity = identity;
+    this.start = start;
+    this.end = end;
+    this.type = type;
+    this.properties = properties;
+    this.elementId = elementId;
+    this.startNodeElementId = startNodeElementId;
+    this.endNodeElementId = endNodeElementId;
   }
 }

@@ -1,3 +1,5 @@
+import type { Node as ModelNode, Relationship } from "./model";
+
 /**
  * All supported Kineo types.
  */
@@ -48,23 +50,21 @@ type KineoToTs<T extends KineoType> = T extends "ANY"
         | "LOCAL TIME"
         | "DATE"
     ? Date
-    : T extends "DURATION"
-      ? Duration
-      : T extends "BOOLEAN"
-        ? boolean
-        : T extends "FLOAT" | "INTEGER"
-          ? number
-          : T extends "MAP"
-            ? Record<string, unknown>
-            : T extends "NOTHING"
-              ? null | undefined
-              : T extends "PATH"
-                ? Path
-                : T extends "POINT"
-                  ? Point
-                  : T extends "STRING"
-                    ? string
-                    : never;
+    : T extends "BOOLEAN"
+      ? boolean
+      : T extends "FLOAT" | "INTEGER" | "DURATION"
+        ? number
+        : T extends "MAP"
+          ? Record<string, unknown>
+          : T extends "NOTHING"
+            ? null | undefined
+            : T extends "PATH"
+              ? Path
+              : T extends "POINT"
+                ? Point
+                : T extends "STRING"
+                  ? string
+                  : never;
 
 /**
  * Infers a value from a Kineo type.
@@ -455,8 +455,8 @@ export const relation = {
 };
 
 /**
- * Defines a new node.
- * @param def The node schema.
+ * Defines a new model.
+ * @param def The model schema.
  * @returns The same object, with types.
  */
 export function model<TNode extends Node>(def: TNode): TNode {
@@ -472,14 +472,42 @@ export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
   return def;
 }
 
+class PathSegment {
+  start: ModelNode;
+  relationship: Relationship;
+  end: ModelNode;
+
+  constructor(start: ModelNode, rel: Relationship, end: ModelNode) {
+    this.start = start;
+    this.relationship = rel;
+    this.end = end;
+  }
+}
+
 export class Path {
-  // TODO
+  start: ModelNode;
+  end: ModelNode;
+  segments: PathSegment[];
+  length: number;
+
+  constructor(start: ModelNode, end: ModelNode, segments: PathSegment[]) {
+    this.start = start;
+    this.end = end;
+    this.segments = segments;
+    this.length = segments.length;
+  }
 }
 
 export class Point {
-  // TODO
-}
+  srid: number;
+  x: number;
+  y: number;
+  z?: number;
 
-export class Duration {
-  // TODO
+  constructor(srid: number, x: number, y: number, z?: number) {
+    this.srid = srid;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
 }

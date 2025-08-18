@@ -549,14 +549,39 @@ export default class Model<
   }
 }
 
+/**
+ * Node properties.
+ */
 type Properties = Record<string, unknown>;
 
+/**
+ * A node.
+ */
 export class Node {
+  /**
+   * Identity of node.
+   */
   identity: number;
+  /**
+   * Labels associated with the node.
+   */
   labels: string[];
+  /**
+   * Node properties.
+   */
   properties: Properties;
+  /**
+   * Node element ID.
+   */
   elementId: string;
 
+  /**
+   * Creates a new node.
+   * @param identity The node identity.
+   * @param labels The node labels.
+   * @param properties The node properties.
+   * @param elementId The node element ID.
+   */
   constructor(
     identity: number,
     labels: string[],
@@ -570,16 +595,54 @@ export class Node {
   }
 }
 
+/**
+ * A relationship.
+ */
 export class Relationship {
+  /**
+   * Identity of relationship.
+   */
   identity: number;
+  /**
+   * Start node identity.
+   */
   start: number;
+  /**
+   * End node identity.
+   */
   end: number;
+  /**
+   * Relationship type.
+   */
   type: string;
+  /**
+   * Relationship properties.
+   */
   properties: Properties;
+  /**
+   * Relationship element ID.
+   */
   elementId: string;
+  /**
+   * Element ID of start node.
+   */
   startNodeElementId: string;
+  /**
+   * Element ID of end node.
+   */
   endNodeElementId: string;
 
+  /**
+   *
+   * @param identity Identity of relationship.
+   * @param start Start node identity.
+   * @param end End node identity.
+   * @param type Relationship type.
+   * @param properties Relationship properties.
+   * @param elementId Relationship element ID.
+   * @param startNodeElementId Element ID of start node.
+   * @param endNodeElementId Element ID of end node.
+   */
   constructor(
     identity: number,
     start: number,

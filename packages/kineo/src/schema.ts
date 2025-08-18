@@ -472,11 +472,29 @@ export function defineSchema<TSchema extends Schema>(def: TSchema): TSchema {
   return def;
 }
 
+/**
+ * A segment of a path.
+ */
 class PathSegment {
+  /**
+   * The start of the path segment.
+   */
   start: ModelNode;
+  /**
+   * The relationship this path segment is tied to,
+   */
   relationship: Relationship;
+  /**
+   * The end of the path segment.
+   */
   end: ModelNode;
 
+  /**
+   * Creates a new path segment.
+   * @param start The start of the path segment.
+   * @param rel The relationship this path segment is tied to.
+   * @param end The end of the path segment.
+   */
   constructor(start: ModelNode, rel: Relationship, end: ModelNode) {
     this.start = start;
     this.relationship = rel;
@@ -484,12 +502,33 @@ class PathSegment {
   }
 }
 
+/**
+ * A path.
+ */
 export class Path {
+  /**
+   * The start of the path.
+   */
   start: ModelNode;
+  /**
+   * The end of the path.
+   */
   end: ModelNode;
+  /**
+   * All path segments between the start and end.
+   */
   segments: PathSegment[];
+  /**
+   * Amount of path segments.
+   */
   length: number;
 
+  /**
+   * Creates a new path.
+   * @param start The start of the path.
+   * @param end The end of the path.
+   * @param segments Path segments.
+   */
   constructor(start: ModelNode, end: ModelNode, segments: PathSegment[]) {
     this.start = start;
     this.end = end;
@@ -498,12 +537,34 @@ export class Path {
   }
 }
 
+/**
+ * A point in space.
+ */
 export class Point {
+  /**
+   * Spatial Reference Identifier.
+   */
   srid: number;
+  /**
+   * The position on the X axis.
+   */
   x: number;
+  /**
+   * The position on the Y axis.
+   */
   y: number;
+  /**
+   * The position on the Z axis, if three dimensional.
+   */
   z?: number;
 
+  /**
+   * Creates a new point in space.
+   * @param srid Spatial Reference Identifier.
+   * @param x The position on the X axis.
+   * @param y The position on the Y axis.
+   * @param z The position on the Z axis, if three dimensional.
+   */
   constructor(srid: number, x: number, y: number, z?: number) {
     this.srid = srid;
     this.x = x;

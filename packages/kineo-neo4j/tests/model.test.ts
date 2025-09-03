@@ -18,7 +18,7 @@ describe("Model", () => {
   });
 
   test("matchOne: match user by name with nested where", async () => {
-    const user = await db.User.matchOne({
+    const user = await db.User.findOne({
       where: {
         name: {
           startsWith: "a",
@@ -44,7 +44,7 @@ describe("Model", () => {
   });
 
   test("mergeOne: merge user (create or update)", async () => {
-    const merged = await db.User.mergeOne({
+    const merged = await db.User.upsertOne({
       where: { name: "alice" },
       create: {
         name: "alice",

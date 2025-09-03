@@ -149,7 +149,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post
+      schema.Post,
     );
 
     expect(connect).toEqual({
@@ -179,7 +179,7 @@ describe("IR Parsers", () => {
         to: { name: "Alice" },
         relation: "author",
       },
-      schema.Post
+      schema.Post,
     );
 
     expect(disconnect.type).toBe("DISCONNECT");

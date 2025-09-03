@@ -83,6 +83,11 @@ export type Adapter = {
   >;
 
   /**
+   * Gets schema from database.
+   */
+  getSchema(): Promise<Schema>;
+
+  /**
    * Close the adapter.
    */
   close(): OptPromise<void>;
@@ -117,37 +122,76 @@ export type Adapter = {
   deploy(migrations: string[]): OptPromise<void>;
 };
 
-// tiny helpers to safely read values
+/**
+ * Checks if a value is a node.
+ * @param v The value to check.
+ * @returns `true` is the value is a node.
+ */
 export const isNode = (v: unknown): v is Node => v instanceof Node;
 
+/**
+ * Gets a scalar (primitive) node.
+ * @param rec The record to check against.
+ * @param key The key to get.
+ * @returns Undefined if the value is a node, otherwise a plain value if it exists.
+ */
 export const getScalar = <T extends Scalar>(
   rec: QueryRecord | undefined,
-  key: string | number
+  key: string | number,
 ): T | undefined => {
   const v = rec?.get?.(key);
   return isNode(v) ? undefined : (v as T | undefined);
 };
 
+/**
+ * Gets property from a node.
+ * @param rec The record to get from.
+ * @param idx The index to get.
+ * @param prop The property name.
+ * @returns The property or undefined if it doesn't exist.
+ */
 export const getNodeProp = <T>(
   rec: QueryRecord | undefined,
   idx: number | string,
-  prop: string
+  prop: string,
 ): T | undefined => {
   const v = rec?.get?.(idx);
   return isNode(v) ? (v.properties[prop] as T | undefined) : undefined;
 };
 
+/**
+ * A node. Could also represent a model.
+ */
 export class Node {
+  /**
+   * Node identity.
+   */
   identity: number | bigint;
+  /**
+   * Node labels.
+   */
   labels: string[];
+  /**
+   * Node properties.
+   */
   properties: Params;
+  /**
+   * Node element identifier.
+   */
   elementId: string;
 
+  /**
+   * Creates a new node.
+   * @param identity Node identity.
+   * @param labels Node labels.
+   * @param properties Node properties.
+   * @param elementId Node element ID.
+   */
   constructor(
     identity: number | bigint,
     labels: string[],
     properties: Params,
-    elementId: string
+    elementId: string,
   ) {
     this.identity = identity;
     this.labels = labels;

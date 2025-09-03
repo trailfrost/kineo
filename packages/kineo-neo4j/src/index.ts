@@ -1,4 +1,5 @@
 import type { Adapter } from "kineo/adapter";
+import type { Schema } from "kineo/schema";
 import type {
   Config,
   Driver,
@@ -82,12 +83,27 @@ function createDriver(config: AdapterConfig): Driver {
   return neo4j.driver(config.url, authToken, config);
 }
 
+/**
+ * Type for Kineo Neo4j adapter.
+ */
 export type Kineo4j = Adapter & {
   driver: Driver;
   session: Session;
   serverInfo?: ServerInfo;
 };
 
+/**
+ * Gets a schema from Neo4j.
+ */
+async function getSchema(): Promise<Schema> {
+  return {};
+}
+
+/**
+ * Creates a Neo4j adapter for Kineo.
+ * @param config The configuration for the adapter.
+ * @returns A Neo4j adapter.
+ */
 export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
   const driver = createDriver(config);
   const session = driver.session();
@@ -96,7 +112,22 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
     driver,
     session,
 
-    schemaIntrospection: [], // TODO
+    schemaIntrospection: [
+      "model_list",
+      "field_list",
+      "field_type",
+      "field_array",
+      "unique_constraints",
+      "indexes",
+      "index_details",
+      "relations",
+      "relation_properties",
+      "relation_multiplicity",
+      "functions",
+    ],
+    compile,
+
+    getSchema,
 
     async close() {
       await session.close();
@@ -110,23 +141,19 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
       };
     },
 
-    compile(ir) {
-      return compile(ir);
-    },
-
-    push() {
+    async push() {
       throw new Error("This adapter does not support pushing."); // TODO
     },
 
-    deploy() {
-      throw new Error("This adapter does not support deploying."); // TODO
+    async deploy() {
+      throw new Error("This adapter does not support deploying migrations."); // TODO
     },
 
-    migrate() {
+    async migrate() {
       throw new Error("This adapter does not support migrations."); // TODO
     },
 
-    pull() {
+    async pull() {
       throw new Error("This adapter does not support pulling."); // TODO
     },
   };

@@ -15,6 +15,6 @@ Kineo(
       password: "password",
     },
   }),
-  schema
+  schema,
 );
 ```

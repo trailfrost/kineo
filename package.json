@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "test": "vitest",
-    "format": "prettier .",
+    "format": "prettier --check .",
     "format!": "prettier --write .",
     "lint": "eslint .",
-    "check": "tsc --noEmit packages/*",
+    "lint!": "eslint --fix .",
+    "check": "tsc -b --noEmit packages/*",
     "build": "tsc -b packages/*",
-    "refresh": "pnpm build && pnpm install"
+    "refresh": "pnpm build && pnpm install",
+    "cloc": "cloc --exclude-dir=dist,node_modules packages/*"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

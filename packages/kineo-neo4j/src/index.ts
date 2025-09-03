@@ -75,7 +75,7 @@ function createDriver(config: AdapterConfig): Driver {
         config.auth.credentials,
         config.auth.realm,
         config.auth.scheme,
-        config.auth.parameters
+        config.auth.parameters,
       );
       break;
   }

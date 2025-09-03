@@ -2,7 +2,7 @@
 import process from "node:process";
 import { defineSchema, field, relation, model } from "kineo/schema";
 import Kineo from "kineo";
-import Neo4jAdapter from "../src";
+import Neo4jAdapter from "../../kineo-neo4j/src";
 
 export const schema = defineSchema({
   User: model({

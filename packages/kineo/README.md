@@ -4,7 +4,7 @@ Base package for Kineo. Contains API for adapters, model and schema creation and
 
 ```ts
 // This example uses the Neo4j adapter.
-import Neo4jAdapter from "kineo-neo4j";
+import Neo4jAdapter from "kineo/adapters/neo4j";
 import Kineo from "kineo";
 import {
   defineSchema,
@@ -38,6 +38,6 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema,
+  schema
 );
 ```

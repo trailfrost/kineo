@@ -1,6 +1,6 @@
 {
   "name": "kineo",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Declarative, TypeScript-first Object-Graph Mapper.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,6 +24,14 @@
     "./adapter": {
       "default": "./dist/adapter.js",
       "types": "./dist/adapter.d.ts"
+    },
+    "./adapters/neo4j": {
+      "default": "./dist/adapters/neo4j.js",
+      "types": "./dist/adapters/neo4j.d.ts"
+    },
+    "./compilers/cypher": {
+      "default": "./dist/compilers/cypher.js",
+      "types": "./dist/compilers/cypher.d.ts"
     }
   },
   "keywords": [
@@ -39,5 +47,8 @@
   ],
   "author": "trailfrost",
   "license": "MIT",
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.14.0",
+  "dependencies": {
+    "neo4j-driver": "^5.28.1"
+  }
 }

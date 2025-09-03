@@ -59,10 +59,10 @@ describe("Compiler", () => {
     const result = compile(ir);
     expect(result.command).toContain("MERGE (u:User { id: $u_id_0_0 })");
     expect(result.command).toContain(
-      "ON MATCH SET u.lastLogin = $u_update_lastLogin_0_0"
+      "ON MATCH SET u.lastLogin = $u_update_lastLogin_0_0",
     );
     expect(result.command).toContain(
-      "ON CREATE SET u.createdAt = $u_create_createdAt_0_0"
+      "ON CREATE SET u.createdAt = $u_create_createdAt_0_0",
     );
     expect(result.params).toMatchObject({
       u_id_0_0: "123",

@@ -1,6 +1,6 @@
-# Kineo Neo4j adapter
+# (Deprecated) Kineo Neo4j adapter
 
-Adapter for Neo4j for Kineo, allowing you to use Kineo as an OGM for Neo4j.
+Adapter for Neo4j for Kineo, allowing you to use Kineo as an OGM for Neo4j. This has been deprecated and moved into the main `kineo` package.
 
 ## Usage
 
@@ -15,6 +15,6 @@ Kineo(
       password: "password",
     },
   }),
-  schema,
+  schema
 );
 ```

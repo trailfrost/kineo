@@ -13,7 +13,7 @@ type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter> = {
  * Kineo Client, including all the models from a schema.
  */
 export type KineoClient<TSchema extends Schema, TAdapter extends Adapter> = {
-  adapter: Adapter;
+  adapter: TAdapter;
   close(): void | Promise<void>;
 } & ModelsForSchema<TSchema, TAdapter>;
 
@@ -32,7 +32,7 @@ export type InferClient<T> =
  */
 export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
   adapter: TAdapter,
-  schema: TSchema,
+  schema: TSchema
 ): KineoClient<TSchema, TAdapter> {
   const modelsForSchema = {} as ModelsForSchema<TSchema, TAdapter>;
   for (const label in schema) {
@@ -45,6 +45,6 @@ export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
       adapter,
       close: adapter.close,
     },
-    modelsForSchema,
+    modelsForSchema
   );
 }

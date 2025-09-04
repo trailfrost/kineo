@@ -51,38 +51,6 @@ export type OptPromise<T> = T | Promise<T>;
  */
 export type Adapter = {
   /**
-   * What types of schema introspection your database supports.
-   */
-  schemaIntrospection: Array<
-    | "model_list" // List all models (tables, node labels, collections)
-    | "system_model_list" // List of system/internal models to ignore
-    | "field_list" // List of fields/properties for a given model
-    | "field_type" // Field data type (including precision, scale)
-    | "field_nullability" // Whether field is nullable
-    | "field_default" // Default values (static or computed)
-    | "field_auto_increment" // Auto-increment / identity info
-    | "field_array" // Whether a field is an array/multi-valued
-    | "field_computed" // Computed/generated columns
-    | "field_collation" // Collation/charset info
-    | "field_check_constraints" // Check constraints (e.g., value ranges)
-    | "field_enum_values" // Enum allowed values
-    | "primary_key" // Primary key(s) for a model
-    | "unique_constraints" // Unique constraints on one or more fields
-    | "foreign_keys" // Foreign key constraints
-    | "foreign_key_actions" // FK update/delete actions (cascade, restrict, etc.)
-    | "indexes" // Index definitions (basic)
-    | "index_details" // Index details (order, partial, expressions)
-    | "relations" // Relationship definitions (graph DB: edge types)
-    | "relation_properties" // Properties/fields on relationships
-    | "relation_multiplicity" // Min/max cardinality if supported
-    | "triggers" // Trigger definitions
-    | "functions" // Functions/procedures tied to schema
-    | "materialized_views" // Materialized views
-    | "views" // Views
-    | "exclusion_constraints" // Exclusion constraints (Postgres, etc.)
-  >;
-
-  /**
    * Gets schema from database.
    */
   getSchema(): Promise<Schema>;
@@ -116,8 +84,9 @@ export type Adapter = {
    */
   status(
     migrations: string[],
-    hashes: string[]
+    hashes: string[],
   ): OptPromise<Array<"deployed" | "pending">>;
+
   /**
    * Deploys a series of migrations to the database.
    * @param migrations The migrations queries to deploy.
@@ -140,7 +109,7 @@ export const isNode = (v: unknown): v is Node => v instanceof Node;
  */
 export const getScalar = <T extends Scalar>(
   rec: QueryRecord | undefined,
-  key: string | number
+  key: string | number,
 ): T | undefined => {
   const v = rec?.get?.(key);
   return isNode(v) ? undefined : (v as T | undefined);
@@ -156,7 +125,7 @@ export const getScalar = <T extends Scalar>(
 export const getNodeProp = <T>(
   rec: QueryRecord | undefined,
   idx: number | string,
-  prop: string
+  prop: string,
 ): T | undefined => {
   const v = rec?.get?.(idx);
   return isNode(v) ? (v.properties[prop] as T | undefined) : undefined;
@@ -194,7 +163,7 @@ export class Node {
     identity: number | bigint,
     labels: string[],
     properties: Params,
-    elementId: string
+    elementId: string,
   ) {
     this.identity = identity;
     this.labels = labels;

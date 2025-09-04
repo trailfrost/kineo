@@ -33,7 +33,7 @@ export const client = Kineo(
       password: "password",
     },
   }),
-  schema
+  schema,
 );
 
 export { config };

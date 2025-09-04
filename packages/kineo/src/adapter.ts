@@ -1,84 +1,5 @@
 import type { IR } from "./ir";
-import type { Schema } from "./schema";
-
-/**
- * A diff between two schemas.
- *
- * This only describes the structure of a diff,
- * not the actual "before" and "after" values.
- */
-export type SchemaDiff = {
-  /** Added nodes keyed by name */
-  addedNodes?: Record<string, NodeDiff>;
-  /** Removed nodes keyed by name */
-  removedNodes?: Record<string, NodeDiff>;
-  /** Nodes that exist in both schemas but differ */
-  changedNodes?: Record<string, NodeChangeDiff>;
-};
-
-/**
- * A diff at the node level.
- */
-export type NodeDiff = {
-  /** Added fields */
-  addedFields?: Record<string, FieldDiff | RelationshipDiff>;
-  /** Removed fields */
-  removedFields?: Record<string, FieldDiff | RelationshipDiff>;
-  /** Changed fields */
-  changedFields?: Record<string, FieldChangeDiff | RelationshipChangeDiff>;
-};
-
-/**
- * A diff for a field.
- */
-export type FieldDiff = {
-  kind: "FIELD";
-};
-
-/**
- * A diff for a relationship.
- */
-export type RelationshipDiff = {
-  kind: "RELATIONSHIP";
-};
-
-/**
- * A diff representing changes in an existing field.
- */
-export type FieldChangeDiff = {
-  kind: "FIELD";
-  /** Flags for what aspect of the field changed */
-  typeChanged?: true;
-  requiredChanged?: true;
-  arrayChanged?: true;
-  idChanged?: true;
-  uniqueChanged?: true;
-  defaultChanged?: true;
-};
-
-/**
- * A diff representing changes in an existing relationship.
- */
-export type RelationshipChangeDiff = {
-  kind: "RELATIONSHIP";
-  /** Flags for what aspect of the relationship changed */
-  toChanged?: true;
-  labelChanged?: true;
-  directionChanged?: true;
-  requiredChanged?: true;
-  arrayChanged?: true;
-  defaultChanged?: true;
-  metadataChanged?: true;
-};
-
-/**
- * A diff for a node that existed in both schemas
- * but has internal changes.
- */
-export type NodeChangeDiff = NodeDiff & {
-  /** Node name that changed */
-  name: string;
-};
+import type { Schema, SchemaDiff } from "./schema";
 
 /**
  * Parameters. Used for passing parameters into queries.
@@ -185,20 +106,23 @@ export type Adapter = {
   /**
    * Pushes a schema to the database. You don't need to warn the user, Kineo already does that for you.
    */
-  push(): OptPromise<void>;
+  push(schema: Schema): OptPromise<void>;
   /**
    * Generates migrations for the database.
    */
-  migrate(): OptPromise<string[]>;
+  migrate(diff: SchemaDiff): OptPromise<string[]>;
   /**
    * Gets the status for all migrations.
    */
-  status(migrations: string[]): OptPromise<Array<"deployed" | "pending">>;
+  status(
+    migrations: string[],
+    hashes: string[]
+  ): OptPromise<Array<"deployed" | "pending">>;
   /**
    * Deploys a series of migrations to the database.
    * @param migrations The migrations queries to deploy.
    */
-  deploy(migrations: string[]): OptPromise<void>;
+  deploy(migration: string, hash: string): OptPromise<void>;
 };
 
 /**

@@ -144,7 +144,7 @@ export default defineConfig({
       }
 
       const { client, schema } = await importFiles();
-      await kineokit.push(client, schema);
+      await kineokit.push(client.adapter, schema);
 
       console.log("[info] Database schema pushed!");
     });
@@ -162,8 +162,8 @@ export default defineConfig({
 
       const { client, schema } = await importFiles();
 
-      const schemaDiff = await kineokit.schemaDiff(client, schema);
-      const migrations = await kineokit.migrate(client, schemaDiff);
+      const schemaDiff = await kineokit.schemaDiff(client.adapter, schema);
+      const migrations = await kineokit.migrate(client.adapter, schemaDiff);
 
       for (const migration of migrations) {
         await fs.writeFile(`${Date.now()}.kn`, migration, "utf-8");
@@ -199,7 +199,12 @@ export default defineConfig({
         crypto.hash("sha256", migration, "hex")
       );
 
-      const statuses = await kineokit.status(migrations, hashes);
+      const { client } = await importFiles();
+      const statuses = await kineokit.status(
+        client.adapter,
+        migrations,
+        hashes
+      );
       for (const index in statuses) {
         console.log(`${files[index]}: ${statuses[index]}`);
       }
@@ -232,10 +237,19 @@ export default defineConfig({
         crypto.hash("sha256", migration, "hex")
       );
 
-      const statuses = await kineokit.status(migrations, hashes);
+      const { client } = await importFiles();
+      const statuses = await kineokit.status(
+        client.adapter,
+        migrations,
+        hashes
+      );
       for (const index in statuses) {
         if (statuses[index] !== "deployed") {
-          await kineokit.deploy(migrations[index], hashes[index]);
+          await kineokit.deploy(
+            client.adapter,
+            migrations[index],
+            hashes[index]
+          );
           console.log(`[info] Deployed migration ${files[index]}!`);
         }
       }

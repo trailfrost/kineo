@@ -53,7 +53,7 @@ export type Adapter = {
   /**
    * Gets schema from database.
    */
-  getSchema(): Promise<Schema>;
+  getSchema(): OptPromise<Schema>;
 
   /**
    * Close the adapter.

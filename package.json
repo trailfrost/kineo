@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "lint!": "eslint --fix .",
     "check": "tsc -b --noEmit packages/*",
-    "build": "tsc -b packages/*",
+    "build": "rimraf packages/*/dist && tsc -b packages/*",
     "refresh": "pnpm build && pnpm install",
     "cloc": "cloc --exclude-dir=dist,node_modules packages/*"
   },
@@ -19,6 +19,7 @@
     "globals": "^16.3.0",
     "jiti": "^2.5.1",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.39.0",
     "vitest": "^3.2.4"

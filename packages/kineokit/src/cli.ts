@@ -16,6 +16,9 @@ const jiti = createJiti(cwd);
 
 let config: kineokit.Config | undefined;
 
+/**
+ * Runs the CLI.
+ */
 async function main() {
   const possibleFiles = [
     "kineo.config.ts",
@@ -33,7 +36,7 @@ async function main() {
       const module = (await jiti.import(fullPath, { default: true })) as object;
       if (!module) {
         console.warn(
-          `[warning] It seems like the default export is \`undefined\` in ${file}. Ignoring.`
+          `[warning] It seems like the default export is \`undefined\` in ${file}. Ignoring.`,
         );
         continue;
       }
@@ -99,7 +102,7 @@ async function main() {
       ]);
 
       const packageJson = JSON.parse(
-        await fs.readFile(path.join(cwd, "package.json"), "utf-8")
+        await fs.readFile(path.join(cwd, "package.json"), "utf-8"),
       );
       const isModule = "type" in packageJson && packageJson.type === "module";
 
@@ -124,7 +127,7 @@ export default defineConfig({
   clientExport: ${JSON.stringify(results.clientExport)},
   migrationsDir: ${JSON.stringify(results.migrationsDir)},
 });
-`
+`,
       );
 
       console.log(`[info] Successfully created \`${file}\`!`);
@@ -133,18 +136,18 @@ export default defineConfig({
   program
     .command("push")
     .description(
-      "Pushes schema to database, skipping migrations. Warns you for possible breaking changes."
+      "Pushes schema to database, skipping migrations. Warns you for possible breaking changes.",
     )
     .action(async () => {
       if (!config) {
         console.error(
-          "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
+          "[fatal] This command requires a configuration file. Run `kineokit init` to create one.",
         );
         return;
       }
 
       const { client, schema } = await importFiles();
-      await kineokit.push(client.adapter, schema);
+      await kineokit.push(client.adapter, schema, true);
 
       console.log("[info] Database schema pushed!");
     });
@@ -155,14 +158,14 @@ export default defineConfig({
     .action(async () => {
       if (!config) {
         console.error(
-          "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
+          "[fatal] This command requires a configuration file. Run `kineokit init` to create one.",
         );
         return;
       }
 
       const { client, schema } = await importFiles();
 
-      const schemaDiff = await kineokit.schemaDiff(client.adapter, schema);
+      const schemaDiff = await kineokit.diff(client.adapter, schema);
       const migrations = await kineokit.migrate(client.adapter, schemaDiff);
 
       for (const migration of migrations) {
@@ -178,7 +181,7 @@ export default defineConfig({
     .action(async () => {
       if (!config) {
         console.error(
-          "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
+          "[fatal] This command requires a configuration file. Run `kineokit init` to create one.",
         );
         return;
       }
@@ -191,19 +194,19 @@ export default defineConfig({
           async (migrations) =>
             await fs.readFile(
               path.join(migrations.parentPath, migrations.name),
-              "utf-8"
-            )
-        )
+              "utf-8",
+            ),
+        ),
       );
       const hashes = migrations.map((migration) =>
-        crypto.hash("sha256", migration, "hex")
+        crypto.hash("sha256", migration, "hex"),
       );
 
       const { client } = await importFiles();
       const statuses = await kineokit.status(
         client.adapter,
         migrations,
-        hashes
+        hashes,
       );
       for (const index in statuses) {
         console.log(`${files[index]}: ${statuses[index]}`);
@@ -216,7 +219,7 @@ export default defineConfig({
     .action(async () => {
       if (!config) {
         console.error(
-          "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
+          "[fatal] This command requires a configuration file. Run `kineokit init` to create one.",
         );
         return;
       }
@@ -229,26 +232,26 @@ export default defineConfig({
           async (migrations) =>
             await fs.readFile(
               path.join(migrations.parentPath, migrations.name),
-              "utf-8"
-            )
-        )
+              "utf-8",
+            ),
+        ),
       );
       const hashes = migrations.map((migration) =>
-        crypto.hash("sha256", migration, "hex")
+        crypto.hash("sha256", migration, "hex"),
       );
 
       const { client } = await importFiles();
       const statuses = await kineokit.status(
         client.adapter,
         migrations,
-        hashes
+        hashes,
       );
       for (const index in statuses) {
         if (statuses[index] !== "deployed") {
           await kineokit.deploy(
             client.adapter,
             migrations[index],
-            hashes[index]
+            hashes[index],
           );
           console.log(`[info] Deployed migration ${files[index]}!`);
         }
@@ -258,6 +261,10 @@ export default defineConfig({
   await program.parseAsync();
 }
 
+/**
+ * Imports the client and schema.
+ * @returns The schema and client exports.
+ */
 async function importFiles() {
   if (config?.schemaFile === config?.clientFile) {
     const module = (await jiti.import(config!.clientFile)) as Record<

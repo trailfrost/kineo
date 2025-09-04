@@ -6,27 +6,86 @@ import type {
   SchemaDiff,
   Schema,
 } from "kineo/schema";
+import inquirer from "inquirer";
 import { FieldDef, RelationshipDef } from "kineo/schema";
 
+/**
+ * KineoKit configuration.
+ */
 export interface Config {
+  /**
+   * The location of your schema.
+   */
   schemaFile: string;
+  /**
+   * The export name of your schema.
+   */
   schemaExport: string;
+  /**
+   * The location of your client.
+   */
   clientFile: string;
+  /**
+   * The export name of your client.
+   */
   clientExport: string;
+  /**
+   * Where migrations should be stored.
+   */
   migrationsDir: string;
 }
 
+/**
+ * Adds typing to your configuration.
+ * @param config Configuration.
+ * @returns The same configuration.
+ */
 export function defineConfig(config: Config): Config {
   return config;
 }
 
-export async function push(adapter: Adapter, schema: Schema) {
+/**
+ * Pushes the current schema to your database driver.
+ * @param adapter The adapter/driver to push to.
+ * @param schema The new schema.
+ */
+export async function push(
+  adapter: Adapter,
+  schema: Schema,
+  warnForBreaking = false,
+) {
+  const changes = await diff(adapter, schema);
+  if (changes.severity === "breaking" && warnForBreaking) {
+    console.warn(
+      "[IMPORTANT WARNING] There are breaking changes between the current schema and the previous schema. This may cause data loss and/or unexpected errors.",
+    );
+    const { proceed } = await inquirer.prompt([
+      {
+        name: "proceed",
+        type: "confirm",
+        default: false,
+        message: "Do you want to continue?",
+      },
+    ]);
+
+    if (!proceed) {
+      console.log("[info] Cancelled.");
+      return;
+    }
+  }
+
   return await adapter.push(schema);
 }
 
-export async function schemaDiff(
+/**
+ * Gets differences and breaking changes for a schema.
+ * @param adapter The adapter to get the current schema from.
+ * @param prev The previous schema.
+ * @returns The difference between the two schemas, warning from breaking changes.
+ */
+export async function diff(
   adapter: Adapter,
-  prev: Schema
+  prev: Schema,
 ): Promise<SchemaDiff> {
   const current = await adapter.getSchema();
   const nodeDiffs: NodeDiff[] = [];
@@ -156,7 +215,7 @@ export async function schemaDiff(
 
     if (fieldDiffs.length > 0 || relationshipDiffs.length > 0) {
       const severity = [...fieldDiffs, ...relationshipDiffs].some(
-        (d) => d.severity === "breaking"
+        (d) => d.severity === "breaking",
       )
         ? "breaking"
         : "non-breaking";
@@ -193,25 +252,44 @@ export async function schemaDiff(
   };
 }
 
+/**
+ * Generates migrations.
+ * @param adapter The adapter to generate migrations from.
+ * @param diff The difference between the database schema and the current schema.
+ * @returns The generated migrations.
+ */
 export async function migrate(
   adapter: Adapter,
-  diff: SchemaDiff
+  diff: SchemaDiff,
 ): Promise<string[]> {
   return await adapter.migrate(diff);
 }
 
+/**
+ * Gets migration statuses.
+ * @param adapter The adapter to get statuses from.
+ * @param migrations The migrations to check.
+ * @param hashes The SHA-256 hashes of the migrations.
+ * @returns The migration statuses.
+ */
 export async function status(
   adapter: Adapter,
   migrations: string[],
-  hashes: string[]
+  hashes: string[],
 ): Promise<Array<"pending" | "deployed">> {
   return await adapter.status(migrations, hashes);
 }
 
+/**
+ * Deploys a migration.
+ * @param adapter The adapter to apply to.
+ * @param migration The migration to apply.
+ * @param hash The hash of the migration to apply.
+ */
 export async function deploy(
   adapter: Adapter,
   migration: string,
-  hash: string
+  hash: string,
 ) {
   return await adapter.deploy(migration, hash);
 }

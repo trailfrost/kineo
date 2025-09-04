@@ -1,16 +1,20 @@
 import path from "node:path";
 import process from "node:process";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import inquirer from "inquirer";
 import { existsSync } from "node:fs";
 import { Command } from "commander";
 import { createJiti } from "jiti";
-import type { Config } from "./index.js";
+import type { Schema } from "kineo/schema";
+import type { Adapter } from "kineo/adapter";
+import type { KineoClient } from "kineo";
+import * as kineokit from "./index.js";
 
 const cwd = process.cwd();
 const jiti = createJiti(cwd);
 
-let config: Config | undefined;
+let config: kineokit.Config | undefined;
 
 async function main() {
   const possibleFiles = [
@@ -33,8 +37,8 @@ async function main() {
         );
         continue;
       }
-      if ("config" in module) config = module.config as Config;
-      else config = module as Config;
+      if ("config" in module) config = module.config as kineokit.Config;
+      else config = module as kineokit.Config;
     } catch (err) {
       console.warn(`[warning] Could not import ${file}: ${err}`);
     }
@@ -131,69 +135,141 @@ export default defineConfig({
     .description(
       "Pushes schema to database, skipping migrations. Warns you for possible breaking changes."
     )
-    .action(() => {
+    .action(async () => {
       if (!config) {
         console.error(
           "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
         );
         return;
       }
-      throw new Error("Not Implemented"); // TODO
-    });
 
-  program
-    .command("pull")
-    .description("Pulls schema from database.")
-    .action(() => {
-      if (!config) {
-        console.error(
-          "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
-        );
-        return;
-      }
-      throw new Error("Not Implemented"); // TODO
+      const { client, schema } = await importFiles();
+      await kineokit.push(client, schema);
+
+      console.log("[info] Database schema pushed!");
     });
 
   program
     .command("migrate")
     .description("Generates migration files.")
-    .action(() => {
+    .action(async () => {
       if (!config) {
         console.error(
           "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
         );
         return;
       }
-      throw new Error("Not Implemented"); // TODO
+
+      const { client, schema } = await importFiles();
+
+      const schemaDiff = await kineokit.schemaDiff(client, schema);
+      const migrations = await kineokit.migrate(client, schemaDiff);
+
+      for (const migration of migrations) {
+        await fs.writeFile(`${Date.now()}.kn`, migration, "utf-8");
+      }
+
+      console.log("[info] Migrations generated!");
     });
 
   program
     .command("status")
     .description("Gets status for the migration files, if they exist.")
-    .action(() => {
+    .action(async () => {
       if (!config) {
         console.error(
           "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
         );
         return;
       }
-      throw new Error("Not Implemented"); // TODO
+
+      const files = await fs.readdir(config.migrationsDir, {
+        withFileTypes: true,
+      });
+      const migrations = await Promise.all(
+        files.map(
+          async (migrations) =>
+            await fs.readFile(
+              path.join(migrations.parentPath, migrations.name),
+              "utf-8"
+            )
+        )
+      );
+      const hashes = migrations.map((migration) =>
+        crypto.hash("sha256", migration, "hex")
+      );
+
+      const statuses = await kineokit.status(migrations, hashes);
+      for (const index in statuses) {
+        console.log(`${files[index]}: ${statuses[index]}`);
+      }
     });
 
   program
     .command("deploy")
     .description("Sends migrations to database.")
-    .action(() => {
+    .action(async () => {
       if (!config) {
         console.error(
           "[fatal] This command requires a configuration file. Run `kineokit init` to create one."
         );
         return;
       }
-      throw new Error("Not Implemented"); // TODO
+
+      const files = await fs.readdir(config.migrationsDir, {
+        withFileTypes: true,
+      });
+      const migrations = await Promise.all(
+        files.map(
+          async (migrations) =>
+            await fs.readFile(
+              path.join(migrations.parentPath, migrations.name),
+              "utf-8"
+            )
+        )
+      );
+      const hashes = migrations.map((migration) =>
+        crypto.hash("sha256", migration, "hex")
+      );
+
+      const statuses = await kineokit.status(migrations, hashes);
+      for (const index in statuses) {
+        if (statuses[index] !== "deployed") {
+          await kineokit.deploy(migrations[index], hashes[index]);
+          console.log(`[info] Deployed migration ${files[index]}!`);
+        }
+      }
     });
 
   await program.parseAsync();
+}
+
+async function importFiles() {
+  if (config?.schemaFile === config?.clientFile) {
+    const module = (await jiti.import(config!.clientFile)) as Record<
+      string,
+      unknown
+    >;
+    const schema = module[config!.schemaExport] as Schema;
+    return {
+      schema,
+      client: module[config!.clientExport] as KineoClient<Schema, Adapter>,
+    };
+  } else {
+    const schemaModule = (await jiti.import(config!.schemaFile)) as Record<
+      string,
+      Schema
+    >;
+    const clientModule = (await jiti.import(config!.clientFile)) as Record<
+      string,
+      KineoClient<Schema, Adapter>
+    >;
+
+    return {
+      schema: schemaModule[config!.schemaExport],
+      client: clientModule[config!.clientExport],
+    };
+  }
 }
 
 main();

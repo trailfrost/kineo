@@ -137,6 +137,133 @@ export type InferSchema<T extends Schema> = {
 };
 
 /**
+ * Whether a change is breaking or not.
+ */
+export type ChangeSeverity = "breaking" | "non-breaking";
+
+/**
+ * Base type for all diff entries.
+ */
+export interface DiffBase {
+  kind: string;
+  severity: ChangeSeverity;
+  message: string; // human-readable summary
+}
+
+/**
+ * Field-level changes.
+ */
+export type FieldDiff =
+  | {
+      kind: "field.added";
+      severity: "non-breaking";
+      // eslint-disable-next-line
+      field: FieldDef<KineoType, any, any, any>;
+    }
+  | {
+      kind: "field.removed";
+      severity: "breaking";
+      // eslint-disable-next-line
+      field: FieldDef<KineoType, any, any, any>;
+    }
+  | {
+      kind: "field.changedType";
+      severity: "breaking";
+      // eslint-disable-next-line
+      from: FieldDef<KineoType, any, any, any>;
+      // eslint-disable-next-line
+      to: FieldDef<KineoType, any, any, any>;
+    }
+  | {
+      kind: "field.changedRequired";
+      severity: "breaking" | "non-breaking"; // required->optional = non-breaking, optional->required = breaking
+      // eslint-disable-next-line
+      from: FieldDef<KineoType, any, any, any>;
+      // eslint-disable-next-line
+      to: FieldDef<KineoType, any, any, any>;
+    }
+  | {
+      kind: "field.changedArray";
+      severity: "breaking";
+      // eslint-disable-next-line
+      from: FieldDef<KineoType, any, any, any>;
+      // eslint-disable-next-line
+      to: FieldDef<KineoType, any, any, any>;
+    };
+
+/**
+ * Relationship-level changes.
+ */
+export type RelationshipDiff =
+  | {
+      kind: "relationship.added";
+      severity: "non-breaking";
+      // eslint-disable-next-line
+      relationship: RelationshipDef<string, any, any, any>;
+    }
+  | {
+      kind: "relationship.removed";
+      severity: "breaking";
+      // eslint-disable-next-line
+      relationship: RelationshipDef<string, any, any, any>;
+    }
+  | {
+      kind: "relationship.changedDirection";
+      severity: "breaking";
+      // eslint-disable-next-line
+      from: RelationshipDef<string, any, any, any>;
+      // eslint-disable-next-line
+      to: RelationshipDef<string, any, any, any>;
+    }
+  | {
+      kind: "relationship.changedRequired";
+      severity: "breaking" | "non-breaking";
+      // eslint-disable-next-line
+      from: RelationshipDef<string, any, any, any>;
+      // eslint-disable-next-line
+      to: RelationshipDef<string, any, any, any>;
+    }
+  | {
+      kind: "relationship.changedArray";
+      severity: "breaking";
+      // eslint-disable-next-line
+      from: RelationshipDef<string, any, any, any>;
+      // eslint-disable-next-line
+      to: RelationshipDef<string, any, any, any>;
+    };
+
+/**
+ * Node-level changes (container for field + relationship diffs).
+ */
+export type NodeDiff =
+  | {
+      kind: "node.added";
+      severity: "non-breaking";
+      node: Node;
+    }
+  | {
+      kind: "node.removed";
+      severity: "breaking";
+      node: Node;
+    }
+  | {
+      kind: "node.changed";
+      severity: "breaking" | "non-breaking";
+      nodeName: string;
+      fieldDiffs: FieldDiff[];
+      relationshipDiffs: RelationshipDiff[];
+    };
+
+/**
+ * Schema-level diff (root).
+ */
+export interface SchemaDiff {
+  kind: "schema.diff";
+  severity: "breaking" | "non-breaking";
+  nodeDiffs: NodeDiff[];
+}
+
+/**
  * Field definition.
  */
 export class FieldDef<

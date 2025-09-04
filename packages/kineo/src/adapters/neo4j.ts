@@ -75,7 +75,7 @@ function createDriver(config: AdapterConfig): Driver {
         config.auth.credentials,
         config.auth.realm,
         config.auth.scheme,
-        config.auth.parameters,
+        config.auth.parameters
       );
       break;
   }
@@ -89,7 +89,6 @@ function createDriver(config: AdapterConfig): Driver {
 export type Kineo4j = Adapter & {
   driver: Driver;
   session: Session;
-  serverInfo?: ServerInfo;
 };
 
 /**
@@ -141,24 +140,20 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
       };
     },
 
-    async push() {
+    async push(schema) {
       throw new Error("This adapter does not support pushing."); // TODO
     },
 
-    async status(migrations) {
+    async status(migrations, hashes) {
       throw new Error("This adapter does not support migrations."); // TODO
     },
 
-    async deploy() {
+    async deploy(migration, hash) {
       throw new Error("This adapter does not support migrations."); // TODO
     },
 
-    async migrate() {
+    async migrate(diff) {
       throw new Error("This adapter does not support migrations."); // TODO
-    },
-
-    async pull() {
-      throw new Error("This adapter does not support pulling."); // TODO
     },
   };
 }

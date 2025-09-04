@@ -2,7 +2,7 @@
 import process from "node:process";
 import { defineSchema, field, relation, model } from "kineo/schema";
 import Kineo from "kineo";
-import Neo4jAdapter from "../../kineo-neo4j/src";
+import Neo4jAdapter from "../src/adapters/neo4j";
 
 export const schema = defineSchema({
   User: model({
@@ -26,7 +26,7 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema,
+  schema
 );
 
 await db.adapter.run(
@@ -34,7 +34,7 @@ await db.adapter.run(
   MATCH (n)
   DETACH DELETE n
   `,
-  {},
+  {}
 );
 
 process.on("exit", db.close);

@@ -38,7 +38,11 @@
     "object-graph-mapper",
     "ogm",
     "graph-database",
-    "graph-db"
+    "graph-db",
+    "object-relation-mapper",
+    "orm",
+    "sql-database",
+    "sql-db"
   ],
   "files": [
     "dist",

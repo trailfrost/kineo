@@ -36,7 +36,7 @@ export const db = Kineo(
       username: "neo4j",
       password: "password",
     },
-  })
+  }),
   schema,
 );
 

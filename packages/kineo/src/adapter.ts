@@ -116,6 +116,10 @@ export type Adapter = {
    */
   migrate(): OptPromise<string[]>;
   /**
+   * Gets the status for all migrations.
+   */
+  status(migrations: string[]): OptPromise<Array<"deployed" | "pending">>;
+  /**
    * Deploys a series of migrations to the database.
    * @param migrations The migrations queries to deploy.
    */
@@ -137,7 +141,7 @@ export const isNode = (v: unknown): v is Node => v instanceof Node;
  */
 export const getScalar = <T extends Scalar>(
   rec: QueryRecord | undefined,
-  key: string | number,
+  key: string | number
 ): T | undefined => {
   const v = rec?.get?.(key);
   return isNode(v) ? undefined : (v as T | undefined);
@@ -153,7 +157,7 @@ export const getScalar = <T extends Scalar>(
 export const getNodeProp = <T>(
   rec: QueryRecord | undefined,
   idx: number | string,
-  prop: string,
+  prop: string
 ): T | undefined => {
   const v = rec?.get?.(idx);
   return isNode(v) ? (v.properties[prop] as T | undefined) : undefined;
@@ -191,7 +195,7 @@ export class Node {
     identity: number | bigint,
     labels: string[],
     properties: Params,
-    elementId: string,
+    elementId: string
   ) {
     this.identity = identity;
     this.labels = labels;

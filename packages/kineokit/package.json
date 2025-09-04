@@ -1,0 +1,42 @@
+{
+  "name": "kineokit",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Migration and schema manager for Kineo.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": "./dist/cli.js",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "default": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    }
+  },
+  "scripts": {
+    "start": "jiti src/cli.ts"
+  },
+  "keywords": [
+    "cli",
+    "object-relation-mapper",
+    "orm",
+    "object-graph-mapper",
+    "ogm"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.15.0",
+  "dependencies": {
+    "commander": "^14.0.0",
+    "inquirer": "^12.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  },
+  "peerDependencies": {
+    "kineo": "workspace:kineo"
+  }
+}

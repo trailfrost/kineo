@@ -1,6 +1,6 @@
 # Kineo
 
-Base package for Kineo. Contains API for adapters, model and schema creation and intermediate representation.
+An Object-Relation Mapper/Object-Graph Mapper for TypeScript.
 
 ```ts
 // This example uses the Neo4j adapter.
@@ -38,6 +38,15 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema,
+  schema
 );
+```
+
+## Installation
+
+```sh
+npm install kineo # OR
+pnpm add kineo    # OR
+bun add kineo     # OR
+yarn add kineo    # OR
 ```

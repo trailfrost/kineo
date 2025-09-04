@@ -1,11 +1,16 @@
 {
   "name": "kineokit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Migration and schema manager for Kineo.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": "./dist/cli.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "default": "./dist/index.js",

@@ -2,46 +2,109 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Getting started
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Kineo is a pluggable library for TypeScript that allows you to talk to SQL and NoSQL relational databases. This page will walk you through setting it up in your project.
 
-## Getting Started
+## Installation
 
-Get started by **creating a new site**.
+You must have Node.js >= 12.17.1 installed.
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+Then, you can install Kineo through a package manager:
 
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
+```sh
+npm install kineo        # OR
+pnpm add kineo           # OR
+yarn add kineo           # OR
+bun add kineo
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+If you also want to install KineoKit (the migration manager), you can follow [this guide](/docs/kit) to get started.
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+## Usage
 
-## Start your site
+Create a schema, anywhere on your project. We will use `src/db.ts` here. You can use the `defineSchema`, `model`, `field` and `relation` helpers from `kineo/schema` to define a schema, and the `InferSchema` helper to get types out of your schema.
 
-Run the development server:
+```ts
+import {
+  defineSchema,
+  model,
+  field,
+  relation,
+  type InferSchema,
+} from "kineo/schema";
 
-```bash
-cd my-website
-npm run start
+export const schema = defineSchema({
+  // ...
+});
+
+export type Schema = InferSchema<typeof schema>;
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+Then, create models inside of your schema, using the `model`, `field` and `relation` helpers:
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+```ts
+defineSchema({
+  users: model({
+    name: field.string().id(),
+    password: field.string(),
+    posts: relation.to("posts").array().outgoing("HAS_POSTS").default([]),
+  }),
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+  posts: model({
+    id: field.string().id(),
+    title: field.string(),
+    content: field.string(),
+    author: relation.to("users").incoming("HAS_POSTS").required(),
+  }),
+});
+```
+
+Then, create your database client. You need an adapter for this. Kineo is an early-stage library, and only has an adapter and compiler for Neo4j at the moment. We're working on adapters for popular SQL and graph databases.
+
+> Here are the states of the adapters we plan on implementing:
+>
+> - [x] Neo4j: Completed
+> - [ ] PostgreSQL: Not completed
+> - [ ] MySQL: Not completed
+> - [ ] SQL Server: Not completed
+> - [ ] SQLite: Not completed
+
+To create a client, you can use the `Kineo` factory function from `kineo`.
+
+```ts
+import Kineo from "kineo";
+
+// ...
+
+export const client = Kineo(adapter, schema);
+```
+
+The adapter can come from Kineo itself (`kineo/adapters/*`) or from another npm package. Adapters are just functions, and each adapter takes different parameters.
+
+Then, you can start using it. You pass query options to your models, like this:
+
+```ts
+import { client } from "@/db";
+
+const user = await client.users.findOne({
+  where: {
+    name: {
+      startsWith: "alice",
+    },
+  },
+  select: {
+    name: true,
+    password: true,
+    posts: {
+      id: true,
+      title: true,
+      description: true,
+    },
+  },
+});
+
+console.log(user); // -> { name: "alice44", password: "correct horse battery staple", posts: [] }
+```
+
+And that's it! Kineo is now set up and ready to go, in your code.

@@ -5,8 +5,8 @@ import type * as Preset from "@docusaurus/preset-classic";
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: "My Site",
-  tagline: "Dinosaurs are cool",
+  title: "Kineo",
+  tagline: "Kineo is an ORM/OGM for TypeScript.",
   favicon: "img/favicon.ico",
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: "https://your-docusaurus-site.example.com",
+  url: "https://kineo.trailfrost.com/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "facebook", // Usually your GitHub org/user name.
-  projectName: "docusaurus", // Usually your repo name.
+  organizationName: "trailfrost", // Usually your GitHub org/user name.
+  projectName: "kinep", // Usually your repo name.
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -42,10 +42,7 @@ const config: Config = {
       {
         docs: {
           sidebarPath: "./sidebars.ts",
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+          editUrl: "https://github.com/trailfrost/kineo/edit/docs",
         },
         blog: {
           showReadingTime: true,
@@ -53,10 +50,7 @@ const config: Config = {
             type: ["rss", "atom"],
             xslt: true,
           },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/",
+          editUrl: "https://github.com/trailfrost/kineo/edit/docs",
           // Useful options to enforce blogging best practices
           onInlineTags: "warn",
           onInlineAuthors: "warn",
@@ -73,9 +67,9 @@ const config: Config = {
     // Replace with your project's social card
     image: "img/docusaurus-social-card.jpg",
     navbar: {
-      title: "My Site",
+      title: "Kineo",
       logo: {
-        alt: "My Site Logo",
+        alt: "Kineo Logo",
         src: "img/logo.svg",
       },
       items: [
@@ -83,11 +77,11 @@ const config: Config = {
           type: "docSidebar",
           sidebarId: "tutorialSidebar",
           position: "left",
-          label: "Tutorial",
+          label: "Documentation",
         },
         { to: "/blog", label: "Blog", position: "left" },
         {
-          href: "https://github.com/facebook/docusaurus",
+          href: "https://github.com/trailfrost/kineo",
           label: "GitHub",
           position: "right",
         },
@@ -97,28 +91,28 @@ const config: Config = {
       style: "dark",
       links: [
         {
-          title: "Docs",
+          title: "Guides",
           items: [
             {
-              label: "Tutorial",
+              label: "Introduction",
               to: "/docs/intro",
             },
           ],
         },
         {
-          title: "Community",
+          title: "API Reference",
           items: [
             {
-              label: "Stack Overflow",
-              href: "https://stackoverflow.com/questions/tagged/docusaurus",
+              label: "Adapter API",
+              to: "/docs/ref/adapter",
             },
             {
-              label: "Discord",
-              href: "https://discordapp.com/invite/docusaurus",
+              label: "Compiler API",
+              to: "/docs/ref/compiler",
             },
             {
-              label: "X",
-              href: "https://x.com/docusaurus",
+              label: "SQL Preset API",
+              to: "/docs/ref/compiler/sql",
             },
           ],
         },
@@ -131,12 +125,12 @@ const config: Config = {
             },
             {
               label: "GitHub",
-              href: "https://github.com/facebook/docusaurus",
+              href: "https://github.com/trailfrost/kineo",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © 2025-${new Date().getFullYear()} trailfrost. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

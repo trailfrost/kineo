@@ -19,28 +19,58 @@ const FeatureList: FeatureItem[] = [
     Svg: docusaurusMountain,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Kineo was designed to be familiar for TypeScript developers. Pass
+        objects in, get objects out.
       </>
     ),
   },
   {
-    title: "Focus on What Matters",
+    title: "Pure TypeScript",
     Svg: docusaurusTree,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Kineo defines everything in TypeScript &mdash; from schema, to client
+        definition, to queries.
       </>
     ),
   },
   {
-    title: "Powered by React",
+    title: "Graph Database Compatible",
     Svg: docusaurusReact,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Kineo was built to work with graph databases, having utility methods for
+        them.
+      </>
+    ),
+  },
+  {
+    title: "Pluggable",
+    Svg: docusaurusMountain,
+    description: (
+      <>
+        Kineo can be extended to talk to any database you want &mdash; with
+        official adapters for various databases.
+      </>
+    ),
+  },
+  {
+    title: "Fast",
+    Svg: docusaurusTree,
+    description: (
+      <>
+        The only thing that bottlenecks speed in Kineo is the database latency
+        itself.
+      </>
+    ),
+  },
+  {
+    title: "Mostly Edge-Compatible",
+    Svg: docusaurusReact,
+    description: (
+      <>
+        Most, but not all built-in Kineo adapters are edge-compatible. It
+        depends on the database driver used.
       </>
     ),
   },

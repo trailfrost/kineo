@@ -26,7 +26,7 @@ Run the installation command above. It will ask you a few questions, install the
 ```ts
 import { defineConfig } from "kineokit";
 
-// https://kineo.trailfrost.com/docs/ref/config
+// https://kineo.trailfrost.com/docs/api/config
 export default defineConfig({
   // ...
 });

@@ -1,5 +1,5 @@
+import type { Compiler } from "../adapter";
 import type {
-  IR,
   IRConnect,
   IRDelete,
   IRCreate,
@@ -19,7 +19,7 @@ import type {
  * @param ir Intermediate representation to compile.
  * @returns The compiled Cypher command.
  */
-export default function compile(ir: IR) {
+const compile: Compiler = (ir) => {
   const parts: string[] = [];
   const params: Record<string, unknown> = {};
 
@@ -33,7 +33,9 @@ export default function compile(ir: IR) {
     command: parts.join(" "),
     params,
   };
-}
+};
+
+export default compile;
 
 /**
  * Compiles a statement into Cypher.

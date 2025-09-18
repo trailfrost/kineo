@@ -94,6 +94,17 @@ export type Adapter = {
   deploy(migration: string, hash: string): OptPromise<void>;
 };
 
+export type CompileResult = {
+  command: string;
+  params: Record<string, unknown>;
+};
+export type Compiler<TDialect = undefined> = TDialect extends
+  | null
+  | undefined
+  | never
+  ? (ir: IR) => CompileResult
+  : (ir: IR, dialect: TDialect) => CompileResult;
+
 /**
  * Checks if a value is a node.
  * @param v The value to check.

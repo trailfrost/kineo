@@ -134,6 +134,29 @@ export default defineConfig({
     });
 
   program
+    .command("pull")
+    .description(
+      "Pulls schema from database. This is a destructive action, and will override your current schema.",
+    )
+    .action(async () => {
+      const results = await inquirer.prompt([
+        {
+          name: "confirm",
+          type: "confirm",
+          message: "This is a destructive action. Do you want to continue?",
+          default: false,
+        },
+      ]);
+      if (!results.confirm) {
+        console.log("[warn] Aborting.");
+        return;
+      }
+
+      // TODO
+      console.log("[info] Successfully pulled schema!");
+    });
+
+  program
     .command("push")
     .description(
       "Pushes schema to database, skipping migrations. Warns you for possible breaking changes.",

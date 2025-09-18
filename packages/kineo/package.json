@@ -17,17 +17,29 @@
       "default": "./dist/model.js",
       "types": "./dist/model.d.ts"
     },
+    "./graph/model": {
+      "default": "./dist/graph/model.js",
+      "types": "./dist/graph/model.d.ts"
+    },
     "./ir": {
       "default": "./dist/ir.js",
       "types": "./dist/ir.d.ts"
+    },
+    "./graph/ir": {
+      "default": "./dist/graph/ir.js",
+      "types": "./dist/graph/ir.d.ts"
     },
     "./adapter": {
       "default": "./dist/adapter.js",
       "types": "./dist/adapter.d.ts"
     },
     "./adapters/neo4j": {
-      "default": "./dist/adapters/neo4j.js",
-      "types": "./dist/adapters/neo4j.d.ts"
+      "default": "./dist/adapters/neo4j/index.js",
+      "types": "./dist/adapters/neo4j/index.d.ts"
+    },
+    "./adapters/neo4j/ir": {
+      "default": "./dist/adapters/neo4j/ir.js",
+      "types": "./dist/adapters/neo4j/ir.d.ts"
     },
     "./adapters/postgresql": {
       "default": "./dist/adapters/postgresql.js",

@@ -32,12 +32,17 @@ export type InferClient<T> =
  */
 export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
   adapter: TAdapter,
-  schema: TSchema,
+  schema: TSchema
 ): KineoClient<TSchema, TAdapter> {
   const modelsForSchema = {} as ModelsForSchema<TSchema, TAdapter>;
   for (const label in schema) {
     const node = schema[label];
-    modelsForSchema[label] = new Model(label, schema, node, adapter);
+    modelsForSchema[label] = new (adapter.Model || Model)(
+      label,
+      schema,
+      node,
+      adapter
+    );
   }
 
   return Object.assign(
@@ -45,6 +50,6 @@ export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
       adapter,
       close: adapter.close,
     },
-    modelsForSchema,
+    modelsForSchema
   );
 }

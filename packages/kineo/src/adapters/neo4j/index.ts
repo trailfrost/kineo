@@ -1,13 +1,21 @@
-import type { Adapter } from "../adapter";
+import { getNodeProp, getScalar, type Adapter } from "../../adapter";
 import {
   field,
   FieldDef,
+  Node,
   relation,
   RelationshipDef,
   type Schema,
-} from "../schema";
+} from "../../schema";
+import compile from "../../compilers/cypher";
+import GraphModel from "../../graph/model";
 import * as neo4j from "neo4j-driver";
-import compile from "../compilers/cypher";
+import {
+  parseGetNodeLabels,
+  parseGetNodeProperties,
+  parseGetRelationshipProperties,
+  parseGetRelationshipTypes,
+} from "./ir";
 
 /**
  * Neo4j authentication options.
@@ -74,7 +82,7 @@ function createDriver(config: AdapterConfig): neo4j.Driver {
         config.auth.credentials,
         config.auth.realm,
         config.auth.scheme,
-        config.auth.parameters,
+        config.auth.parameters
       );
       break;
   }
@@ -90,18 +98,81 @@ export type Kineo4j = Adapter & {
   session: neo4j.Session;
 };
 
+export class Neo4jModel<
+  S extends Schema,
+  N extends Node,
+  A extends Adapter,
+> extends GraphModel<S, N, A> {
+  /**
+   * Gets all labels (graph database specific).
+   * @returns Labels.
+   */
+  async getNodeLabels(): Promise<string[]> {
+    const ir = parseGetNodeLabels(this.label, "l");
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "l") ?? getNodeProp<string[]>(row, 0, "l") ?? []
+    );
+  }
+
+  /**
+   * Gets all relationship types (graph database specific).
+   * @returns Types.
+   */
+  async getRelationshipTypes(): Promise<string[]> {
+    const ir = parseGetRelationshipTypes(this.label, "t");
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "t") ?? getNodeProp<string[]>(row, 0, "t") ?? []
+    );
+  }
+
+  /**
+   * Gets properties of a node (graph database specific).
+   * @param label The label to get properties of.
+   * @param arrayType Only enable this if node types are arrays.
+   * @returns Node properties.
+   */
+  async getNodeProperties(): Promise<string[]> {
+    const ir = parseGetNodeProperties(this.label, "p");
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
+    );
+  }
+
+  /**
+   * Gets relationship properties (graph database specific).
+   * @param type The relationship type.
+   * @returns Relationship properties.
+   */
+  async getRelationshipProperties(type: string): Promise<string[]> {
+    const ir = parseGetRelationshipProperties(this.label, "p", type);
+    const res = await this.run(ir);
+    const row = res.records[0];
+    return (
+      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
+    );
+  }
+}
+
 /**
  * Creates a Neo4j adapter for Kineo.
  * @param config The configuration for the adapter.
  * @returns A Neo4j adapter.
  */
-export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
+export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
   const driver = createDriver(config);
   const session = driver.session();
 
   return {
     driver,
     session,
+
+    Model: Neo4jModel,
 
     compile,
 
@@ -110,7 +181,7 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
       // Get node properties
       const nodePropsResult = await session.run(
-        "CALL db.schema.nodeTypeProperties()",
+        "CALL db.schema.nodeTypeProperties()"
       );
 
       // Get rel properties
@@ -121,7 +192,7 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
       // Get relationships (for directions)
       const relTypesResult = await session.run(
-        "CALL db.schema.visualization()",
+        "CALL db.schema.visualization()"
       );
 
       // Process node properties into a Kineo Schema
@@ -148,11 +219,11 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
         for (const rel of rels) {
           const start = nodes.find(
             (n: { identity: { equals(other: unknown): boolean } }) =>
-              n.identity.equals(rel.startNode),
+              n.identity.equals(rel.startNode)
           );
           const end = nodes.find(
             (n: { identity: { equals(other: unknown): boolean } }) =>
-              n.identity.equals(rel.endNode),
+              n.identity.equals(rel.endNode)
           );
           const startLabel = start.labels[0];
           const endLabel = end.labels[0];
@@ -190,21 +261,21 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
             // Primary key
             if (def.isPrimaryKey) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_pk IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`,
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_pk IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`
               );
             }
 
             // Required (existence constraint)
             if (def.isRequired) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_exists IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS NOT NULL`,
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_exists IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS NOT NULL`
               );
             }
 
             // Uniqueness constraint (if not primary key already)
             if (def.isUnique && !def.isPrimaryKey) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_unique IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`,
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_unique IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`
               );
             }
           }
@@ -215,7 +286,7 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
             if (def.metadata && Object.keys(def.metadata).length > 0) {
               for (const metaKey of Object.keys(def.metadata)) {
                 await session.run(
-                  `CREATE INDEX ${nodeName}_${fieldName}_${metaKey}_idx IF NOT EXISTS FOR ()-[r:${def.refLabel}]-() ON (r.${metaKey})`,
+                  `CREATE INDEX ${nodeName}_${fieldName}_${metaKey}_idx IF NOT EXISTS FOR ()-[r:${def.refLabel}]-() ON (r.${metaKey})`
                 );
               }
             }
@@ -226,20 +297,20 @@ export default function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
     async status() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated.",
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated."
       );
       return [];
     },
 
     async deploy() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be deployed.",
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be deployed."
       );
     },
 
     async migrate() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated.",
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated."
       );
       return [];
     },

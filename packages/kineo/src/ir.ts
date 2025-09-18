@@ -143,7 +143,7 @@ export interface IR {
  */
 export function parseWhereField(
   field: string,
-  fieldValue: Record<string, unknown>
+  fieldValue: Record<string, unknown>,
 ): IRWhereClause[] {
   const clauses: IRWhereClause[] = [];
 
@@ -243,7 +243,7 @@ export function parseWhereNode<T>(node: SchemaWhereNode<T>): IRWhereNode {
 export function parseMatch<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: QueryOpts<S, N>
+  opts: QueryOpts<S, N>,
 ): IRMatch {
   return {
     type: "MATCH",
@@ -268,7 +268,7 @@ export function parseMatch<S extends Schema, N extends Node>(
 export function parseCreate<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: CreateOpts<S, N>
+  opts: CreateOpts<S, N>,
 ): IRCreate {
   return {
     type: "CREATE",
@@ -288,7 +288,7 @@ export function parseCreate<S extends Schema, N extends Node>(
 export function parseMerge<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: MergeOpts<S, N>
+  opts: MergeOpts<S, N>,
 ): IRMerge {
   return {
     type: "MERGE",
@@ -310,7 +310,7 @@ export function parseMerge<S extends Schema, N extends Node>(
 export function parseDelete<S extends Schema, N extends Node>(
   label: string,
   alias: string,
-  opts: DeleteOpts<S, N>
+  opts: DeleteOpts<S, N>,
 ): IRDelete {
   return {
     type: "DELETE",

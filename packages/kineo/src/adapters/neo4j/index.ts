@@ -82,7 +82,7 @@ function createDriver(config: AdapterConfig): neo4j.Driver {
         config.auth.credentials,
         config.auth.realm,
         config.auth.scheme,
-        config.auth.parameters
+        config.auth.parameters,
       );
       break;
   }
@@ -181,7 +181,7 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
       // Get node properties
       const nodePropsResult = await session.run(
-        "CALL db.schema.nodeTypeProperties()"
+        "CALL db.schema.nodeTypeProperties()",
       );
 
       // Get rel properties
@@ -192,7 +192,7 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
       // Get relationships (for directions)
       const relTypesResult = await session.run(
-        "CALL db.schema.visualization()"
+        "CALL db.schema.visualization()",
       );
 
       // Process node properties into a Kineo Schema
@@ -219,11 +219,11 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
         for (const rel of rels) {
           const start = nodes.find(
             (n: { identity: { equals(other: unknown): boolean } }) =>
-              n.identity.equals(rel.startNode)
+              n.identity.equals(rel.startNode),
           );
           const end = nodes.find(
             (n: { identity: { equals(other: unknown): boolean } }) =>
-              n.identity.equals(rel.endNode)
+              n.identity.equals(rel.endNode),
           );
           const startLabel = start.labels[0];
           const endLabel = end.labels[0];
@@ -261,21 +261,21 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
             // Primary key
             if (def.isPrimaryKey) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_pk IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_pk IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`,
               );
             }
 
             // Required (existence constraint)
             if (def.isRequired) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_exists IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS NOT NULL`
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_exists IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS NOT NULL`,
               );
             }
 
             // Uniqueness constraint (if not primary key already)
             if (def.isUnique && !def.isPrimaryKey) {
               await session.run(
-                `CREATE CONSTRAINT ${nodeName}_${fieldName}_unique IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`
+                `CREATE CONSTRAINT ${nodeName}_${fieldName}_unique IF NOT EXISTS FOR (n:${nodeName}) REQUIRE n.${fieldName} IS UNIQUE`,
               );
             }
           }
@@ -286,7 +286,7 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
             if (def.metadata && Object.keys(def.metadata).length > 0) {
               for (const metaKey of Object.keys(def.metadata)) {
                 await session.run(
-                  `CREATE INDEX ${nodeName}_${fieldName}_${metaKey}_idx IF NOT EXISTS FOR ()-[r:${def.refLabel}]-() ON (r.${metaKey})`
+                  `CREATE INDEX ${nodeName}_${fieldName}_${metaKey}_idx IF NOT EXISTS FOR ()-[r:${def.refLabel}]-() ON (r.${metaKey})`,
                 );
               }
             }
@@ -297,20 +297,20 @@ export function Neo4jAdapter(config: AdapterConfig): Kineo4j {
 
     async status() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated."
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated.",
       );
       return [];
     },
 
     async deploy() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be deployed."
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be deployed.",
       );
     },
 
     async migrate() {
       console.error(
-        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated."
+        "[fatal] Neo4j doesn't enforce a schema, therefore migrations can't be generated.",
       );
       return [];
     },

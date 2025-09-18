@@ -59,7 +59,7 @@ export type Adapter = {
       label: string,
       schema: S,
       node: N,
-      adapter: A
+      adapter: A,
     ): Model<S, N, A>;
   };
 
@@ -97,7 +97,7 @@ export type Adapter = {
    */
   status(
     migrations: string[],
-    hashes: string[]
+    hashes: string[],
   ): OptPromise<Array<"deployed" | "pending">>;
 
   /**
@@ -133,7 +133,7 @@ export const isNode = (v: unknown): v is Node => v instanceof Node;
  */
 export const getScalar = <T extends Scalar>(
   rec: QueryRecord | undefined,
-  key: string | number
+  key: string | number,
 ): T | undefined => {
   const v = rec?.get?.(key);
   return isNode(v) ? undefined : (v as T | undefined);
@@ -149,7 +149,7 @@ export const getScalar = <T extends Scalar>(
 export const getNodeProp = <T>(
   rec: QueryRecord | undefined,
   idx: number | string,
-  prop: string
+  prop: string,
 ): T | undefined => {
   const v = rec?.get?.(idx);
   return isNode(v) ? (v.properties[prop] as T | undefined) : undefined;
@@ -187,7 +187,7 @@ export class Node {
     identity: number | bigint,
     labels: string[],
     properties: Params,
-    elementId: string
+    elementId: string,
   ) {
     this.identity = identity;
     this.labels = labels;

@@ -38,7 +38,7 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema
+  schema,
 );
 ```
 

@@ -37,7 +37,7 @@ export interface IRGetRelationshipProperties extends IRBase {
  */
 export function parseGetNodeLabels(
   label: string,
-  alias: string
+  alias: string,
 ): IRGetNodeLabels {
   return {
     type: "GET_NODE_LABELS",
@@ -54,7 +54,7 @@ export function parseGetNodeLabels(
  */
 export function parseGetRelationshipTypes(
   label: string,
-  alias: string
+  alias: string,
 ): IRGetRelationshipTypes {
   return {
     type: "GET_RELATIONSHIP_TYPES",
@@ -71,7 +71,7 @@ export function parseGetRelationshipTypes(
  */
 export function parseGetNodeProperties(
   label: string,
-  alias: string
+  alias: string,
 ): IRGetNodeProperties {
   return {
     type: "GET_NODE_PROPERTIES",
@@ -83,7 +83,7 @@ export function parseGetNodeProperties(
 export function parseGetRelationshipProperties(
   label: string,
   alias: string,
-  relationType: string
+  relationType: string,
 ): IRGetRelationshipProperties {
   return {
     type: "GET_RELATIONSHIP_PROPERTIES",

@@ -46,7 +46,7 @@ export function parseConnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N
+  nodeDef: N,
 ): IRConnect {
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
   const toLabel = relDef.refTo;
@@ -81,7 +81,7 @@ export function parseDisconnect<S extends Schema, N extends Node>(
   label: string,
   alias: string,
   opts: ConnectOpts<S, N>,
-  nodeDef: N
+  nodeDef: N,
 ): IRConnect {
   return {
     ...parseConnect(label, alias, opts, nodeDef),
@@ -99,7 +99,7 @@ export function parseDisconnect<S extends Schema, N extends Node>(
 export function parseRelationQuery<S extends Schema, N extends Node>(
   schema: S,
   nodeLabel: string,
-  opts: GetRelationOpts<S, N>
+  opts: GetRelationOpts<S, N>,
 ): IRRelationQuery {
   const nodeDef = schema[nodeLabel] as N;
   const relDef = nodeDef[opts.relation] as RelationshipDef<string>;

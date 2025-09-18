@@ -1,6 +1,7 @@
 import Model, { type GetTargetNodeType, type RelationshipKeys } from "../model";
 import type { Schema, Node, InferNode } from "../schema";
 import type { Adapter } from "../adapter";
+import { parseConnect, parseDisconnect } from "./ir";
 
 /**
  * Options for connecting two nodes.
@@ -46,4 +47,16 @@ export default class GraphModel<
   S extends Schema,
   N extends Node,
   A extends Adapter,
-> extends Model<S, N, A> {}
+> extends Model<S, N, A> {
+  async connect(opts: ConnectOpts<S, N>) {
+    const ir = parseConnect(this.label, "n", opts, this.node);
+    const result = await this.run(ir);
+    return this.toNodeProperties(result.records[0]);
+  }
+
+  async disconnect(opts: ConnectOpts<S, N>) {
+    const ir = parseDisconnect(this.label, "n", opts, this.node);
+    const result = await this.run(ir);
+    return this.toNodeProperties(result.records[0]);
+  }
+}

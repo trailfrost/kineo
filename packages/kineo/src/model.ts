@@ -181,7 +181,7 @@ export default class Model<
 
   protected applyDefaults<N extends SchemaNode, S extends Schema>(
     nodeDef: N,
-    record: Record<string, unknown>
+    record: Record<string, unknown>,
   ) {
     for (const key in nodeDef) {
       const def = nodeDef[key];
@@ -238,7 +238,7 @@ export default class Model<
       }
       return this.applyDefaults<N, S>(
         this.node,
-        node.properties as InferNode<N, S>
+        node.properties as InferNode<N, S>,
       );
     };
 
@@ -395,7 +395,7 @@ export class Node {
     identity: number,
     labels: string[],
     properties: Properties,
-    elementId?: string
+    elementId?: string,
   ) {
     this.identity = identity;
     this.labels = labels;
@@ -460,7 +460,7 @@ export class Relationship {
     properties: Properties,
     elementId: string,
     startNodeElementId: string,
-    endNodeElementId: string
+    endNodeElementId: string,
   ) {
     this.identity = identity;
     this.start = start;

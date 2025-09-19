@@ -93,7 +93,7 @@ function createDriver(config: AdapterConfig): neo4j.Driver {
 /**
  * Type for Kineo Neo4j adapter.
  */
-export type Kineo4j = Adapter & {
+export type Kineo4j = Adapter<typeof Neo4jModel> & {
   driver: neo4j.Driver;
   session: neo4j.Session;
 };
@@ -101,7 +101,7 @@ export type Kineo4j = Adapter & {
 export class Neo4jModel<
   S extends Schema,
   N extends Node,
-  A extends Adapter,
+  A extends Adapter<any>,
 > extends GraphModel<S, N, A> {
   /**
    * Gets all labels (graph database specific).

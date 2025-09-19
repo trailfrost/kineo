@@ -50,18 +50,22 @@ export type OptPromise<T> = T | Promise<T>;
 /**
  * Main adapter type.
  */
-export type Adapter = {
+export type Adapter<
+  M extends new <
+    S extends Schema,
+    N extends SchemaNode,
+    A extends Adapter<any>,
+  >(
+    label: string,
+    schema: S,
+    node: N,
+    adapter: A,
+  ) => Model<S, N, A>,
+> = {
   /**
    * Constructor of a model class. Not necessary if no extension is used.
    */
-  Model?: {
-    new <S extends Schema, N extends SchemaNode, A extends Adapter>(
-      label: string,
-      schema: S,
-      node: N,
-      adapter: A,
-    ): Model<S, N, A>;
-  };
+  Model: M;
 
   /**
    * Gets schema from database.

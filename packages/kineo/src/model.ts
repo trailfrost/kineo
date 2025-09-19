@@ -18,7 +18,6 @@ import type { Adapter } from "./adapter";
  * Utility to extract relationship definitions.
  */
 export type RelationshipKeys<N extends SchemaNode> = {
-  // eslint-disable-next-line
   [K in keyof N]: N[K] extends RelationshipDef<any> ? K : never;
 }[keyof N];
 
@@ -97,7 +96,6 @@ export interface QueryOpts<
   limit?: number;
   skip?: number;
   include?: {
-    // eslint-disable-next-line
     [K in keyof N]?: N[K] extends RelationshipDef<any> ? boolean : never;
   };
   select?: {
@@ -146,7 +144,7 @@ export type DeleteOpts<
 export default class Model<
   S extends Schema,
   N extends SchemaNode,
-  A extends Adapter,
+  A extends Adapter<any>,
 > {
   /**
    * The label of the node this model applies to.

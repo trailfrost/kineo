@@ -297,7 +297,7 @@ async function importFiles() {
     const schema = module[config!.schemaExport] as Schema;
     return {
       schema,
-      client: module[config!.clientExport] as KineoClient<Schema, Adapter>,
+      client: module[config!.clientExport] as KineoClient<Schema, Adapter<any>>,
     };
   } else {
     const schemaModule = (await jiti.import(config!.schemaFile)) as Record<
@@ -306,7 +306,7 @@ async function importFiles() {
     >;
     const clientModule = (await jiti.import(config!.clientFile)) as Record<
       string,
-      KineoClient<Schema, Adapter>
+      KineoClient<Schema, Adapter<any>>
     >;
 
     return {

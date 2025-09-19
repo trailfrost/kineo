@@ -46,7 +46,7 @@ export type GetRelationOpts<
 export default class GraphModel<
   S extends Schema,
   N extends Node,
-  A extends Adapter,
+  A extends Adapter<any>,
 > extends Model<S, N, A> {
   async connect(opts: ConnectOpts<S, N>) {
     const ir = parseConnect(this.label, "n", opts, this.node);

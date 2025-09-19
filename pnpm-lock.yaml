@@ -58,6 +58,12 @@ importers:
         specifier: ^24.3.0
         version: 24.3.0
 
+  packages/test:
+    dependencies:
+      kineo:
+        specifier: workspace:kineo
+        version: link:../kineo
+
 packages:
 
   '@esbuild/aix-ppc64@0.25.8':

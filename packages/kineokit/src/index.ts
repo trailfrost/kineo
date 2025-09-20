@@ -50,7 +50,7 @@ export function defineConfig(config: Config): Config {
  * @param schema The new schema.
  */
 export async function push(
-  adapter: Adapter,
+  adapter: Adapter<any>,
   schema: Schema,
   warnForBreaking = false,
 ) {
@@ -84,7 +84,7 @@ export async function push(
  * @returns The difference between the two schemas, warning from breaking changes.
  */
 export async function diff(
-  adapter: Adapter,
+  adapter: Adapter<any>,
   prev: Schema,
 ): Promise<SchemaDiff> {
   const current = await adapter.getSchema();
@@ -259,7 +259,7 @@ export async function diff(
  * @returns The generated migrations.
  */
 export async function migrate(
-  adapter: Adapter,
+  adapter: Adapter<any>,
   diff: SchemaDiff,
 ): Promise<string[]> {
   return await adapter.migrate(diff);
@@ -273,7 +273,7 @@ export async function migrate(
  * @returns The migration statuses.
  */
 export async function status(
-  adapter: Adapter,
+  adapter: Adapter<any>,
   migrations: string[],
   hashes: string[],
 ): Promise<Array<"pending" | "deployed">> {
@@ -287,7 +287,7 @@ export async function status(
  * @param hash The hash of the migration to apply.
  */
 export async function deploy(
-  adapter: Adapter,
+  adapter: Adapter<any>,
   migration: string,
   hash: string,
 ) {

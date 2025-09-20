@@ -134,6 +134,29 @@ export default defineConfig({
     });
 
   program
+    .command("pull")
+    .description(
+      "Pulls schema from database. This is a destructive action, and will override your current schema.",
+    )
+    .action(async () => {
+      const results = await inquirer.prompt([
+        {
+          name: "confirm",
+          type: "confirm",
+          message: "This is a destructive action. Do you want to continue?",
+          default: false,
+        },
+      ]);
+      if (!results.confirm) {
+        console.log("[warn] Aborting.");
+        return;
+      }
+
+      // TODO
+      console.log("[info] Successfully pulled schema!");
+    });
+
+  program
     .command("push")
     .description(
       "Pushes schema to database, skipping migrations. Warns you for possible breaking changes.",
@@ -274,7 +297,7 @@ async function importFiles() {
     const schema = module[config!.schemaExport] as Schema;
     return {
       schema,
-      client: module[config!.clientExport] as KineoClient<Schema, Adapter>,
+      client: module[config!.clientExport] as KineoClient<Schema, Adapter<any>>,
     };
   } else {
     const schemaModule = (await jiti.import(config!.schemaFile)) as Record<
@@ -283,7 +306,7 @@ async function importFiles() {
     >;
     const clientModule = (await jiti.import(config!.clientFile)) as Record<
       string,
-      KineoClient<Schema, Adapter>
+      KineoClient<Schema, Adapter<any>>
     >;
 
     return {

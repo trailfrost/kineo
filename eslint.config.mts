@@ -12,5 +12,10 @@ export default defineConfig([
   },
   // @ts-expect-error tseslint doesn't support eslint 9.32 yet, and this works fine
   tseslint.configs.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
   globalIgnores(["**/dist/**/*"]),
 ]);

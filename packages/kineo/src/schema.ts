@@ -97,11 +97,9 @@ type InferRelationship<
  * Is the field required?
  */
 type IsRequiredField<T> =
-  // eslint-disable-next-line
   T extends FieldDef<any, infer Req, any>
     ? Req
-    : // eslint-disable-next-line
-      T extends RelationshipDef<any, infer Req, any>
+    : T extends RelationshipDef<any, infer Req, any>
       ? Req
       : false;
 
@@ -157,37 +155,29 @@ export type FieldDiff =
   | {
       kind: "field.added";
       severity: "non-breaking";
-      // eslint-disable-next-line
       field: FieldDef<KineoType, any, any, any>;
     }
   | {
       kind: "field.removed";
       severity: "breaking";
-      // eslint-disable-next-line
       field: FieldDef<KineoType, any, any, any>;
     }
   | {
       kind: "field.changedType";
       severity: "breaking";
-      // eslint-disable-next-line
       from: FieldDef<KineoType, any, any, any>;
-      // eslint-disable-next-line
       to: FieldDef<KineoType, any, any, any>;
     }
   | {
       kind: "field.changedRequired";
       severity: "breaking" | "non-breaking"; // required->optional = non-breaking, optional->required = breaking
-      // eslint-disable-next-line
       from: FieldDef<KineoType, any, any, any>;
-      // eslint-disable-next-line
       to: FieldDef<KineoType, any, any, any>;
     }
   | {
       kind: "field.changedArray";
       severity: "breaking";
-      // eslint-disable-next-line
       from: FieldDef<KineoType, any, any, any>;
-      // eslint-disable-next-line
       to: FieldDef<KineoType, any, any, any>;
     };
 
@@ -198,37 +188,29 @@ export type RelationshipDiff =
   | {
       kind: "relationship.added";
       severity: "non-breaking";
-      // eslint-disable-next-line
       relationship: RelationshipDef<string, any, any, any>;
     }
   | {
       kind: "relationship.removed";
       severity: "breaking";
-      // eslint-disable-next-line
       relationship: RelationshipDef<string, any, any, any>;
     }
   | {
       kind: "relationship.changedDirection";
       severity: "breaking";
-      // eslint-disable-next-line
       from: RelationshipDef<string, any, any, any>;
-      // eslint-disable-next-line
       to: RelationshipDef<string, any, any, any>;
     }
   | {
       kind: "relationship.changedRequired";
       severity: "breaking" | "non-breaking";
-      // eslint-disable-next-line
       from: RelationshipDef<string, any, any, any>;
-      // eslint-disable-next-line
       to: RelationshipDef<string, any, any, any>;
     }
   | {
       kind: "relationship.changedArray";
       severity: "breaking";
-      // eslint-disable-next-line
       from: RelationshipDef<string, any, any, any>;
-      // eslint-disable-next-line
       to: RelationshipDef<string, any, any, any>;
     };
 

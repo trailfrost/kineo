@@ -4,8 +4,8 @@ An Object-Relation Mapper/Object-Graph Mapper for TypeScript.
 
 ```ts
 // This example uses the Neo4j adapter.
-import Neo4jAdapter from "kineo/adapters/neo4j";
 import Kineo from "kineo";
+import { Neo4jAdapter } from "kineo/adapters/neo4j";
 import {
   defineSchema,
   model,

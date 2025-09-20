@@ -10,22 +10,14 @@ import {
   parseCreate,
   parseMerge,
   parseDelete,
-  parseConnect,
-  parseDisconnect,
-  parseRelationQuery,
-  IRStatement,
-  parseGetNodeLabels,
-  parseGetRelationshipTypes,
-  parseGetNodeProperties,
-  parseGetRelationshipProperties,
+  type IRStatement,
 } from "./ir";
-import { Adapter, getNodeProp, getScalar } from "./adapter";
+import type { Adapter } from "./adapter";
 
 /**
  * Utility to extract relationship definitions.
  */
 export type RelationshipKeys<N extends SchemaNode> = {
-  // eslint-disable-next-line
   [K in keyof N]: N[K] extends RelationshipDef<any> ? K : never;
 }[keyof N];
 
@@ -47,64 +39,6 @@ export type GetTargetNodeType<
 > = S[GetRelationshipTargetLabel<N, R>] extends SchemaNode
   ? InferNode<S[GetRelationshipTargetLabel<N, R>], S>
   : never;
-
-/**
- * Options for connecting two nodes.
- */
-export type ConnectOpts<
-  S extends Schema,
-  N extends SchemaNode,
-  R extends RelationshipKeys<N> = RelationshipKeys<N>,
-  FromNode = InferNode<N, S>,
-  ToNode = GetTargetNodeType<S, N, R>,
-> = {
-  from: Partial<FromNode>;
-  to: Partial<ToNode>;
-  relation: R;
-};
-
-/**
- * Options for checking if a node is connected.
- */
-export type IsConnectedOpts<
-  S extends Schema,
-  N extends SchemaNode,
-  R extends RelationshipKeys<N> = RelationshipKeys<N>,
-> = ConnectOpts<S, N, R>;
-
-/**
- * Options for upserting a connection.
- */
-export type UpsertConnectOpts<
-  S extends Schema,
-  N extends SchemaNode,
-  R extends RelationshipKeys<N> = RelationshipKeys<N>,
-> = ConnectOpts<S, N, R> & {
-  create?: boolean;
-};
-
-/**
- * Options for deleting a connection.
- */
-export type DeleteConnectionOpts<
-  S extends Schema,
-  N extends SchemaNode,
-  R extends RelationshipKeys<N> = RelationshipKeys<N>,
-> = ConnectOpts<S, N, R>;
-
-/**
- * Options for getting a relationship.
- */
-export type GetRelationOpts<
-  S extends Schema,
-  N extends SchemaNode,
-  R extends RelationshipKeys<N> = RelationshipKeys<N>,
-  FromNode = InferNode<N, S>,
-> = {
-  from: Partial<FromNode>;
-  relation: R;
-  where?: Partial<GetTargetNodeType<S, N, R>>;
-};
 
 /**
  * Defines a field in a `where` clause.
@@ -162,7 +96,6 @@ export interface QueryOpts<
   limit?: number;
   skip?: number;
   include?: {
-    // eslint-disable-next-line
     [K in keyof N]?: N[K] extends RelationshipDef<any> ? boolean : never;
   };
   select?: {
@@ -206,42 +139,12 @@ export type DeleteOpts<
 };
 
 /**
- * Applies default values.
- * @param nodeDef The node to apply to.
- * @param record The record to apply to.
- * @returns The record, with defaults applied.
- */
-function applyDefaults<N extends SchemaNode, S extends Schema>(
-  nodeDef: N,
-  record: Record<string, unknown>,
-) {
-  for (const key in nodeDef) {
-    const def = nodeDef[key];
-    const hasValue = record[key as string] !== undefined;
-
-    if (!hasValue) {
-      if ("defaultValue" in def && def.defaultValue !== undefined) {
-        record[key] = def.defaultValue;
-      } else if (
-        "isArray" in def &&
-        def.isArray === true &&
-        def.defaultValue === undefined
-      ) {
-        // fallback to [] if array with no default explicitly set
-        record[key] = [];
-      }
-    }
-  }
-  return record as InferNode<N, S>;
-}
-
-/**
  * A model, created when instantiating the OGM. Provides functions for interacting with the database.
  */
 export default class Model<
   S extends Schema,
   N extends SchemaNode,
-  A extends Adapter,
+  A extends Adapter<any>,
 > {
   /**
    * The label of the node this model applies to.
@@ -274,12 +177,36 @@ export default class Model<
     this.adapter = adapter;
   }
 
+  protected applyDefaults<N extends SchemaNode, S extends Schema>(
+    nodeDef: N,
+    record: Record<string, unknown>,
+  ) {
+    for (const key in nodeDef) {
+      const def = nodeDef[key];
+      const hasValue = record[key as string] !== undefined;
+
+      if (!hasValue) {
+        if ("defaultValue" in def && def.defaultValue !== undefined) {
+          record[key] = def.defaultValue;
+        } else if (
+          "isArray" in def &&
+          def.isArray === true &&
+          def.defaultValue === undefined
+        ) {
+          // fallback to [] if array with no default explicitly set
+          record[key] = [];
+        }
+      }
+    }
+    return record as InferNode<N, S>;
+  }
+
   /**
    * Compiles and runs an IR.
    * @param ir The IR to compile and run.
    * @returns The result of running the IR.
    */
-  private async run(ir: IRStatement): Promise<QueryResult> {
+  protected async run(ir: IRStatement): Promise<QueryResult> {
     const { command, params } = await this.adapter.compile({
       statements: [ir],
     });
@@ -290,14 +217,14 @@ export default class Model<
    * Gets the properties from a record.
    * @param record The record.
    */
-  private toNodeProperties(record: QueryRecord): InferNode<N, S> | null;
+  protected toNodeProperties(record: QueryRecord): InferNode<N, S> | null;
   /**
    * Gets all properties from a list of records.
    * @param record The records.
    */
-  private toNodeProperties(record: QueryRecord[]): InferNode<N, S>[];
+  protected toNodeProperties(record: QueryRecord[]): InferNode<N, S>[];
 
-  private toNodeProperties(record: QueryRecord | QueryRecord[]) {
+  protected toNodeProperties(record: QueryRecord | QueryRecord[]) {
     if (!record) return null;
 
     const apply = (rec: QueryRecord) => {
@@ -307,7 +234,10 @@ export default class Model<
       if (!("properties" in node)) {
         return null;
       }
-      return applyDefaults<N, S>(this.node, node.properties as InferNode<N, S>);
+      return this.applyDefaults<N, S>(
+        this.node,
+        node.properties as InferNode<N, S>,
+      );
     };
 
     if (Array.isArray(record)) return record.map(apply);
@@ -414,74 +344,6 @@ export default class Model<
   }
 
   /**
-   * Connects two nodes together (graph database specific).
-   * @param opts Connection options.
-   * @returns The first node.
-   */
-  async connect(opts: ConnectOpts<S, N>) {
-    const ir = parseConnect(this.label, "n", opts, this.node);
-    const result = await this.run(ir);
-    return this.toNodeProperties(result.records[0]);
-  }
-
-  /**
-   * Disconnects two nodes (graph database specific).
-   * @param opts Disconnection options.
-   * @returns The first node.
-   */
-  async disconnect(opts: ConnectOpts<S, N>) {
-    const ir = parseDisconnect(this.label, "n", opts, this.node);
-    const result = await this.run(ir);
-    return this.toNodeProperties(result.records[0]);
-  }
-
-  /**
-   * Checks if two nodes are connected (graph database specific).
-   * @param opts Connection options.
-   * @returns The first node.
-   */
-  async isConnected(opts: IsConnectedOpts<S, N>) {
-    const ir = parseConnect(this.label, "n", opts, this.node);
-    const result = await this.run(ir);
-    return result.records.length > 0;
-  }
-
-  /**
-   * Upserts a relationship (graph database specific).
-   * @param opts Connection options.
-   * @returns The first node.
-   */
-  async upsertRelation(opts: UpsertConnectOpts<S, N>) {
-    const ir = parseConnect(this.label, "n", opts, this.node); // Could differentiate based on `create?: true`
-    const result = await this.run(ir);
-    return this.toNodeProperties(result.records[0]);
-  }
-
-  /**
-   * Removes a relationship (graph database specific).
-   * @param opts Connection options.
-   * @returns The first node.
-   */
-  async deleteRelation(opts: DeleteConnectionOpts<S, N>) {
-    const ir = parseDisconnect(this.label, "n", opts, this.node);
-    const result = await this.run(ir);
-    return this.toNodeProperties(result.records[0]);
-  }
-
-  /**
-   * Gets all relationships (graph database specific).
-   * @param opts What relations to get
-   * @returns The relations.
-   */
-  async getRelations(opts: GetRelationOpts<S, N>) {
-    const ir = parseRelationQuery(this.schema, this.label, opts);
-    const result = await this.run(ir);
-    return this.toNodeProperties(
-      result.records,
-    ) as unknown as GetTargetNodeType<S, N, RelationshipKeys<N>>[];
-  }
-
-  /**
    * Counts nodes.
    * @param opts Nodes to count.
    * @returns Number of nodes that match.
@@ -491,61 +353,6 @@ export default class Model<
       where: opts,
       select: {},
     }).then((result) => result.length);
-  }
-
-  /**
-   * Gets all labels (graph database specific).
-   * @returns Labels.
-   */
-  async getNodeLabels(): Promise<string[]> {
-    const ir = parseGetNodeLabels(this.label, "l");
-    const res = await this.run(ir);
-    const row = res.records[0];
-    return (
-      getScalar<string[]>(row, "l") ?? getNodeProp<string[]>(row, 0, "l") ?? []
-    );
-  }
-
-  /**
-   * Gets all relationship types (graph database specific).
-   * @returns Types.
-   */
-  async getRelationshipTypes(): Promise<string[]> {
-    const ir = parseGetRelationshipTypes(this.label, "t");
-    const res = await this.run(ir);
-    const row = res.records[0];
-    return (
-      getScalar<string[]>(row, "t") ?? getNodeProp<string[]>(row, 0, "t") ?? []
-    );
-  }
-
-  /**
-   * Gets properties of a node (graph database specific).
-   * @param label The label to get properties of.
-   * @param arrayType Only enable this if node types are arrays.
-   * @returns Node properties.
-   */
-  async getNodeProperties(): Promise<string[]> {
-    const ir = parseGetNodeProperties(this.label, "p");
-    const res = await this.run(ir);
-    const row = res.records[0];
-    return (
-      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
-    );
-  }
-
-  /**
-   * Gets relationship properties (graph database specific).
-   * @param type The relationship type.
-   * @returns Relationship properties.
-   */
-  async getRelationshipProperties(type: string): Promise<string[]> {
-    const ir = parseGetRelationshipProperties(this.label, "p", type);
-    const res = await this.run(ir);
-    const row = res.records[0];
-    return (
-      getScalar<string[]>(row, "p") ?? getNodeProp<string[]>(row, 0, "p") ?? []
-    );
   }
 }
 

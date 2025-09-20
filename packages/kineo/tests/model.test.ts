@@ -3,7 +3,7 @@ import { db } from "./utils";
 
 describe("Model", () => {
   test("createOne: creates a user", async () => {
-    const result = await db.User.createOne({
+    const result = await db.users.createOne({
       data: {
         name: "alice",
         password: "secure123",
@@ -18,7 +18,7 @@ describe("Model", () => {
   });
 
   test("matchOne: match user by name with nested where", async () => {
-    const user = await db.User.findOne({
+    const user = await db.users.findOne({
       where: {
         name: {
           startsWith: "a",
@@ -44,7 +44,7 @@ describe("Model", () => {
   });
 
   test("mergeOne: merge user (create or update)", async () => {
-    const merged = await db.User.upsertOne({
+    const merged = await db.users.upsertOne({
       where: { name: "alice" },
       create: {
         name: "alice",
@@ -60,14 +60,14 @@ describe("Model", () => {
   });
 
   test("connect: connect user to post", async () => {
-    await db.Post.createOne({
+    await db.posts.createOne({
       data: {
         id: "post-1",
         title: "Hello World",
       },
     });
 
-    const result = await db.User.connect({
+    const result = await db.users.connect({
       from: { name: "alice" },
       to: { id: "post-1" },
       relation: "posts",
@@ -77,7 +77,7 @@ describe("Model", () => {
   });
 
   test("getRelations: get posts for user", async () => {
-    const posts = await db.User.getRelations({
+    const posts = await db.users.getRelations({
       from: { name: "alice" },
       relation: "posts",
       where: {
@@ -89,19 +89,8 @@ describe("Model", () => {
     expect(posts[0].title).toBe("Hello World");
   });
 
-  test("upsertRelation: connect or create post", async () => {
-    const result = await db.User.upsertRelation({
-      from: { name: "alice" },
-      to: { id: "post-2", title: "Another Post" },
-      relation: "posts",
-      create: true,
-    });
-
-    expect(result).toBeDefined();
-  });
-
   test("isConnected: check if user is connected to post", async () => {
-    const connected = await db.User.isConnected({
+    const connected = await db.users.isConnected({
       from: { name: "alice" },
       to: { id: "post-1" },
       relation: "posts",
@@ -110,8 +99,8 @@ describe("Model", () => {
     expect(connected).toBe(true);
   });
 
-  test("deleteRelation: remove post connection", async () => {
-    const result = await db.User.deleteRelation({
+  test("disconnect: remove post connection", async () => {
+    const result = await db.users.disconnect({
       from: { name: "alice" },
       to: { id: "post-1" },
       relation: "posts",
@@ -121,7 +110,7 @@ describe("Model", () => {
   });
 
   test("deleteOne: delete user", async () => {
-    const result = await db.User.deleteOne({
+    const result = await db.users.deleteOne({
       where: { name: "alice" },
     });
 
@@ -129,14 +118,14 @@ describe("Model", () => {
   });
 
   test("count: count users matching where", async () => {
-    await db.User.createOne({
+    await db.users.createOne({
       data: {
         name: "bob",
         password: "123",
       },
     });
 
-    const count = await db.User.count({
+    const count = await db.users.count({
       password: {
         contains: "1",
       },
@@ -147,10 +136,10 @@ describe("Model", () => {
   });
 
   test("metadata: labels, types, props", async () => {
-    const labels = await db.User.getNodeLabels();
-    const relTypes = await db.User.getRelationshipTypes();
-    const props = await db.User.getNodeProperties();
-    const relProps = await db.User.getRelationshipProperties("HAS_POST");
+    const labels = await db.users.getNodeLabels();
+    const relTypes = await db.users.getRelationshipTypes();
+    const props = await db.users.getNodeProperties();
+    const relProps = await db.users.getRelationshipProperties("HAS_POST");
 
     expect(Array.isArray(labels)).toBe(true);
     expect(Array.isArray(relTypes)).toBe(true);
@@ -159,7 +148,7 @@ describe("Model", () => {
   });
 
   test("createMany: batch create posts", async () => {
-    const result = await db.Post.createMany({
+    const result = await db.posts.createMany({
       data: {
         id: "post-3",
         title: "Bulk Created Post",
@@ -170,7 +159,7 @@ describe("Model", () => {
   });
 
   test("deleteMany: remove all posts", async () => {
-    const result = await db.Post.deleteMany();
+    const result = await db.posts.deleteMany();
     expect(result).toBeDefined();
   });
 });

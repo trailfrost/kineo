@@ -5,14 +5,17 @@ import Model from "./model";
 /**
  * Utility type for creating models from a schema.
  */
-type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter> = {
-  [Node in keyof TSchema]: Model<TSchema, TSchema[Node], TAdapter>;
+type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter<any>> = {
+  [K in keyof TSchema]: Model<TSchema, TSchema[K], TAdapter>;
 };
 
 /**
  * Kineo Client, including all the models from a schema.
  */
-export type KineoClient<TSchema extends Schema, TAdapter extends Adapter> = {
+export type KineoClient<
+  TSchema extends Schema,
+  TAdapter extends Adapter<any>,
+> = {
   adapter: TAdapter;
   close(): void | Promise<void>;
 } & ModelsForSchema<TSchema, TAdapter>;
@@ -21,7 +24,6 @@ export type KineoClient<TSchema extends Schema, TAdapter extends Adapter> = {
  * Infers the TypeScript types from a Kineo OGM.
  */
 export type InferClient<T> =
-  // eslint-disable-next-line
   T extends KineoClient<infer TSchema, any> ? InferSchema<TSchema> : never;
 
 /**
@@ -30,14 +32,19 @@ export type InferClient<T> =
  * @param schema Schema for building the Kineo client.
  * @returns A new Kineo client.
  */
-export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
-  adapter: TAdapter,
-  schema: TSchema,
-): KineoClient<TSchema, TAdapter> {
+export default function Kineo<
+  TSchema extends Schema,
+  TAdapter extends Adapter<any>,
+>(adapter: TAdapter, schema: TSchema): KineoClient<TSchema, TAdapter> {
   const modelsForSchema = {} as ModelsForSchema<TSchema, TAdapter>;
   for (const label in schema) {
     const node = schema[label];
-    modelsForSchema[label] = new Model(label, schema, node, adapter);
+    modelsForSchema[label] = new adapter.Model(
+      label,
+      schema,
+      node,
+      adapter
+    ) as any;
   }
 
   return Object.assign(
@@ -45,6 +52,6 @@ export default function Kineo<TSchema extends Schema, TAdapter extends Adapter>(
       adapter,
       close: adapter.close,
     },
-    modelsForSchema,
+    modelsForSchema
   );
 }

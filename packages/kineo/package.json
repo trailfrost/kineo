@@ -17,21 +17,49 @@
       "default": "./dist/model.js",
       "types": "./dist/model.d.ts"
     },
+    "./graph/model": {
+      "default": "./dist/graph/model.js",
+      "types": "./dist/graph/model.d.ts"
+    },
     "./ir": {
       "default": "./dist/ir.js",
       "types": "./dist/ir.d.ts"
+    },
+    "./graph/ir": {
+      "default": "./dist/graph/ir.js",
+      "types": "./dist/graph/ir.d.ts"
     },
     "./adapter": {
       "default": "./dist/adapter.js",
       "types": "./dist/adapter.d.ts"
     },
     "./adapters/neo4j": {
-      "default": "./dist/adapters/neo4j.js",
-      "types": "./dist/adapters/neo4j.d.ts"
+      "default": "./dist/adapters/neo4j/index.js",
+      "types": "./dist/adapters/neo4j/index.d.ts"
+    },
+    "./adapters/neo4j/ir": {
+      "default": "./dist/adapters/neo4j/ir.js",
+      "types": "./dist/adapters/neo4j/ir.d.ts"
+    },
+    "./adapters/postgresql": {
+      "default": "./dist/adapters/postgresql.js",
+      "types": "./dist/adapters/postgresql.d.ts"
+    },
+    "./adapters/mysql": {
+      "default": "./dist/adapters/mysql.js",
+      "types": "./dist/adapters/mysql.d.ts"
+    },
+    "./adapters/sqlite": {
+      "default": "./dist/adapters/sqlite.js",
+      "types": "./dist/adapters/sqlite.d.ts"
     },
     "./compilers/cypher": {
       "default": "./dist/compilers/cypher.js",
       "types": "./dist/compilers/cypher.d.ts"
+    },
+    "./compilers/sql": {
+      "default": "./dist/compilers/sql.js",
+      "types": "./dist/compilers/sql.d.ts"
     }
   },
   "keywords": [

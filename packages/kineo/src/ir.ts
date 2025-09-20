@@ -1,13 +1,14 @@
-import type { Schema, Node, RelationshipDef } from "./schema";
+import type { Schema, Node } from "./schema";
 import type {
   QueryOpts,
   CreateOpts,
   MergeOpts,
   DeleteOpts,
-  ConnectOpts,
-  GetRelationOpts,
   WhereNode as SchemaWhereNode,
 } from "./model";
+
+import type * as Neo4j from "./adapters/neo4j/ir";
+import type * as Graph from "./graph/ir";
 
 /**
  * All possible statements.
@@ -18,9 +19,11 @@ export type IRQueryType =
   | "CREATE"
   | "MERGE"
   | "DELETE"
+  // Graph database specific
   | "CONNECT"
   | "DISCONNECT"
   | "RELATION_QUERY"
+  // Neo4j specific
   | "GET_NODE_LABELS"
   | "GET_RELATIONSHIP_TYPES"
   | "GET_NODE_PROPERTIES"
@@ -106,67 +109,6 @@ export interface IRDelete extends IRBase {
 }
 
 /**
- * Connect statement.
- */
-export interface IRConnect extends IRBase {
-  type: "CONNECT" | "DISCONNECT";
-  from: {
-    label: string;
-    alias: string;
-    match: Record<string, unknown>;
-  };
-  to: {
-    label: string;
-    alias: string;
-    match: Record<string, unknown>;
-  };
-  relation: string;
-}
-
-/**
- * Relation query.
- */
-export interface IRRelationQuery extends IRBase {
-  type: "RELATION_QUERY";
-  from: {
-    label: string;
-    alias: string;
-    match: Record<string, unknown>;
-  };
-  relation: string;
-  where?: Record<string, unknown>;
-}
-
-/**
- * A query to get all node labels.
- */
-export interface IRGetNodeLabels extends IRBase {
-  type: "GET_NODE_LABELS";
-}
-
-/**
- * A query to get relationship types.
- */
-export interface IRGetRelationshipTypes extends IRBase {
-  type: "GET_RELATIONSHIP_TYPES";
-}
-
-/**
- * A query to get properties from a node.
- */
-export interface IRGetNodeProperties extends IRBase {
-  type: "GET_NODE_PROPERTIES";
-}
-
-/**
- * A query to get properties from a relationship.
- */
-export interface IRGetRelationshipProperties extends IRBase {
-  type: "GET_RELATIONSHIP_PROPERTIES";
-  relationType: string;
-}
-
-/**
  * All types of statements.
  */
 export type IRStatement =
@@ -174,12 +116,15 @@ export type IRStatement =
   | IRCreate
   | IRMerge
   | IRDelete
-  | IRConnect
-  | IRRelationQuery
-  | IRGetNodeLabels
-  | IRGetRelationshipTypes
-  | IRGetNodeProperties
-  | IRGetRelationshipProperties;
+  // Graph database-specific
+  | Graph.IRConnect
+  | Graph.IRRelationQuery
+  // Neo4j-specific
+  | Neo4j.IRGetNodeProperties
+  | Neo4j.IRGetNodeLabels
+  | Neo4j.IRGetNodeProperties
+  | Neo4j.IRGetRelationshipProperties
+  | Neo4j.IRGetRelationshipTypes;
 
 /**
  * Intermediate representation, built for compiling into a query language.
@@ -372,153 +317,5 @@ export function parseDelete<S extends Schema, N extends Node>(
     label,
     alias,
     where: opts.where,
-  };
-}
-
-/**
- * Parses a connect statement.
- * @param label The label of the statement.
- * @param alias Name of return value.
- * @param opts Options passed into the model.
- * @param nodeDef Node definition.
- * @returns A connect statement.
- */
-export function parseConnect<S extends Schema, N extends Node>(
-  label: string,
-  alias: string,
-  opts: ConnectOpts<S, N>,
-  nodeDef: N,
-): IRConnect {
-  const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
-  const toLabel = relDef.refTo;
-
-  return {
-    type: "CONNECT",
-    label,
-    alias,
-    from: {
-      label,
-      alias: "from",
-      match: opts.from,
-    },
-    to: {
-      label: toLabel,
-      alias: "to",
-      match: opts.to,
-    },
-    relation: opts.relation as string,
-  };
-}
-
-/**
- * Parses a disconnect statement.
- * @param label The label of the statement.
- * @param alias Name of return value.
- * @param opts Options passed into the model.
- * @param nodeDef Node definition.
- * @returns A disconnect statement.
- */
-export function parseDisconnect<S extends Schema, N extends Node>(
-  label: string,
-  alias: string,
-  opts: ConnectOpts<S, N>,
-  nodeDef: N,
-): IRConnect {
-  return {
-    ...parseConnect(label, alias, opts, nodeDef),
-    type: "DISCONNECT",
-  };
-}
-
-/**
- * Parses a relationship query.
- * @param schema Object definitions.
- * @param nodeLabel Name of the node that is related.
- * @param opts Options passed into the model.
- * @returns A relationship query.
- */
-export function parseRelationQuery<S extends Schema, N extends Node>(
-  schema: S,
-  nodeLabel: string,
-  opts: GetRelationOpts<S, N>,
-): IRRelationQuery {
-  const nodeDef = schema[nodeLabel] as N;
-  const relDef = nodeDef[opts.relation] as RelationshipDef<string>;
-
-  return {
-    type: "RELATION_QUERY",
-    label: relDef.refTo,
-    alias: "n",
-    from: {
-      label: nodeLabel,
-      alias: "from",
-      match: opts.from,
-    },
-    relation: opts.relation as string,
-    where: opts.where ?? undefined,
-  };
-}
-
-/**
- * Parses a "get node labels" query.
- * @param label The label of the statement.
- * @param alias Name of return value.
- * @returns A `GET_NODE_LABELS` statement.
- */
-export function parseGetNodeLabels(
-  label: string,
-  alias: string,
-): IRGetNodeLabels {
-  return {
-    type: "GET_NODE_LABELS",
-    label,
-    alias,
-  };
-}
-
-/**
- * Parse a "get relationship types" query.
- * @param label The label of the statement.
- * @param alias Name of return value.
- * @returns A `GET_RELATIONSHIP_TYPES` query.
- */
-export function parseGetRelationshipTypes(
-  label: string,
-  alias: string,
-): IRGetRelationshipTypes {
-  return {
-    type: "GET_RELATIONSHIP_TYPES",
-    label,
-    alias,
-  };
-}
-
-/**
- * Parses a "get node properties" statement.
- * @param label The label of the statement.
- * @param alias Name of return value.
- * @returns A `GET_NODE_PROPERTIES` statement.
- */
-export function parseGetNodeProperties(
-  label: string,
-  alias: string,
-): IRGetNodeProperties {
-  return {
-    type: "GET_NODE_PROPERTIES",
-    label,
-    alias,
-  };
-}
-
-export function parseGetRelationshipProperties(
-  label: string,
-  alias: string,
-  relationType: string,
-): IRGetRelationshipProperties {
-  return {
-    type: "GET_RELATIONSHIP_PROPERTIES",
-    label,
-    alias,
-    relationType,
   };
 }

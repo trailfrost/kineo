@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "lint!": "eslint --fix .",
     "check": "tsc -b --noEmit packages/*",
-    "build": "rimraf packages/*/dist && tsc -b packages/*",
+    "clean": "rimraf packages/*/dist",
+    "build": "pnpm clean && tsc -b packages/*",
     "refresh": "pnpm build && pnpm install",
     "cloc": "cloc --exclude-dir=dist,node_modules packages/*"
   },

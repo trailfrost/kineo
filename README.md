@@ -1,6 +1,6 @@
 # Kineo
 
-Object-Relation Mapper and Object-Graph Mapper in TypeScript.
+Object-Relation Mapper and Object-Graph Mapper for TypeScript.
 
 ```ts
 import Kineo from "kineo";

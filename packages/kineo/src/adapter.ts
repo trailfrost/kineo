@@ -1,5 +1,6 @@
 import type { IR } from "./ir";
-import type { Schema, SchemaDiff } from "./schema";
+import type { Schema, Node as SchemaNode, SchemaDiff } from "./schema";
+import Model from "./model";
 
 /**
  * Parameters. Used for passing parameters into queries.
@@ -49,7 +50,23 @@ export type OptPromise<T> = T | Promise<T>;
 /**
  * Main adapter type.
  */
-export type Adapter = {
+export type Adapter<
+  M extends new <
+    S extends Schema,
+    N extends SchemaNode,
+    A extends Adapter<any>,
+  >(
+    label: string,
+    schema: S,
+    node: N,
+    adapter: A,
+  ) => Model<S, N, A>,
+> = {
+  /**
+   * Constructor of a model class. Not necessary if no extension is used.
+   */
+  Model: M;
+
   /**
    * Gets schema from database.
    */
@@ -93,6 +110,17 @@ export type Adapter = {
    */
   deploy(migration: string, hash: string): OptPromise<void>;
 };
+
+export type CompileResult = {
+  command: string;
+  params: Record<string, unknown>;
+};
+export type Compiler<TDialect = undefined> = TDialect extends
+  | null
+  | undefined
+  | never
+  ? (ir: IR) => CompileResult
+  : (ir: IR, dialect: TDialect) => CompileResult;
 
 /**
  * Checks if a value is a node.

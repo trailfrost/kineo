@@ -1,17 +1,16 @@
-// @ts-expect-error `process` is a Node.js module
 import process from "node:process";
+import { Neo4jAdapter } from "../src/adapters/neo4j";
 import { defineSchema, field, relation, model } from "kineo/schema";
 import Kineo from "kineo";
-import Neo4jAdapter from "../src/adapters/neo4j";
 
 export const schema = defineSchema({
-  User: model({
+  users: model({
     name: field.string().id(),
     password: field.string().required(),
     posts: relation.to("Post").outgoing("posts").array(),
   }),
 
-  Post: model({
+  posts: model({
     id: field.string().id(),
     title: field.string().required(),
     author: relation.to("User").incoming("posts"),

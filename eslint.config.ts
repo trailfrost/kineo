@@ -10,7 +10,6 @@ export default defineConfig([
     extends: ["js/recommended"],
     languageOptions: { globals: globals.browser },
   },
-  // @ts-expect-error tseslint doesn't support eslint 9.32 yet, and this works fine
   tseslint.configs.recommended,
   {
     rules: {

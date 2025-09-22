@@ -154,6 +154,10 @@ export class FieldDef<
    */
   isRequired: TRequired = false as TRequired;
   /**
+   * If this field is the identifier (or primary key).
+   */
+  isId = false;
+  /**
    * If this field is an array.
    */
   isArray: TArray = false as TArray;
@@ -214,6 +218,15 @@ export class FieldDef<
   optional() {
     this.isRequired = false as TRequired;
     return this as FieldDef<TKind, TDefault, false, TArray>;
+  }
+
+  /**
+   * Makes this field the identifier (or primary key).
+   * @returns `this`.
+   */
+  id() {
+    this.isId = true;
+    return this as FieldDef<TKind, TDefault, true, TArray>;
   }
 
   /**

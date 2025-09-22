@@ -1,3 +1,4 @@
+import { describe, test, expect } from "vitest";
 import {
   field,
   relation,
@@ -6,7 +7,6 @@ import {
   defineSchema,
   defineModel,
 } from "../src/schema";
-import { describe, test, expect } from "vitest";
 
 describe("FieldDef", () => {
   test("initialize with correct kind and optional name", () => {

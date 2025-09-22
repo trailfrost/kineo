@@ -10,11 +10,22 @@
       "default": "./dist/client.js",
       "types": "./dist/client.d.ts"
     },
+    "./adapter": {
+      "default": "./dist/adapter.js",
+      "types": "./dist/adapter.d.ts"
+    },
+    "./model": {
+      "default": "./dist/model.js",
+      "types": "./dist/model.d.ts"
+    },
     "./schema": {
       "default": "./dist/schema.js",
       "types": "./dist/schema.d.ts"
     }
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "vitest tests",
     "format": "prettier --check .",

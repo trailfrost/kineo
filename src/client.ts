@@ -1,25 +1,54 @@
-import { InferSchema, Schema } from "./schema.js";
-import { Model } from "./model.js";
+import type { InferSchema, Schema } from "./schema.js";
+import type { Model } from "./model.js";
+import type { Adapter } from "./adapter.js";
 
-type ModelsForSchema<TSchema extends Schema> = {
-  [Key in keyof TSchema]: Key extends string ? Model : never;
+// Mapped type over a schema that defines model types
+type ModelsForSchema<
+  TSchema extends Schema,
+  TAdapter extends Adapter<Model>,
+> = {
+  [Key in keyof TSchema]: Key extends string
+    ? TAdapter extends Adapter<infer TModel>
+      ? TModel
+      : never
+    : never;
 };
 
-type KineoClient<TSchema extends Schema> = ModelsForSchema<TSchema> & {
+/**
+ * A Kineo client.
+ */
+export type KineoClient<
+  TSchema extends Schema,
+  TAdapter extends Adapter<any>,
+> = ModelsForSchema<TSchema, TAdapter> & {
+  /**
+   * The schema.
+   */
   schema: TSchema;
 };
 
+/**
+ * Infers a schema from a client.
+ */
 export type InferClient<T> =
-  T extends KineoClient<infer TSchema> ? InferSchema<TSchema> : never;
+  T extends KineoClient<infer TSchema, any> ? InferSchema<TSchema> : never;
 
-export function Kineo<T extends Schema>(schema: T): KineoClient<T> {
+/**
+ * Creates a Kineo client.
+ * @param schema The schema.
+ * @returns A Kineo client.
+ */
+export function Kineo<TAdapter extends Adapter<any>, TSchema extends Schema>(
+  adapter: TAdapter,
+  schema: TSchema
+): KineoClient<TSchema, TAdapter> {
   const client: Record<string, Model> = {};
   for (const key in schema) {
-    client[key] = new Model(); // TODO
+    client[key] = new adapter.Model(); // TODO
   }
 
   return {
     ...client,
     schema,
-  } as KineoClient<T>;
+  } as KineoClient<TSchema, TAdapter>;
 }

@@ -8,4 +8,7 @@ export class Model {
 
 export class GraphModel extends Model {
   // TODO
+  graphTest() {
+    console.log("it works too!");
+  }
 }

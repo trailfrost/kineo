@@ -300,7 +300,7 @@ export class Model<S extends Schema, M extends ModelDef> {
   }
 
   async findFirst<O extends QueryOpts<S, M>>(
-    opts: O
+    opts: O,
   ): FindFirstReturn<S, M, O> {
     // TODO
     console.log(opts);
@@ -356,7 +356,7 @@ export class Model<S extends Schema, M extends ModelDef> {
   }
 
   async upsertMany<O extends UpsertOpts<S, M>>(
-    opts: O
+    opts: O,
   ): UpsertManyReturn<S, M, O> {
     // TODO
     console.log(opts);

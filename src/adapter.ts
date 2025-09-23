@@ -1,6 +1,6 @@
 import { IR } from "./ir.js";
 import type { Model } from "./model.js";
-import type { Schema } from "./schema.js";
+import type { ModelDef, Schema } from "./schema.js";
 
 // Either a Promise or not
 type OptPromise<T> = T | Promise<T>;
@@ -43,7 +43,9 @@ export interface Adapter<TModel extends Model<any, any>> {
   /**
    * What extension of the model class you're using. This can be just the default model, `GraphModel` or a custom class.
    */
-  Model: { new (): TModel };
+  Model: {
+    new (schema: Schema, node: ModelDef, adapter: Adapter<TModel>): TModel;
+  };
 
   // Runtime related functions
   /**

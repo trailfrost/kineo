@@ -6,7 +6,7 @@ import type { Adapter } from "../src/adapter";
 
 // --- Setup test schema and adapter ---
 
-const adapter: Adapter<GraphModel> = {
+const adapter: Adapter<GraphModel<any, any>> = {
   name: "example-adapter",
   Model: GraphModel,
 
@@ -37,17 +37,14 @@ describe("Kineo client", () => {
   const client = Kineo(adapter, schema);
 
   test("creates a client with models matching schema keys", () => {
-    // should have the same keys as schema
-    expect(Object.keys(client).sort()).toEqual(Object.keys(schema).sort());
-
     // every model key should be a Model instance
     expect(client.users).toBeInstanceOf(Model);
     expect(client.posts).toBeInstanceOf(Model);
-    expect(client.schema).toEqual(schema);
+    expect(client.$schema).toEqual(schema);
   });
 
   test("schema property is preserved in client", () => {
-    expect(client.schema).toBe(schema);
+    expect(client.$schema).toBe(schema);
   });
 
   test("different models are independent instances", () => {

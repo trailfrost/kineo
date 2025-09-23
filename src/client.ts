@@ -44,11 +44,11 @@ export type InferClient<T> =
  */
 export function Kineo<TAdapter extends Adapter<any>, TSchema extends Schema>(
   adapter: TAdapter,
-  schema: TSchema
+  schema: TSchema,
 ): KineoClient<TSchema, TAdapter> {
   const client: Record<string, Model<any, any>> = {};
   for (const key in schema) {
-    client[key] = new adapter.Model(); // TODO
+    client[key] = new adapter.Model(schema, schema[key], adapter);
   }
 
   return {

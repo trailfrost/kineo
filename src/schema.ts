@@ -2,7 +2,14 @@
  * A schema. Contains model definitions.
  */
 export interface Schema {
-  [model: string]: Record<string, AnyDef>;
+  [model: string]: ModelDef;
+}
+
+/**
+ * A model definition.
+ */
+export interface ModelDef {
+  [key: string]: FieldDef<any, any, any, any> | RelationDef<any, any, any, any>;
 }
 
 /**
@@ -64,7 +71,7 @@ export type InferRelationship<
  * @param TSchema The schema the model comes from.
  */
 export type InferModelDef<
-  TDef extends Record<string, AnyDef>,
+  TDef extends ModelDef,
   TSchema extends Schema = Schema,
 > = {
   [P in keyof TDef]: TDef[P] extends FieldDef<any, any, any, any>
@@ -81,13 +88,6 @@ export type InferModelDef<
 export type InferSchema<TSchema extends Schema> = {
   [M in keyof TSchema]: InferModelDef<TSchema[M], TSchema>;
 };
-
-/**
- * Any field or relationship definition.
- */
-export type AnyDef =
-  | FieldDef<any, any, any, any>
-  | RelationDef<any, any, any, any>;
 
 /**
  * All supported field types.
@@ -513,8 +513,6 @@ export function defineSchema<TSchema extends Schema>(schema: TSchema): TSchema {
  * @param model The object.
  * @returns The same object.
  */
-export function defineModel<TModel extends Record<string, AnyDef>>(
-  model: TModel,
-): TModel {
+export function defineModel<TModel extends ModelDef>(model: TModel): TModel {
   return model;
 }

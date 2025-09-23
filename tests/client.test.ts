@@ -6,7 +6,7 @@ import type { Adapter } from "../src/adapter";
 
 // --- Setup test schema and adapter ---
 
-const adapter: Adapter<Model> = {
+const adapter: Adapter<GraphModel> = {
   name: "example-adapter",
   Model: GraphModel,
 
@@ -35,6 +35,7 @@ const schema = defineSchema({
 
 describe("Kineo client", () => {
   const client = Kineo(adapter, schema);
+
   test("creates a client with models matching schema keys", () => {
     // should have the same keys as schema
     expect(Object.keys(client).sort()).toEqual(Object.keys(schema).sort());

@@ -5,8 +5,8 @@ import type { Adapter } from "./adapter.js";
 // Mapped type over a schema that defines model types
 type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter<any>> = {
   [Key in keyof TSchema]: Key extends string
-    ? TAdapter extends Adapter<infer TModel>
-      ? TModel extends GraphModel<any, any>
+    ? TAdapter extends Adapter<infer TModelCtor>
+      ? InstanceType<TModelCtor> extends GraphModel<any, any>
         ? GraphModel<TSchema, TSchema[Key]>
         : Model<TSchema, TSchema[Key]>
       : never

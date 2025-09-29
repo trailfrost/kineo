@@ -1,6 +1,6 @@
-import type { IR } from "./ir.js";
+import { IR } from "./ir.js";
 import type { Model } from "./model.js";
-import type { Schema } from "./schema.js";
+import type { ModelDef, Schema } from "./schema.js";
 
 // Either a Promise or not
 type OptPromise<T> = T | Promise<T>;
@@ -35,11 +35,17 @@ export type QueryResult = Map<string | number, Record<string, any>>;
  * An adapter. Contains functions necessary to interact with the database of choice.
  * @param TModel The model class extension this adapter uses.
  */
-export interface Adapter<TExtension extends object = object> {
+export interface Adapter<TModel extends Model<any, any>> {
   /**
-   * Extends the `Model` class.
+   * The name of the adapter.
    */
-  extendModel(model: Model<any, any> & TExtension): void;
+  name: string;
+  /**
+   * What extension of the model class you're using. This can be just the default model, `GraphModel` or a custom class.
+   */
+  Model: {
+    new (schema: Schema, node: ModelDef, adapter: Adapter<TModel>): TModel;
+  };
 
   // Runtime related functions
   /**

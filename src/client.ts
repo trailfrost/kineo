@@ -1,12 +1,14 @@
 import type { InferSchema, Schema } from "./schema.js";
-import type { Model } from "./model.js";
+import type { Model, GraphModel } from "./model.js";
 import type { Adapter } from "./adapter.js";
 
 // Mapped type over a schema that defines model types
 type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter<any>> = {
   [Key in keyof TSchema]: Key extends string
     ? TAdapter extends Adapter<infer TModel>
-      ? TModel
+      ? TModel extends GraphModel<any, any>
+        ? GraphModel<TSchema, TSchema[Key]>
+        : Model<TSchema, TSchema[Key]>
       : never
     : never;
 };
@@ -44,7 +46,7 @@ export type InferClient<T> =
  */
 export function Kineo<TAdapter extends Adapter<any>, TSchema extends Schema>(
   adapter: TAdapter,
-  schema: TSchema,
+  schema: TSchema
 ): KineoClient<TSchema, TAdapter> {
   const client: Record<string, Model<any, any>> = {};
   for (const key in schema) {

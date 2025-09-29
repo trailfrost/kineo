@@ -35,17 +35,19 @@ export type QueryResult = Map<string | number, Record<string, any>>;
  * An adapter. Contains functions necessary to interact with the database of choice.
  * @param TModel The model class extension this adapter uses.
  */
-export interface Adapter<TModel extends Model<any, any>> {
+export interface Adapter<
+  TModelCtor extends {
+    new (
+      schema: Schema,
+      node: ModelDef,
+      adapter: Adapter<any>
+    ): Model<any, any>;
+  },
+> {
   /**
-   * The name of the adapter.
+   * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
-  name: string;
-  /**
-   * What extension of the model class you're using. This can be just the default model, `GraphModel` or a custom class.
-   */
-  Model: {
-    new (schema: Schema, node: ModelDef, adapter: Adapter<TModel>): TModel;
-  };
+  Model: TModelCtor;
 
   // Runtime related functions
   /**

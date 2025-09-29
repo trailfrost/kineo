@@ -1,13 +1,14 @@
 import { describe, test, expect } from "vitest";
 import { defineModel, defineSchema, field, relation } from "../src/schema";
 import { Kineo, KineoClient, type InferClient } from "../src/client";
-import { graphModel, Model, type GraphModel } from "../src/model";
+import { GraphModel, Model } from "../src/model";
 import type { Adapter } from "../src/adapter";
 
 // --- Setup test schema and adapter ---
 
 const adapter: Adapter<GraphModel<any, any>> = {
-  extendModel: graphModel,
+  name: "example-adapter",
+  Model: GraphModel,
 
   close() {},
   compile() {

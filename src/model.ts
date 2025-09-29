@@ -448,7 +448,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async findFirst<O extends QueryOpts<S, M>>(
-    opts: O
+    opts: O,
   ): FindFirstReturn<S, M, O> {
     // TODO
     console.log(opts);
@@ -549,7 +549,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that were upserted.
    */
   async upsertMany<O extends UpsertOpts<S, M>>(
-    opts: O
+    opts: O,
   ): UpsertManyReturn<S, M, O> {
     // TODO
     console.log(opts);
@@ -562,106 +562,95 @@ export class Model<S extends Schema, M extends ModelDef> {
  * @param S The schema.
  * @param M The model definition.
  */
-export interface GraphModel<S extends Schema, M extends ModelDef> {
+export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
+  S,
+  M
+> {
   /**
    * Finds a path that matches a filter.
    * @param opts Path options.
    * @returns The path the matches the filter.
    */
-  findPath(opts: PathOpts<S, M>): PathReturn<S, M>;
+  async findPath(opts: PathOpts<S, M>): PathReturn<S, M> {
+    // TODO
+    console.log(opts);
+    return {
+      edges: [],
+      nodes: [],
+    };
+  }
+
   /**
    * Finds the shortest path to a node.
    * @param opts Path options.
    * @returns The shortest path.
    */
-  findShortestPath(opts: PathOpts<S, M>): PathReturn<S, M>;
+  async findShortestPath(opts: PathOpts<S, M>): PathReturn<S, M> {
+    // TODO
+    console.log(opts);
+    return {
+      edges: [],
+      nodes: [],
+    };
+  }
+
   /**
    * Finds all paths that match a filter.
    * @param opts Path options.
    * @returns The paths that match the filter.
    */
-  findAllPaths(opts: PathOpts<S, M>): PathReturn<S, M>;
+  async findAllPaths(opts: PathOpts<S, M>): PathReturn<S, M> {
+    // TODO
+    console.log(opts);
+    return {
+      edges: [],
+      nodes: [],
+    };
+  }
+
   /**
    * Finds neighbor nodes, or nodes that are connected directly.
    * @param opts Query options.
    * @returns The neighbor nodes.
    */
-  findNeighbors(opts: QueryOpts<S, M>): NeighborsReturn<S, M>;
+  async findNeighbors(opts: QueryOpts<S, M>): NeighborsReturn<S, M> {
+    // TODO
+    console.log(opts);
+    return [];
+  }
+
   /**
    * Connects a node to another node.
    * @param opts Connect options.
    * @returns If the connection was successful or not.
    */
-  connect(opts: ConnectOpts<S, M>): ConnectReturn;
+  async connect(opts: ConnectOpts<S, M>): ConnectReturn {
+    // TODO
+    console.log(opts);
+    return { success: true };
+  }
+
   /**
    * Disconnects a node from another node.
    * @param opts Connect options.
    * @returns If the connection was successful or not.
    */
-  disconnect(opts: ConnectOpts<S, M>): ConnectReturn;
+  async disconnect(opts: ConnectOpts<S, M>): ConnectReturn {
+    // TODO
+    console.log(opts);
+    return { success: true };
+  }
+
   /**
    * Traverses a graph.
    * @param opts Traverse options.
    * @returns The paths it passed through.
    */
-  traverse(opts: TraverseOpts<S, M>): TraverseReturn<S, M>;
-}
-
-/**
- * Extends a model into a graph database model.
- * @param model The model to extend.
- */
-export function graphModel(model: Model<any, any> & GraphModel<any, any>) {
-  model.findPath = async (opts) => {
-    // TODO
-    console.log(opts);
-    return {
-      edges: [],
-      nodes: [],
-    };
-  };
-
-  model.findShortestPath = async (opts) => {
-    // TODO
-    console.log(opts);
-    return {
-      edges: [],
-      nodes: [],
-    };
-  };
-
-  model.findAllPaths = async (opts) => {
-    // TODO
-    console.log(opts);
-    return {
-      edges: [],
-      nodes: [],
-    };
-  };
-
-  model.findNeighbors = async (opts) => {
-    // TODO
-    console.log(opts);
-    return [];
-  };
-
-  model.connect = async (opts) => {
-    // TODO
-    console.log(opts);
-    return { success: true };
-  };
-
-  model.disconnect = async (opts) => {
-    // TODO
-    console.log(opts);
-    return { success: true };
-  };
-
-  model.traverse = async (opts) => {
+  async traverse(opts: TraverseOpts<S, M>): TraverseReturn<S, M> {
     // TODO
     console.log(opts);
     return {
       path: [],
     };
-  };
+  }
 }

@@ -1,6 +1,6 @@
-import { IR } from "./ir.js";
-import type { Model } from "./model.js";
-import type { ModelDef, Schema } from "./schema.js";
+import { IR } from "./ir";
+import type { Model } from "./model";
+import type { ModelDef, Schema } from "./schema";
 
 // Either a Promise or not
 type OptPromise<T> = T | Promise<T>;

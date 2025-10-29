@@ -1,5 +1,5 @@
-import { KineoClient } from "@/client.js";
-import { Schema } from "@/schema.js";
+import { KineoClient } from "@/client";
+import { Schema } from "@/schema";
 
 export interface FileExport {
   file: string;

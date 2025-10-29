@@ -1,6 +1,6 @@
-import type { InferSchema, Schema } from "./schema.js";
-import type { Model, GraphModel } from "./model.js";
-import type { Adapter } from "./adapter.js";
+import type { InferSchema, Schema } from "./schema";
+import type { Model, GraphModel } from "./model";
+import type { Adapter } from "./adapter";
 
 // Mapped type over a schema that defines model types
 type ModelsForSchema<TSchema extends Schema, TAdapter extends Adapter<any>> = {

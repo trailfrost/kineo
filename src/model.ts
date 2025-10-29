@@ -1,5 +1,5 @@
-import type { Adapter } from "./adapter.js";
-import type { Direction, InferModelDef, ModelDef, Schema } from "./schema.js";
+import type { Adapter } from "./adapter";
+import type { Direction, InferModelDef, ModelDef, Schema } from "./schema";
 
 // ---------- Generic Utility Types ---------- //
 
@@ -448,7 +448,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async findFirst<O extends QueryOpts<S, M>>(
-    opts: O,
+    opts: O
   ): FindFirstReturn<S, M, O> {
     // TODO
     console.log(opts);
@@ -549,7 +549,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that were upserted.
    */
   async upsertMany<O extends UpsertOpts<S, M>>(
-    opts: O,
+    opts: O
   ): UpsertManyReturn<S, M, O> {
     // TODO
     console.log(opts);

@@ -6,12 +6,17 @@ export interface FileExport {
   export: string;
 }
 
+export type ReferenceFn<T> = () => Promise<T> | T;
+export type Reference<T> =
+  | string
+  | FileExport
+  | T
+  | Promise<T>
+  | ReferenceFn<T>;
+
 export interface KineoConfig {
-  schema: string | FileExport | (() => Schema | Promise<Schema>);
-  client:
-    | string
-    | FileExport
-    | (() => KineoClient<any, any> | Promise<KineoClient<any, any>>);
+  schema: Reference<Schema>;
+  client: Reference<KineoClient<any, any>>;
   migrations: string;
 }
 

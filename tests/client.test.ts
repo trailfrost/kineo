@@ -7,7 +7,6 @@ import type { Adapter } from "../src/adapter";
 // --- Setup test schema and adapter ---
 
 const adapter: Adapter<typeof GraphModel> = {
-  name: "example-adapter",
   Model: GraphModel,
 
   close() {},

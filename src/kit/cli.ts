@@ -118,101 +118,102 @@ const program = new Command("kineo")
     }
   );
 
-program.subCommand("init", (c) =>
-  c
-    .description("Creates configuration for Kineo.")
-    .input({
-      clientExport: i.option("string", "--client-export", "-x").optional(),
-      clientFile: i.option("string", "--client-file", "-c").optional(),
-      schemaExport: i.option("string", "--schema-export", "-e").optional(),
-      schemaFile: i.option("string", "--schema-file", "-s").optional(),
-      migrations: i.option("string", "--migrations-dir", "-m").optional(),
-      style: i.option("string", "--style", "-t").optional(),
-    })
-    .action(
-      async ({
-        clientExport,
-        clientFile,
-        schemaExport,
-        schemaFile,
-        migrations,
-        style,
-      }) => {
-        if (!clientFile) {
-          clientFile = await prompt.text({
-            message: "Where is your client located?",
-            default: "src/db/index.ts",
-            placeholder: "src/db/index.ts",
-          });
-        }
+program
+  .subCommand("init", (c) =>
+    c
+      .description("Creates configuration for Kineo.")
+      .input({
+        clientExport: i.option("string", "--client-export", "-x").optional(),
+        clientFile: i.option("string", "--client-file", "-c").optional(),
+        schemaExport: i.option("string", "--schema-export", "-e").optional(),
+        schemaFile: i.option("string", "--schema-file", "-s").optional(),
+        migrations: i.option("string", "--migrations-dir", "-m").optional(),
+        style: i.option("string", "--style", "-t").optional(),
+      })
+      .action(
+        async ({
+          clientExport,
+          clientFile,
+          schemaExport,
+          schemaFile,
+          migrations,
+          style,
+        }) => {
+          if (!clientFile) {
+            clientFile = await prompt.text({
+              message: "Where is your client located?",
+              default: "src/db/index.ts",
+              placeholder: "src/db/index.ts",
+            });
+          }
 
-        if (!clientExport) {
-          clientExport = await prompt.text({
-            message: "What is the name of the export of your client?",
-            default: "client",
-            placeholder: "client",
-          });
-        }
+          if (!clientExport) {
+            clientExport = await prompt.text({
+              message: "What is the name of the export of your client?",
+              default: "client",
+              placeholder: "client",
+            });
+          }
 
-        if (!schemaFile) {
-          schemaFile = await prompt.text({
-            message: "Where is your schema located?",
-            default: "src/db/index.ts",
-            placeholder: "src/db/index.ts",
-          });
-        }
+          if (!schemaFile) {
+            schemaFile = await prompt.text({
+              message: "Where is your schema located?",
+              default: "src/db/index.ts",
+              placeholder: "src/db/index.ts",
+            });
+          }
 
-        if (!schemaExport) {
-          schemaExport = await prompt.text({
-            message: "What is the name of the export of your schema?",
-            default: "schema",
-            placeholder: "schema",
-          });
-        }
+          if (!schemaExport) {
+            schemaExport = await prompt.text({
+              message: "What is the name of the export of your schema?",
+              default: "schema",
+              placeholder: "schema",
+            });
+          }
 
-        if (!migrations) {
-          migrations = await prompt.text({
-            message: "Where do you want your migrations to be stored?",
-            default: "migrations",
-            placeholder: "migrations",
-          });
-        }
+          if (!migrations) {
+            migrations = await prompt.text({
+              message: "Where do you want your migrations to be stored?",
+              default: "migrations",
+              placeholder: "migrations",
+            });
+          }
 
-        if (!style) {
-          style = await prompt.select({
-            message:
-              "How do you want your configuration file to be structured?",
-            options: [
-              {
-                label: "Dynamic imports",
-                value: "dynamic",
-              },
-              {
-                label: "Direct imports",
-                value: "direct",
-              },
-              {
-                label: "File paths",
-                value: "paths",
-              },
-              {
-                label: "CommonJS",
-                value: "commonjs",
-              },
-              {
-                label: "CommonJS file paths",
-                value: "commonjs-paths",
-              },
-            ],
-          });
-        }
+          if (!style) {
+            style = await prompt.select({
+              message:
+                "How do you want your configuration file to be structured?",
+              options: [
+                {
+                  label: "Dynamic imports",
+                  value: "dynamic",
+                },
+                {
+                  label: "Direct imports",
+                  value: "direct",
+                },
+                {
+                  label: "File paths",
+                  value: "paths",
+                },
+                {
+                  label: "CommonJS",
+                  value: "commonjs",
+                },
+                {
+                  label: "CommonJS file paths",
+                  value: "commonjs-paths",
+                },
+              ],
+            });
+          }
 
-        await log.info("\nGenerating configuration file.");
+          await log.info("\nGenerating configuration file.");
 
-        let contents: string;
-        let fileName = "kineo.config.ts";
-        if (style === "direct") {
-          contents = `import { defineConfig } from "kineo/kit";
+          let contents: string;
+          let fileName = "kineo.config.ts";
+          if (style === "direct") {
+            contents = `import { defineConfig } from "kineo/kit";
 import ${schemaExport === "default" ? "schema" : `{ ${schemaExport} as schema }`} from ${importPath(schemaFile)};
 import ${clientExport === "default" ? "client" : `{ ${clientExport} as client }`} from ${importPath(clientFile)};
 
@@ -222,8 +223,8 @@ export default defineConfig({
   migrations: ${importPath(migrations)},
 });
 `;
-        } else if (style === "dynamic") {
-          contents = `import { defineConfig } from "kineo/kit";
+          } else if (style === "dynamic") {
+            contents = `import { defineConfig } from "kineo/kit";
 
 export default defineConfig({
   schema: import(${importPath(schemaFile)}).then((mod) => mod["${schemaExport}"]),
@@ -231,8 +232,8 @@ export default defineConfig({
   migrations: ${importPath(migrations)},
 });
 `;
-        } else if (style === "paths") {
-          contents = `import { defineConfig } from "kineo/kit";
+          } else if (style === "paths") {
+            contents = `import { defineConfig } from "kineo/kit";
 
 export default defineConfig({
   schema: { file: ${importPath(schemaFile)}, export: "${schemaExport}" },
@@ -240,8 +241,8 @@ export default defineConfig({
   migrations: ${importPath(migrations)},
 });
 `;
-        } else if (style === "commonjs") {
-          contents = `const { defineConfig } = require("kineo/kit");
+          } else if (style === "commonjs") {
+            contents = `const { defineConfig } = require("kineo/kit");
 
 module.exports = defineConfig({
   schema: require(${importPath(schemaFile)})["${schemaExport}"],
@@ -249,9 +250,9 @@ module.exports = defineConfig({
   migrations: ${importPath(migrations)}
 });
 `;
-          fileName = "kineo.config.cts";
-        } else {
-          contents = `const { defineConfig } = require("kineo/kit");
+            fileName = "kineo.config.cts";
+          } else {
+            contents = `const { defineConfig } = require("kineo/kit");
 
 module.exports = defineConfig({
   schema: { file: ${importPath(schemaFile)}, export: "${schemaExport}" },
@@ -259,19 +260,78 @@ module.exports = defineConfig({
   migrations: ${importPath(migrations)},
 });
 `;
-          fileName = "kineo.config.cts";
+            fileName = "kineo.config.cts";
+          }
+
+          await log.trace("writing", contents, "to", fileName);
+
+          await fs.writeFile(path.join(CWD, fileName), contents, "utf-8");
+
+          await log.info(
+            "Configuration file generated! You can now start using Kineo migrations."
+          );
         }
-
-        await log.trace("writing", contents, "to", fileName);
-
-        await fs.writeFile(path.join(CWD, fileName), contents, "utf-8");
-
-        await log.info(
-          "Configuration file generated! You can now start using Kineo migrations."
-        );
-      }
-    )
-);
+      )
+  )
+  .subCommand("push", (c) =>
+    c
+      .description(
+        "Pushes the current schema to the database, warning you for breaking changes."
+      )
+      .input({
+        force: i.option("boolean", "-f", "--force").optional(),
+      })
+      .action(async ({ force }) => {
+        // TODO
+        await log.fatal("Not implemented", force);
+      })
+  )
+  .subCommand("pull", (c) =>
+    c
+      .description(
+        "Pulls the current schema from the database. This only works for file path style imports in the configuration."
+      )
+      .input({
+        force: i.option("boolean", "-f", "--force").optional(),
+      })
+      .action(async ({ force }) => {
+        // TODO
+        await log.fatal("Not implemented", force);
+      })
+  )
+  .subCommand(["generate", "migrate"], (c) =>
+    c
+      .description(
+        "Generates migrations based on the current database state and the current schema."
+      )
+      .action(async () => {
+        // TODO
+        await log.fatal("Not implemented");
+      })
+  )
+  .subCommand("status", (c) =>
+    c.description("Gets status for existing migrations.").action(async () => {
+      // TODO
+      await log.fatal("Not implemented");
+    })
+  )
+  .subCommand("create", (c) =>
+    c
+      .description("Creates a new migration file.")
+      .input({
+        name: i.option("string", "-n", "--name"),
+      })
+      .action(async ({ name }) => {
+        // TODO
+        await log.fatal("Not implemented", name);
+      })
+  )
+  .subCommand("deploy", (c) =>
+    c.description("Deploys existing migrations.").action(async () => {
+      // TODO
+      await log.fatal("Not implemented");
+    })
+  );
 
 void program.run();
 

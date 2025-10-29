@@ -1,6 +1,6 @@
 import path from "node:path";
 import process from "node:process";
-import { existsSync, promises as fs } from "node:fs";
+import fs from "node:fs/promises";
 
 import { Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
@@ -331,6 +331,17 @@ module.exports = defineConfig({
       // TODO
       await log.fatal("Not implemented");
     })
+  )
+  .subCommand("rollback", (c) =>
+    c
+      .description("Rolls back a certain number of migrations.")
+      .input({
+        n: i.positional("number"),
+      })
+      .action(async ({ n }) => {
+        // TODO
+        await log.fatal("Not implemented", n);
+      })
   );
 
 void program.run();

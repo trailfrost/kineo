@@ -6,7 +6,7 @@ import {
   RelationDef,
   defineSchema,
   defineModel,
-} from "../src/schema";
+} from "@/schema";
 
 describe("FieldDef", () => {
   test("initialize with correct kind and optional name", () => {

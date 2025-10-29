@@ -6,6 +6,9 @@
   "main": "./dist/client.js",
   "types": "./dist/client.d.ts",
   "bin": "./dist/kit/cli.js",
+  "engines": {
+    "node": ">= 20.5"
+  },
   "exports": {
     "./client": {
       "default": "./dist/client.js",
@@ -59,8 +62,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.16.1",
   "dependencies": {
-    "commander": "^14.0.1",
-    "inquirer": "^12.9.6",
+    "convoker": "^0.3.2",
     "jiti": "^2.5.1",
     "neo4j-driver": "^5.28.2"
   },

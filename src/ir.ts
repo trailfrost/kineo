@@ -252,6 +252,7 @@ export function compileToIR(modelName: string, op: string, opts: any): IR {
       stmt = compileCountStatement(modelName, opts);
       break;
     case "create":
+    case "createMany":
       stmt = compileCreateStatement(modelName, opts);
       break;
     case "upsert":

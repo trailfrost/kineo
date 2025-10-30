@@ -1,12 +1,12 @@
 import { describe, test, expect } from "vitest";
 import { defineModel, defineSchema, field, relation } from "@/schema";
-import { Kineo, KineoClient, type InferClient } from "@/client";
+import { Kineo, type InferClient } from "@/client";
 import { GraphModel, Model } from "@/model";
 import type { Adapter } from "@/adapter";
 
 // --- Setup test schema and adapter ---
 
-const adapter: Adapter<typeof GraphModel> = {
+const adapter: Adapter<typeof GraphModel, any> = {
   Model: GraphModel,
 
   close() {},
@@ -14,7 +14,10 @@ const adapter: Adapter<typeof GraphModel> = {
     return { command: "", params: {} };
   },
   exec() {
-    return new Map();
+    return {
+      rows: [],
+      rowCount: 0,
+    };
   },
 };
 
@@ -52,7 +55,7 @@ describe("Kineo client", () => {
 
   test("InferClient type inference works (compile-time)", () => {
     // purely type-level, but we can runtime-check shape loosely
-    type ClientType = InferClient<KineoClient<typeof schema, typeof adapter>>;
+    type ClientType = InferClient<Kineo<typeof schema, typeof adapter>>;
 
     // runtime check: keys should exist
     const keys: (keyof ClientType)[] = ["users", "posts"];

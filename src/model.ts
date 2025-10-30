@@ -1,5 +1,6 @@
 import type { Adapter } from "./adapter";
 import type { Direction, InferModelDef, ModelDef, Schema } from "./schema";
+import * as ir from "@/ir";
 
 // ---------- Generic Utility Types ---------- //
 
@@ -418,28 +419,30 @@ export type TraverseReturn<S extends Schema, M extends ModelDef> = Promise<{
 export class Model<S extends Schema, M extends ModelDef> {
   // ? Not sure if these will be necessary
   /**
-   * The schema.
+   * The name of the model.
    */
-  private $schema: S;
-  /**
-   * The definition.
-   */
-  private $def: M;
+  protected $name: string;
   /**
    * The adapter.
    */
-  private $adapter: Adapter<any>;
+  protected $adapter: Adapter<any, any>;
 
   /**
    * Creates a new model. This is usually done by Kineo -- it is not recommended to create a model manually like this.
-   * @param schema The schema.
-   * @param node The model definition.
+   * @param name The name of the model.
    * @param adapter The adapter.
    */
-  constructor(schema: S, node: M, adapter: Adapter<any>) {
-    this.$schema = schema;
-    this.$def = node;
+  constructor(name: string, adapter: Adapter<any, any>) {
+    this.$name = name;
     this.$adapter = adapter;
+  }
+
+  protected async $exec(opts: any, op: string) {
+    const tree = ir.compileToIR(this.$name, op, opts);
+    const compiled = await this.$adapter.compile(tree);
+    const result = await this.$adapter.exec(compiled);
+
+    return result;
   }
 
   /**
@@ -450,9 +453,8 @@ export class Model<S extends Schema, M extends ModelDef> {
   async findFirst<O extends QueryOpts<S, M>>(
     opts: O
   ): FindFirstReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return {} as any;
+    const { rows } = await this.$exec(opts, "findFirst");
+    return (rows[0] ?? null) as any;
   }
 
   /**
@@ -461,9 +463,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that match the filter.
    */
   async findMany<O extends QueryOpts<S, M>>(opts: O): FindManyReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return [];
+    const { rows } = await this.$exec(opts, "findMany");
+    return rows as any;
   }
 
   /**
@@ -472,9 +473,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async count<O extends QueryOpts<S, M>>(opts: O): CountReturn {
-    // TODO
-    console.log(opts);
-    return 0;
+    const { rowCount } = await this.$exec(opts, "count");
+    return rowCount;
   }
 
   /**
@@ -483,9 +483,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The just created element.
    */
   async create<O extends CreateOpts<S, M>>(opts: O): CreateReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return {} as any;
+    const { rows } = await this.$exec(opts, "create");
+    return (rows[0] ?? null) as any;
   }
 
   /**
@@ -494,9 +493,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was updated.
    */
   async update<O extends UpdateOpts<S, M>>(opts: O): UpdateReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return {} as any;
+    const { rows } = await this.$exec(opts, "update");
+    return (rows[0] ?? null) as any;
   }
 
   /**
@@ -505,9 +503,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were updated.
    */
   async updateMany<O extends UpdateOpts<S, M>>(opts: O): UpdateManyReturn {
-    // TODO
-    console.log(opts);
-    return { count: 0 };
+    const { rows } = await this.$exec(opts, "updateMany");
+    return rows as any;
   }
 
   /**
@@ -516,9 +513,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was deleted.
    */
   async delete<O extends DeleteOpts<S, M>>(opts: O): DeleteReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return {} as any;
+    const { rows } = await this.$exec(opts, "delete");
+    return (rows[0] ?? null) as any;
   }
 
   /**
@@ -527,9 +523,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were deleted.
    */
   async deleteMany<O extends DeleteOpts<S, M>>(opts: O): DeleteManyReturn {
-    // TODO
-    console.log(opts);
-    return { count: 0 };
+    const { rows } = await this.$exec(opts, "deleteMany");
+    return rows as any;
   }
 
   /**
@@ -538,9 +533,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was upserted.
    */
   async upsert<O extends UpsertOpts<S, M>>(opts: O): UpsertReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return {} as any;
+    const { rows } = await this.$exec(opts, "upsert");
+    return (rows[0] ?? null) as any;
   }
 
   /**
@@ -551,9 +545,8 @@ export class Model<S extends Schema, M extends ModelDef> {
   async upsertMany<O extends UpsertOpts<S, M>>(
     opts: O
   ): UpsertManyReturn<S, M, O> {
-    // TODO
-    console.log(opts);
-    return [];
+    const { rows } = await this.$exec(opts, "upsertMany");
+    return rows as any;
   }
 }
 
@@ -566,6 +559,22 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   S,
   M
 > {
+  protected async $exec(opts: any, op: string) {
+    switch (op) {
+      case "findPath":
+      case "findShortestPath":
+      case "findAllPaths":
+        break; // TODO
+      case "findNeighbors":
+        break; // TODO
+      case "connect":
+      case "disconnect":
+        break; // TODO
+    }
+
+    return super.$exec(opts, op);
+  }
+
   /**
    * Finds a path that matches a filter.
    * @param opts Path options.

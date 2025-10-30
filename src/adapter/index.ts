@@ -1,6 +1,6 @@
-import { IR } from "./ir";
-import type { Model } from "./model";
-import type { ModelDef, Schema } from "./schema";
+import type { IR } from "@/ir";
+import type { Model } from "@/model";
+import type { Schema } from "@/schema";
 
 // Either a Promise or not
 type OptPromise<T> = T | Promise<T>;
@@ -14,22 +14,19 @@ export interface CompileResult {
 }
 
 /**
- * Context passed into compilers.
- */
-export interface CompilerContext {
-  ir: IR;
-  preset: any;
-}
-
-/**
  * A compiler.
  */
-export type Compiler = (ctx: CompilerContext) => CompileResult;
+export type Compiler = (ir: IR) => CompileResult;
 
 /**
- * The result of a query.
+ * Result of executing a query.
  */
-export type QueryResult = Map<string | number, Record<string, any>>;
+export interface ExecResult<T = any> {
+  rows: Record<string, any>[];
+  rowCount: number;
+  summary?: T;
+  raw?: unknown;
+}
 
 /**
  * An adapter. Contains functions necessary to interact with the database of choice.
@@ -37,12 +34,9 @@ export type QueryResult = Map<string | number, Record<string, any>>;
  */
 export interface Adapter<
   TModelCtor extends {
-    new (
-      schema: Schema,
-      node: ModelDef,
-      adapter: Adapter<any>
-    ): Model<any, any>;
+    new (name: string, adapter: Adapter<any, any>): Model<any, any>;
   },
+  Summary = any,
 > {
   /**
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
@@ -53,12 +47,12 @@ export interface Adapter<
   /**
    * Compiles an intermediate representation into a query language.
    */
-  compile(ctx: CompilerContext): OptPromise<CompileResult>;
+  compile(ir: IR): OptPromise<CompileResult>;
   /**
    * Runs a compilation result against the database.
    * @param result The compile result.
    */
-  exec(result: CompileResult): OptPromise<QueryResult>;
+  exec(result: CompileResult): OptPromise<ExecResult<Summary>>;
   /**
    * Closes the adapter.
    */

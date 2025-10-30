@@ -1,5 +1,5 @@
-import { KineoClient } from "@/client";
-import { Schema } from "@/schema";
+import type { Kineo } from "@/client";
+import type { Schema } from "@/schema";
 
 export interface FileExport {
   file: string;
@@ -16,7 +16,7 @@ export type Reference<T> =
 
 export interface KineoConfig {
   schema: Reference<Schema>;
-  client: Reference<KineoClient<any, any>>;
+  client: Reference<Kineo<any, any>>;
   migrations: string;
 }
 

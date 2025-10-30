@@ -15,8 +15,12 @@
       "types": "./dist/client.d.ts"
     },
     "./adapter": {
-      "default": "./dist/adapter.js",
-      "types": "./dist/adapter.d.ts"
+      "default": "./dist/adapter/index.js",
+      "types": "./dist/adapter/index.d.ts"
+    },
+    "./adapter/neo4j": {
+      "default": "./dist/adapter/neo4j.js",
+      "types": "./dist/adapter/neo4j.d.ts"
     },
     "./ir": {
       "default": "./dist/ir.js",
@@ -60,11 +64,13 @@
   ],
   "author": "trailfrost",
   "license": "MIT",
-  "packageManager": "pnpm@10.16.1",
+  "packageManager": "pnpm@10.20.0",
   "dependencies": {
     "convoker": "^0.3.2",
-    "jiti": "^2.5.1",
-    "neo4j-driver": "^5.28.2"
+    "jiti": "^2.5.1"
+  },
+  "optionalDependencies": {
+    "neo4j-driver": "^6.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
@@ -75,6 +81,6 @@
     "tsc-alias": "^1.8.16",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.0",
-    "vitest": "^3.2.4"
+    "vitest": "^4.0.5"
   }
 }

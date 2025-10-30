@@ -11,7 +11,7 @@ import type {
   Reference,
   ReferenceFn,
 } from "./index.js";
-import type { KineoClient } from "@/client.js";
+import type { Kineo } from "@/client.js";
 import type { Schema } from "@/schema.js";
 
 const CONFIG_FILES = [
@@ -28,7 +28,7 @@ const jiti = createJiti(CWD);
 interface Config {
   schema: Schema;
   schemaMod?: FileExport;
-  client: KineoClient<any, any>;
+  client: Kineo<any, any>;
   clientMod?: FileExport;
   migrations: string;
 }
@@ -97,7 +97,7 @@ const program = new Command("kineo")
 
         const mod = (await jiti.import(config!.clientMod.file)) as Record<
           string,
-          KineoClient<any, any>
+          Kineo<any, any>
         >;
         config!.client = mod[config!.clientMod.export];
       } else {

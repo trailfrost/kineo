@@ -11,36 +11,36 @@
   },
   "exports": {
     "./client": {
-      "default": "./dist/client.js",
-      "types": "./dist/client.d.ts"
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
     },
     "./adapter": {
-      "default": "./dist/adapter/index.js",
-      "types": "./dist/adapter/index.d.ts"
+      "types": "./dist/adapter/index.d.ts",
+      "default": "./dist/adapter/index.js"
     },
     "./adapter/neo4j": {
-      "default": "./dist/adapter/neo4j.js",
-      "types": "./dist/adapter/neo4j.d.ts"
+      "types": "./dist/adapter/neo4j.d.ts",
+      "default": "./dist/adapter/neo4j.js"
     },
     "./ir": {
-      "default": "./dist/ir.js",
-      "types": "./dist/ir.d.ts"
+      "types": "./dist/ir.d.ts",
+      "default": "./dist/ir.js"
     },
     "./model": {
-      "default": "./dist/model.js",
-      "types": "./dist/model.d.ts"
+      "types": "./dist/model.d.ts",
+      "default": "./dist/model.js"
     },
     "./schema": {
-      "default": "./dist/schema.js",
-      "types": "./dist/schema.d.ts"
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
     },
     "./kit": {
-      "default": "./dist/kit/index.js",
-      "types": "./dist/kit/index.d.ts"
+      "types": "./dist/kit/index.d.ts",
+      "default": "./dist/kit/index.js"
     },
     "./kit/cli": {
-      "default": "./dist/kit/cli.js",
-      "types": "./dist/kit/cli.d.ts"
+      "types": "./dist/kit/cli.d.ts",
+      "default": "./dist/kit/cli.js"
     }
   },
   "files": [

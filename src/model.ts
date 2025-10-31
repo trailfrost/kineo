@@ -633,7 +633,6 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @param opts Traverse options.
    * @returns The paths it passed through.
    */
-
   async traverse(opts: TraverseOpts<S, M>): TraverseReturn<S, M> {
     const result = await this.$exec(opts, "traverse");
 

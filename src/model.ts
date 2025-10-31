@@ -453,7 +453,7 @@ export class Model<S extends Schema, M extends ModelDef> {
   async findFirst<O extends QueryOpts<S, M>>(
     opts: O
   ): FindFirstReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "findFirst");
+    const { entries: rows } = await this.$exec(opts, "findFirst");
     return (rows[0] ?? null) as any;
   }
 
@@ -463,7 +463,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that match the filter.
    */
   async findMany<O extends QueryOpts<S, M>>(opts: O): FindManyReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "findMany");
+    const { entries: rows } = await this.$exec(opts, "findMany");
     return rows as any;
   }
 
@@ -473,7 +473,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async count<O extends QueryOpts<S, M>>(opts: O): CountReturn {
-    const { rowCount } = await this.$exec(opts, "count");
+    const { entryCount: rowCount } = await this.$exec(opts, "count");
     return rowCount;
   }
 
@@ -483,7 +483,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The just created element.
    */
   async create<O extends CreateOpts<S, M>>(opts: O): CreateReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "create");
+    const { entries: rows } = await this.$exec(opts, "create");
     return (rows[0] ?? null) as any;
   }
 
@@ -493,7 +493,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was updated.
    */
   async update<O extends UpdateOpts<S, M>>(opts: O): UpdateReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "update");
+    const { entries: rows } = await this.$exec(opts, "update");
     return (rows[0] ?? null) as any;
   }
 
@@ -503,7 +503,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were updated.
    */
   async updateMany<O extends UpdateOpts<S, M>>(opts: O): UpdateManyReturn {
-    const { rows } = await this.$exec(opts, "updateMany");
+    const { entries: rows } = await this.$exec(opts, "updateMany");
     return rows as any;
   }
 
@@ -513,7 +513,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was deleted.
    */
   async delete<O extends DeleteOpts<S, M>>(opts: O): DeleteReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "delete");
+    const { entries: rows } = await this.$exec(opts, "delete");
     return (rows[0] ?? null) as any;
   }
 
@@ -523,7 +523,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were deleted.
    */
   async deleteMany<O extends DeleteOpts<S, M>>(opts: O): DeleteManyReturn {
-    const { rows } = await this.$exec(opts, "deleteMany");
+    const { entries: rows } = await this.$exec(opts, "deleteMany");
     return rows as any;
   }
 
@@ -533,7 +533,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was upserted.
    */
   async upsert<O extends UpsertOpts<S, M>>(opts: O): UpsertReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "upsert");
+    const { entries: rows } = await this.$exec(opts, "upsert");
     return (rows[0] ?? null) as any;
   }
 
@@ -545,7 +545,7 @@ export class Model<S extends Schema, M extends ModelDef> {
   async upsertMany<O extends UpsertOpts<S, M>>(
     opts: O
   ): UpsertManyReturn<S, M, O> {
-    const { rows } = await this.$exec(opts, "upsertMany");
+    const { entries: rows } = await this.$exec(opts, "upsertMany");
     return rows as any;
   }
 }
@@ -559,33 +559,16 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   S,
   M
 > {
-  protected async $exec(opts: any, op: string) {
-    switch (op) {
-      case "findPath":
-      case "findShortestPath":
-      case "findAllPaths":
-        break; // TODO
-      case "findNeighbors":
-        break; // TODO
-      case "connect":
-      case "disconnect":
-        break; // TODO
-    }
-
-    return super.$exec(opts, op);
-  }
-
   /**
    * Finds a path that matches a filter.
    * @param opts Path options.
    * @returns The path the matches the filter.
    */
   async findPath(opts: PathOpts<S, M>): PathReturn<S, M> {
-    // TODO
-    console.log(opts);
+    const result = await this.$exec(opts, "findPath");
     return {
-      edges: [],
-      nodes: [],
+      nodes: result.entries as InferModelDef<M, S>[],
+      edges: result.edges ?? [],
     };
   }
 
@@ -595,11 +578,10 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @returns The shortest path.
    */
   async findShortestPath(opts: PathOpts<S, M>): PathReturn<S, M> {
-    // TODO
-    console.log(opts);
+    const result = await this.$exec(opts, "findShortestPath");
     return {
-      edges: [],
-      nodes: [],
+      nodes: result.entries as InferModelDef<M, S>[],
+      edges: result.edges ?? [],
     };
   }
 
@@ -609,11 +591,10 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @returns The paths that match the filter.
    */
   async findAllPaths(opts: PathOpts<S, M>): PathReturn<S, M> {
-    // TODO
-    console.log(opts);
+    const result = await this.$exec(opts, "findAllPaths");
     return {
-      edges: [],
-      nodes: [],
+      nodes: result.entries as InferModelDef<M, S>[],
+      edges: result.edges ?? [],
     };
   }
 
@@ -623,9 +604,8 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @returns The neighbor nodes.
    */
   async findNeighbors(opts: QueryOpts<S, M>): NeighborsReturn<S, M> {
-    // TODO
-    console.log(opts);
-    return [];
+    const result = await this.$exec(opts, "findNeighbors");
+    return result.entries as InferModelDef<M, S>[];
   }
 
   /**
@@ -634,9 +614,8 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @returns If the connection was successful or not.
    */
   async connect(opts: ConnectOpts<S, M>): ConnectReturn {
-    // TODO
-    console.log(opts);
-    return { success: true };
+    const result = await this.$exec(opts, "connect");
+    return { success: !!result.summary || true };
   }
 
   /**
@@ -644,10 +623,9 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @param opts Connect options.
    * @returns If the connection was successful or not.
    */
-  async disconnect(opts: ConnectOpts<S, M>): ConnectReturn {
-    // TODO
-    console.log(opts);
-    return { success: true };
+  async disconnect(opts: ConnectOpts<S, M>): DisconnectReturn {
+    const result = await this.$exec(opts, "disconnect");
+    return { success: !!result.summary || true };
   }
 
   /**
@@ -655,11 +633,15 @@ export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
    * @param opts Traverse options.
    * @returns The paths it passed through.
    */
+
   async traverse(opts: TraverseOpts<S, M>): TraverseReturn<S, M> {
-    // TODO
-    console.log(opts);
+    const result = await this.$exec(opts, "traverse");
+
     return {
-      path: [],
+      path: (result.entries ?? []).map((node, i) => ({
+        node: node as InferModelDef<M, S>,
+        edge: result.edges?.[i],
+      })),
     };
   }
 }

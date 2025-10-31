@@ -22,8 +22,17 @@ export type Compiler = (ir: IR) => CompileResult;
  * Result of executing a query.
  */
 export interface ExecResult<T = any> {
-  rows: Record<string, any>[];
-  rowCount: number;
+  entries: Record<string, any>[];
+  entryCount: number;
+  edges?: {
+    type: string;
+    direction: "incoming" | "outgoing";
+    props?: any;
+    from?: string | number;
+    to?: string | number;
+  }[];
+  edgeCount?: number;
+
   summary?: T;
   raw?: unknown;
 }

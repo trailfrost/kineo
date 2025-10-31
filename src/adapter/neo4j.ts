@@ -70,18 +70,30 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         result.command,
         result.params
       );
-      const rows = records.map((record) => {
+
+      const entries: any[] = [];
+      const edges: any[] = [];
+
+      for (const record of records) {
         const obj: Record<string, any> = {};
+
         for (const key of record.keys) {
-          obj[key.toString()] = toNative(record.get(key));
+          const value = toNative(record.get(key));
+          obj[key.toString()] = value;
+
+          // Collect relationship-like objects
+          collectEdges(value, edges);
         }
-        return obj;
-      });
+
+        entries.push(obj);
+      }
 
       return {
-        rows,
+        entries,
+        entryCount: entries.length,
+        edges,
+        edgeCount: edges.length,
         summary,
-        rowCount: rows.length,
         raw: records,
       };
     },
@@ -94,10 +106,10 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 function toNative(value: any): any {
   if (neo4j.isInt(value)) {
     // convert neo4j.Integer -> number (safe)
-    return value.inSafeRange() ? value.toNumber() : value.toString();
+    return value.inSafeRange() ? value.toNumber() : value.toBigInt();
   }
 
-  if (value instanceof neo4j.types.Node) {
+  if (value instanceof neo4j.Node) {
     // Return node properties with an optional id & labels
     return {
       identity: toNative(value.identity),
@@ -106,7 +118,7 @@ function toNative(value: any): any {
     };
   }
 
-  if (value instanceof neo4j.types.Relationship) {
+  if (value instanceof neo4j.Relationship) {
     // Return relationship properties with id, start, end
     return {
       identity: toNative(value.identity),
@@ -117,7 +129,7 @@ function toNative(value: any): any {
     };
   }
 
-  if (value instanceof neo4j.types.Path) {
+  if (value instanceof neo4j.Path) {
     // Flatten paths to their nodes and relationships
     return {
       start: toNative(value.start),
@@ -141,6 +153,39 @@ function toNative(value: any): any {
   }
 
   return value;
+}
+
+function collectEdges(value: any, edges: any[]) {
+  if (!value) return;
+
+  // Relationship-like object (produced by toNative)
+  if (value.type && "start" in value && "end" in value && "identity" in value) {
+    edges.push({
+      id: value.identity,
+      type: value.type,
+      start: value.start,
+      end: value.end,
+      props: Object.fromEntries(
+        Object.entries(value).filter(
+          ([k]) => !["identity", "type", "start", "end"].includes(k)
+        )
+      ),
+    });
+  }
+
+  // Path-like object
+  if (Array.isArray(value?.segments)) {
+    for (const seg of value.segments) {
+      collectEdges(seg.relationship, edges);
+    }
+  }
+
+  // Recurse into arrays/objects
+  if (Array.isArray(value)) {
+    for (const v of value) collectEdges(v, edges);
+  } else if (typeof value === "object") {
+    for (const v of Object.values(value)) collectEdges(v, edges);
+  }
 }
 
 function auth(opts: Auth) {

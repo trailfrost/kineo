@@ -3,7 +3,7 @@ import * as IR from "@/ir";
 
 type Params = Record<string, any>;
 
-export const compile: Compiler = (ir: IR.IR) => {
+export const compile: Compiler = (ir) => {
   const ctx = createCompileContext();
   const chunks: string[] = [];
 
@@ -96,36 +96,21 @@ function whereToCypher(
     not: (f, v) => `${f} <> $${v}`,
   };
 
-  // Handle logical operators first
-  if ("AND" in where) {
-    const subs = (where.AND as any[]).map((w) => whereToCypher(ctx, alias, w));
-    return `(${subs.join(" AND ")})`;
-  }
-  if ("OR" in where) {
-    const subs = (where.OR as any[]).map((w) => whereToCypher(ctx, alias, w));
-    return `(${subs.join(" OR ")})`;
-  }
-  if ("NOT" in where) {
-    return `(NOT ${whereToCypher(ctx, alias, where.NOT as any)})`;
-  }
-
   const parts: string[] = [];
+
   for (const [key, value] of Object.entries(where)) {
+    if (key === "AND" || key === "OR" || key === "NOT") continue;
+
     const field = `${alias}.${key}`;
 
     if (value && typeof value === "object" && !Array.isArray(value)) {
-      // Nested condition or operator map
-      if ("AND" in value || "OR" in value || "NOT" in value) {
-        parts.push(whereToCypher(ctx, alias, value as any));
-      } else {
-        for (const [op, val] of Object.entries(value)) {
-          const pname = ctx.nextParamName(key);
-          ctx.params[pname] = val;
-          const opHandler = opMap[op];
-          parts.push(
-            opHandler ? opHandler(field, pname) : `${field} = $${pname}`
-          );
-        }
+      for (const [op, val] of Object.entries(value)) {
+        const pname = ctx.nextParamName(key);
+        ctx.params[pname] = val;
+        const opHandler = opMap[op];
+        parts.push(
+          opHandler ? opHandler(field, pname) : `${field} = $${pname}`
+        );
       }
     } else if (Array.isArray(value)) {
       const pname = ctx.nextParamName(key);
@@ -138,7 +123,30 @@ function whereToCypher(
     }
   }
 
-  return parts.length ? `(${parts.join(" AND ")})` : "1=1";
+  // Now handle logical operators
+  const logicParts: string[] = [];
+
+  if ("AND" in where) {
+    const subs = (where.AND as any[]).map((w) => whereToCypher(ctx, alias, w));
+    logicParts.push(`(${subs.join(" AND ")})`);
+  }
+  if ("OR" in where) {
+    const subs = (where.OR as any[]).map((w) => whereToCypher(ctx, alias, w));
+    logicParts.push(`(${subs.join(" OR ")})`);
+  }
+  if ("NOT" in where) {
+    logicParts.push(`(NOT ${whereToCypher(ctx, alias, where.NOT as any)})`);
+  }
+
+  if (parts.length && logicParts.length) {
+    return `(${parts.join(" AND ")} AND ${logicParts.join(" AND ")})`;
+  }
+
+  return parts.length
+    ? `(${parts.join(" AND ")})`
+    : logicParts.length
+      ? logicParts.join(" AND ")
+      : "1=1";
 }
 
 function projection(
@@ -198,7 +206,7 @@ function compileFindStatement(
     s.orderBy && s.orderBy.length
       ? `ORDER BY ${s.orderBy
           .map((o) => {
-            const [field, [, dir]] = Object.entries(o);
+            const [[field, [, dir]]] = Object.entries(o);
             return `${alias}.${field} ${dir.toUpperCase()}`;
           })
           .join(", ")}`
@@ -285,12 +293,9 @@ function compileUpsertStatement(
   s: IR.UpdateStatement
 ): string {
   const alias = s.alias ?? "n";
-  const mergeKeys = Object.keys(s.where || {}).length
-    ? s.where
-    : (s.data as any).create;
 
-  if (!Object.keys(mergeKeys).length) {
-    // fallback to simple create
+  // If there are no where keys, fallback to simple create
+  if (!s.where || Object.keys(s.where).length === 0) {
     const props = propsToCypher(
       ctx,
       "upsert_create",
@@ -300,7 +305,8 @@ function compileUpsertStatement(
     return [create, `RETURN properties(${alias}) AS ${alias}`].join("\n");
   }
 
-  const mergeProps = propsToCypher(ctx, "merge", mergeKeys);
+  // Otherwise, use MERGE with where keys
+  const mergeProps = propsToCypher(ctx, "merge", s.where);
   const merge = `MERGE (${alias}:${s.model} ${mergeProps})`;
 
   const createData = (s.data as any).create || {};
@@ -369,6 +375,22 @@ function compileConnectStatement(
   ].join("\n");
 }
 
+function directionalRel(
+  min: number,
+  max: number,
+  direction?: "IN" | "OUT" | "BOTH"
+) {
+  switch (direction) {
+    case "IN":
+      return `<-[:*${min}..${max}]->`;
+    case "OUT":
+      return `-[:*${min}..${max}]->`;
+    case "BOTH":
+    default:
+      return `-[:*${min}..${max}]-`;
+  }
+}
+
 function compileRelationStatement(
   ctx: CompileContext,
   s: IR.RelationQueryStatement
@@ -377,10 +399,10 @@ function compileRelationStatement(
   const to = "b";
   const min = s.minDepth ?? 1;
   const max = s.maxDepth ?? s.limit ?? 5;
-  const dir = s.direction === "IN" ? "<-" : s.direction === "BOTH" ? "-" : "->";
   const limit = s.limit ? `LIMIT ${s.limit}` : "";
 
-  const path = `p = (${from})${dir}[:*${min}..${max}]${dir}(${to})`;
+  const relPattern = directionalRel(min, max, s.direction as any);
+  const path = `p = (${from})${relPattern}(${to})`;
 
   return [
     `MATCH (${from}:${s.model})`,

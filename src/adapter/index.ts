@@ -16,7 +16,7 @@ export interface CompileResult {
 /**
  * A compiler.
  */
-export type Compiler = (ir: IR) => CompileResult;
+export type Compiler<T = any> = (ir: IR, preset?: T) => CompileResult;
 
 /**
  * Result of executing a query.

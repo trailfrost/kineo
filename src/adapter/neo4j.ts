@@ -1,5 +1,6 @@
 import type { Adapter } from ".";
 import { GraphModel } from "@/model";
+import { compile } from "@/compiler/cypher";
 import * as neo4j from "neo4j-driver";
 
 export type Auth =
@@ -60,9 +61,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
     },
 
     compile(ir) {
-      console.log(ir);
-      // TODO
-      return { command: "", params: {} };
+      return compile(ir);
     },
 
     async exec(result) {

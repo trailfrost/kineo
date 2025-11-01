@@ -22,6 +22,10 @@
       "types": "./dist/adapter/neo4j.d.ts",
       "default": "./dist/adapter/neo4j.js"
     },
+    "./compiler/cypher": {
+      "types": "./dist/compiler/cypher.d.ts",
+      "default": "./dist/compiler/cypher.js"
+    },
     "./ir": {
       "types": "./dist/ir.d.ts",
       "default": "./dist/ir.js"

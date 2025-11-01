@@ -166,69 +166,6 @@ export interface UpsertOpts<
   include?: QueryOpts<S, M>["include"];
 }
 
-// ---------- Graph-specific Options ---------- //
-
-/**
- * Path options (`findPath`, `findShortestPath`, etc.).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
- */
-export interface PathOpts<
-  S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
-> {
-  from: {
-    where: { [K in keyof MType]?: FieldFilter<MType[K]> };
-  };
-  to: {
-    where: { [K in keyof MType]?: FieldFilter<MType[K]> };
-  };
-  maxDepth?: number;
-  minDepth?: number;
-  direction?: Direction;
-  limit?: number;
-}
-
-/**
- * Connect options (`connect`, `disconnect`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
- */
-export interface ConnectOpts<
-  S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
-> {
-  from: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
-  to: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
-  relation: string; // rel label
-  direction?: Direction;
-  properties?: Record<string, any>;
-}
-
-/**
- * Traverse options (`traverse`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
- */
-export interface TraverseOpts<
-  S extends Schema,
-  M extends ModelDef,
-  MType = InferModelDef<M, S>,
-> {
-  start: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
-  direction?: Direction;
-  depth?: number;
-  maxDepth?: number;
-  relationFilter?: string | string[];
-  includeNodes?: boolean;
-  includeEdges?: boolean;
-}
-
 // ---------- Result Type Helpers ---------- //
 
 /**
@@ -373,44 +310,6 @@ export type UpsertManyReturn<
   O extends UpsertOpts<S, M>,
 > = Promise<ResultPayload<S, M, O>[]>;
 
-// ---------- Graph Return Types ---------- //
-
-/**
- * The return type for everything related to paths.
- */
-export type PathReturn<S extends Schema, M extends ModelDef> = Promise<{
-  nodes: InferModelDef<M, S>[];
-  edges: Array<{
-    type: string;
-    direction: "incoming" | "outgoing";
-    props?: any;
-  }>;
-}>;
-
-/**
- * The return  type for `findNeighbors`.
- */
-export type NeighborsReturn<S extends Schema, M extends ModelDef> = Promise<
-  InferModelDef<M, S>[]
->;
-
-/**
- * The return  type for `connect`.
- */
-export type ConnectReturn = Promise<{ success: boolean }>;
-
-/**
- * The return  type for `disconnect`.
- */
-export type DisconnectReturn = Promise<{ success: boolean }>;
-
-/**
- * The return  type for `traverse`.
- */
-export type TraverseReturn<S extends Schema, M extends ModelDef> = Promise<{
-  path: Array<{ node: InferModelDef<M, S>; edge?: any }>;
-}>;
-
 /**
  * A model. This is different from a model definition; the definition is just the schema, the class provides the functionality.
  * @param S The schema.
@@ -549,6 +448,107 @@ export class Model<S extends Schema, M extends ModelDef> {
     return rows as any;
   }
 }
+
+// ---------- Graph-specific Options ---------- //
+
+/**
+ * Path options (`findPath`, `findShortestPath`, etc.).
+ * @param S The schema.
+ * @param M The model definition.
+ * @param MType _Do not pass_ Inferred type of the model definition.
+ */
+export interface PathOpts<
+  S extends Schema,
+  M extends ModelDef,
+  MType = InferModelDef<M, S>,
+> {
+  from: {
+    where: { [K in keyof MType]?: FieldFilter<MType[K]> };
+  };
+  to: {
+    where: { [K in keyof MType]?: FieldFilter<MType[K]> };
+  };
+  maxDepth?: number;
+  minDepth?: number;
+  direction?: Direction;
+  limit?: number;
+}
+
+/**
+ * Connect options (`connect`, `disconnect`).
+ * @param S The schema.
+ * @param M The model definition.
+ * @param MType _Do not pass_ Inferred type of the model definition.
+ */
+export interface ConnectOpts<
+  S extends Schema,
+  M extends ModelDef,
+  MType = InferModelDef<M, S>,
+> {
+  from: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
+  to: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
+  relation: string; // rel label
+  direction?: Direction;
+  properties?: Record<string, any>;
+}
+
+/**
+ * Traverse options (`traverse`).
+ * @param S The schema.
+ * @param M The model definition.
+ * @param MType _Do not pass_ Inferred type of the model definition.
+ */
+export interface TraverseOpts<
+  S extends Schema,
+  M extends ModelDef,
+  MType = InferModelDef<M, S>,
+> {
+  start: { where: { [K in keyof MType]?: FieldFilter<MType[K]> } };
+  direction?: Direction;
+  depth?: number;
+  maxDepth?: number;
+  relationFilter?: string | string[];
+  includeNodes?: boolean;
+  includeEdges?: boolean;
+}
+
+// ---------- Graph Return Types ---------- //
+
+/**
+ * The return type for everything related to paths.
+ */
+export type PathReturn<S extends Schema, M extends ModelDef> = Promise<{
+  nodes: InferModelDef<M, S>[];
+  edges: Array<{
+    type: string;
+    direction: "incoming" | "outgoing";
+    props?: any;
+  }>;
+}>;
+
+/**
+ * The return  type for `findNeighbors`.
+ */
+export type NeighborsReturn<S extends Schema, M extends ModelDef> = Promise<
+  InferModelDef<M, S>[]
+>;
+
+/**
+ * The return  type for `connect`.
+ */
+export type ConnectReturn = Promise<{ success: boolean }>;
+
+/**
+ * The return  type for `disconnect`.
+ */
+export type DisconnectReturn = Promise<{ success: boolean }>;
+
+/**
+ * The return  type for `traverse`.
+ */
+export type TraverseReturn<S extends Schema, M extends ModelDef> = Promise<{
+  path: Array<{ node: InferModelDef<M, S>; edge?: any }>;
+}>;
 
 /**
  * Provides utility methods for graph databases on top of the default model.

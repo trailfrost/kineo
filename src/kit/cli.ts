@@ -5,14 +5,9 @@ import fs from "node:fs/promises";
 import { Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
 
-import type {
-  FileExport,
-  KineoConfig,
-  Reference,
-  ReferenceFn,
-} from "./index.js";
-import type { Kineo } from "@/client.js";
-import type { Schema } from "@/schema.js";
+import { parseConfig, type KineoConfig, type ParsedConfig } from ".";
+import type { Kineo } from "@/client";
+import type { Schema } from "@/schema";
 
 const CONFIG_FILES = [
   "kineo.config.ts",
@@ -25,15 +20,7 @@ const CONFIG_FILES = [
 const CWD = process.cwd();
 const jiti = createJiti(CWD);
 
-interface Config {
-  schema: Schema;
-  schemaMod?: FileExport;
-  client: Kineo<any, any>;
-  clientMod?: FileExport;
-  migrations: string;
-}
-
-let config: Config | undefined;
+let config: ParsedConfig | undefined;
 
 const program = new Command("kineo")
   .version("0.6.0")
@@ -57,9 +44,16 @@ const program = new Command("kineo")
             const module = (await jiti.import(file, {
               default: true,
             })) as KineoConfig;
-            config = await extractConfigFromMod(module);
+            config = await parseConfig(jiti, module);
             break;
-          } catch {
+          } catch (e) {
+            await log.error(
+              `an error occurred trying to import './${file}'${
+                typeof e === "object" && e !== null && "message" in e
+                  ? `: ${e.message}`
+                  : ""
+              }. trying to import next file.`
+            );
             continue;
           }
         }
@@ -345,69 +339,6 @@ module.exports = defineConfig({
   );
 
 void program.run();
-
-async function extractConfigFromMod(
-  module: KineoConfig
-): Promise<Config | undefined> {
-  const { exported: client, module: clientMod } = await extract(module.client);
-  const { exported: schema, module: schemaMod } = await extract(module.schema);
-
-  if (!client) {
-    log.fatal(
-      "client is undefined. check if the file exists or if imports are resolving correctly"
-    );
-    return;
-  }
-
-  if (!schema) {
-    log.fatal(
-      "schema is undefined. check if the file exists or if imports are resolving correctly"
-    );
-    return;
-  }
-
-  return {
-    client,
-    clientMod,
-    schema,
-    schemaMod,
-    migrations: module.migrations,
-  };
-}
-
-async function extract<T>(
-  ref: Reference<T>
-): Promise<{ module?: FileExport; exported?: T }> {
-  if (isReferenceFn(ref)) {
-    return { exported: await ref() };
-  }
-
-  if (ref instanceof Promise) {
-    return { exported: await ref };
-  }
-
-  if (isFileExport(ref)) {
-    const module = (await jiti.import(ref.file)) as { [ref.export]: T };
-    const exported = module[ref.export];
-    return {
-      exported,
-      module: {
-        file: ref.file,
-        export: ref.export,
-      },
-    };
-  }
-
-  return { exported: ref as T };
-}
-
-function isReferenceFn<T>(ref: Reference<T>): ref is ReferenceFn<T> {
-  return typeof ref === "function";
-}
-
-function isFileExport(ref: Reference<any>): ref is FileExport {
-  return typeof ref === "object" && "file" in ref && "export" in ref;
-}
 
 function importPath(file: string) {
   return `"${file.startsWith(".") ? file : `./${file}`}"`;

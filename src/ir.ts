@@ -1,6 +1,6 @@
 import type * as model from "./model";
 
-export enum StatementType {
+export const enum StatementType {
   Find = "Find",
   Count = "Count",
   Create = "Create",

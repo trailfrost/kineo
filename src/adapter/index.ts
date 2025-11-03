@@ -51,6 +51,10 @@ export interface Adapter<
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
   Model: TModelCtor;
+  /**
+   * What the file extension for migrations should be.
+   */
+  fileExt?: string;
 
   // Runtime related functions
   /**
@@ -80,7 +84,7 @@ export interface Adapter<
   /**
    * Generates migrations.
    */
-  generate?(): OptPromise<string[]>;
+  generate?(prev: Schema, cur: Schema): OptPromise<string[]>;
   /**
    * Gets a status for a migration.
    * @param migration The migration to get the status for.

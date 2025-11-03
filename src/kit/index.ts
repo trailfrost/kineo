@@ -1,10 +1,11 @@
-import { KineoKitErrorKind, KineoKitError } from "@/error";
+import crypto from "node:crypto";
 
+import { KineoKitErrorKind, KineoKitError } from "@/error";
 import type { Kineo } from "@/client";
+import type { Adapter } from "@/adapter";
 import { FieldDef, RelationDef, type Schema } from "@/schema";
 
 import type { Jiti } from "jiti/lib/types";
-import type { Adapter } from "@/adapter";
 
 export interface FileExport {
   file: string;
@@ -105,17 +106,18 @@ function isFileExport(ref: Reference<any>): ref is FileExport {
 export async function push(
   adapter: Adapter<any, any>,
   newSchema: Schema,
-  force: boolean
+  force?: boolean
 ) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   if (!adapter.push) throw new KineoKitError(KineoKitErrorKind.NoSupport);
 
-  const prevSchema = await adapter.pull();
-  const diff = getDiff(prevSchema, newSchema);
+  if (!force) {
+    const prevSchema = await adapter.pull();
+    const diff = getDiff(prevSchema, newSchema);
 
-  if (diff.breaking.length > 0) {
-    if (!force)
+    if (diff.breaking.length > 0) {
       throw new KineoKitError(KineoKitErrorKind.BreakingSchemaChange, diff);
+    }
   }
 
   await adapter.push(newSchema);
@@ -236,4 +238,33 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   }
 
   return { breaking, nonBreaking };
+}
+
+export async function pull(adapter: Adapter<any, any>) {
+  if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+  return await adapter.pull();
+}
+
+export async function generate(
+  adapter: Adapter<any, any>,
+  prevSchema: Schema,
+  newSchema: Schema
+) {
+  if (!adapter.generate) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+  return await adapter.generate(prevSchema, newSchema);
+}
+
+export async function deploy(adapter: Adapter<any, any>, migration: string) {
+  if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+  return await adapter.deploy(migration, crypto.hash("sha512", migration));
+}
+
+export async function status(adapter: Adapter<any, any>, migration: string) {
+  if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+  return await adapter.status(migration, crypto.hash("sha512", migration));
+}
+
+export async function rollback(adapter: Adapter<any, any>, migration: string) {
+  if (!adapter.rollback) throw new KineoKitError(KineoKitErrorKind.NoSupport);
+  return await adapter.rollback(migration, crypto.hash("sha1", migration));
 }

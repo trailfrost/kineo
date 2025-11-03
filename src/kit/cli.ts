@@ -1,13 +1,14 @@
 import path from "node:path";
 import process from "node:process";
-import fs from "node:fs/promises";
+import { existsSync, promises as fs } from "node:fs";
 
-import { Command, i, log, prompt } from "convoker";
+import { color, Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
 
-import { parseConfig, type KineoConfig, type ParsedConfig } from ".";
 import type { Kineo } from "@/client";
 import type { Schema } from "@/schema";
+import * as kit from ".";
+import { KineoKitError } from "@/error";
 
 const CONFIG_FILES = [
   "kineo.config.ts",
@@ -20,7 +21,7 @@ const CONFIG_FILES = [
 const CWD = process.cwd();
 const jiti = createJiti(CWD);
 
-let config: ParsedConfig | undefined;
+let config: kit.ParsedConfig | undefined;
 
 const program = new Command("kineo")
   .version("0.6.0")
@@ -43,8 +44,8 @@ const program = new Command("kineo")
           try {
             const module = (await jiti.import(file, {
               default: true,
-            })) as KineoConfig;
-            config = await parseConfig(jiti, module);
+            })) as kit.KineoConfig;
+            config = await kit.parseConfig(jiti, module);
             break;
           } catch (e) {
             await log.error(
@@ -276,8 +277,28 @@ module.exports = defineConfig({
         force: i.option("boolean", "-f", "--force").optional(),
       })
       .action(async ({ force }) => {
-        // TODO
-        await log.fatal("Not implemented", force);
+        try {
+          await kit.push(config!.client.$adapter, config!.schema, force);
+        } catch (e) {
+          if (e instanceof KineoKitError) {
+            const { data } = e as KineoKitError<kit.SchemaDiff>;
+            if ((data?.breaking.length ?? 0) > 0) {
+              await log.info(
+                `Changes:\n${color.bold("- Breaking:")}\n${data?.breaking.map((entry) => `  ${entry}`).join("\n")}
+${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}`)}`
+              );
+              const confirmed = await prompt.confirm({
+                message:
+                  "A breaking change was detected. PUSHING THE SCHEMA WILL CAUSE DATA LOSS. Proceed anyways?",
+              });
+
+              if (confirmed)
+                await kit.push(config!.client.$adapter, config!.schema, true);
+            }
+          }
+
+          throw e;
+        }
       })
   )
   .subCommand("pull", (c) =>
@@ -299,14 +320,47 @@ module.exports = defineConfig({
         "Generates migrations based on the current database state and the current schema."
       )
       .action(async () => {
-        // TODO
-        await log.fatal("Not implemented");
+        const adapter = config!.client.$adapter;
+        const migrations = await kit.generate(
+          adapter,
+          await kit.pull(adapter),
+          config!.schema
+        );
+        await Promise.all(
+          migrations.map((migration) =>
+            fs.writeFile(
+              path.join(
+                CWD,
+                config!.migrations,
+                `${Date.now()}.${adapter.fileExt}`
+              ),
+              migration,
+              "utf-8"
+            )
+          )
+        );
       })
   )
   .subCommand("status", (c) =>
     c.description("Gets status for existing migrations.").action(async () => {
-      // TODO
-      await log.fatal("Not implemented");
+      const entries = await fs.readdir(path.join(CWD, config!.migrations));
+
+      const statuses = await Promise.all(
+        entries.map(async (entry) => {
+          const migration = await fs.readFile(
+            path.join(CWD, config!.migrations, entry),
+            "utf-8"
+          );
+          return {
+            entry,
+            status: await kit.status(config!.client.$adapter, migration),
+          };
+        })
+      );
+
+      for (const status of statuses) {
+        await log.info(`${status.entry}: ${status.status}`);
+      }
     })
   )
   .subCommand("create", (c) =>
@@ -316,14 +370,39 @@ module.exports = defineConfig({
         name: i.option("string", "-n", "--name"),
       })
       .action(async ({ name }) => {
-        // TODO
-        await log.fatal("Not implemented", name);
+        const filePath = path.join(
+          CWD,
+          config!.migrations,
+          `${name ?? Date.now()}.${config!.client.$adapter.fileExt}`
+        );
+        await log.trace("creating migration", filePath);
+
+        if (!existsSync(filePath)) {
+          const confirmed = await prompt.confirm({
+            message: `The file ${filePath} already exists. Would you like to override it?`,
+          });
+          if (!confirmed) return;
+        }
+
+        await fs.writeFile(filePath, "", "utf-8");
       })
   )
   .subCommand("deploy", (c) =>
     c.description("Deploys existing migrations.").action(async () => {
-      // TODO
-      await log.fatal("Not implemented");
+      const entries = await fs.readdir(path.join(CWD, config!.migrations));
+
+      await Promise.all(
+        entries.map(async (entry) => {
+          const migration = await fs.readFile(
+            path.join(CWD, config!.migrations, entry),
+            "utf-8"
+          );
+          const status = await kit.status(config!.client.$adapter, migration);
+          if (status === "completed") return;
+
+          await kit.deploy(config!.client.$adapter, migration);
+        })
+      );
     })
   )
   .subCommand("rollback", (c) =>
@@ -333,8 +412,25 @@ module.exports = defineConfig({
         n: i.positional("number"),
       })
       .action(async ({ n }) => {
-        // TODO
-        await log.fatal("Not implemented", n);
+        const entries = await fs.readdir(path.join(CWD, config!.migrations));
+        const sortedEntries = await Promise.all(
+          entries.map(async (entry) => {
+            const fullPath = path.join(CWD, config!.migrations, entry);
+            const stat = await fs.stat(fullPath);
+            return { entry: fullPath, mtime: stat.mtime };
+          })
+        ).then((entries) =>
+          entries
+            .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
+            .map(({ entry }) => entry)
+        );
+
+        await Promise.all(
+          sortedEntries.slice(0, n).map(async (entry) => {
+            const migration = await fs.readFile(entry, "utf-8");
+            await kit.rollback(config!.client.$adapter, migration);
+          })
+        );
       })
   );
 

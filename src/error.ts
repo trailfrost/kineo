@@ -21,6 +21,7 @@ export const enum KineoKitErrorKind {
   MissingClient = "MissingClient",
   NoSupport = "NoSupport",
   BreakingSchemaChange = "BreakingSchemaChange",
+  FilePathNecessary = "FilePathNecessary",
 }
 
 export class KineoKitError<T> extends Error {
@@ -41,7 +42,9 @@ export class KineoKitError<T> extends Error {
       case KineoKitErrorKind.MissingSchema:
         return `${kind === KineoKitErrorKind.MissingClient ? "client" : "schema"} is undefined. check if the file exists or if imports are resolving correctly`;
       case KineoKitErrorKind.BreakingSchemaChange:
-        return "a breaking change was detected in the schema.";
+        return "a breaking change was detected in the schema";
+      case KineoKitErrorKind.FilePathNecessary:
+        return "file path style imports are necessary for this action";
       default:
         return "no message";
     }

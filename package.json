@@ -51,10 +51,6 @@
     "./kit": {
       "types": "./dist/kit/index.d.mts",
       "import": "./dist/kit/index.mjs"
-    },
-    "./kit/cli": {
-      "types": "./dist/kit/cli.d.mts",
-      "import": "./dist/kit/cli.mjs"
     }
   },
   "files": [

@@ -5,7 +5,13 @@
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
   "main": "./dist/client.mjs",
   "types": "./dist/client.d.mts",
-  "bin": "./dist/kit/main.mjs",
+  "bin": {
+    "kineo": "./dist/kit/main.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trailfrost/kineo"
+  },
   "engines": {
     "node": ">= 20.5"
   },

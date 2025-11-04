@@ -6,9 +6,9 @@ import { color, Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
 
 import type { Kineo } from "@/client";
-import type { Schema } from "@/schema";
+import type { FieldDef, RelationDef, Schema } from "@/schema";
 import * as kit from ".";
-import { KineoKitError } from "@/error";
+import { KineoKitError, KineoKitErrorKind } from "@/error";
 
 const CONFIG_FILES = [
   "kineo.config.ts",
@@ -310,8 +310,44 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         force: i.option("boolean", "-f", "--force").optional(),
       })
       .action(async ({ force }) => {
-        // TODO
-        await log.fatal("Not implemented", force);
+        if (!config?.schemaMod)
+          throw new KineoKitError(KineoKitErrorKind.FilePathNecessary);
+        if (!force && config.client.$adapter.pull) {
+          const confirmed = await prompt.confirm({
+            message:
+              "This will delete your current schema. Not all adapters support full schema introspection features. THIS MAY CAUSE LOSS. Make sure you can revert this action.",
+          });
+          if (!confirmed) return;
+        }
+
+        const schema = await kit.pull(config.client.$adapter);
+        const contents = ensureImports(
+          await fs.readFile(config.schemaMod.file, "utf-8")
+        );
+
+        const newExport = generateSchemaSource(schema, config.schemaMod.export);
+        const namedExportRegex = new RegExp(
+          `export\\s+const\\s+${config.schemaMod.export}\\s*=([\\s\\S]*?);`,
+          "m"
+        );
+        const defaultExportRegex =
+          /export\s+default\s+defineSchema\([\s\S]*?\);?/m;
+
+        let updatedContents: string;
+
+        if (config.schemaMod.export === "default") {
+          if (defaultExportRegex.test(contents)) {
+            updatedContents = contents.replace(defaultExportRegex, newExport);
+          } else {
+            updatedContents = contents.trimEnd() + "\n\n" + newExport + "\n";
+          }
+        } else if (namedExportRegex.test(contents)) {
+          updatedContents = contents.replace(namedExportRegex, newExport);
+        } else {
+          updatedContents = contents.trimEnd() + "\n\n" + newExport + "\n";
+        }
+
+        await fs.writeFile(config.schemaMod.file, updatedContents, "utf8");
       })
   )
   .subCommand(["generate", "migrate"], (c) =>
@@ -438,4 +474,86 @@ void program.run();
 
 function importPath(file: string) {
   return `"${file.startsWith(".") ? file : `./${file}`}"`;
+}
+
+function ensureImports(source: string): string {
+  const hasImports =
+    source.includes("defineSchema") &&
+    source.includes("defineModel") &&
+    source.includes("field") &&
+    source.includes("relation");
+
+  if (hasImports) return source;
+
+  const importLine = `import { defineSchema, defineModel, field, relation } from "kineo/schema";\n`;
+
+  // Insert before first import or at top
+  if (/^import\s/m.test(source)) {
+    return source.replace(/^import\s/m, importLine + "import ");
+  }
+
+  return importLine + source;
+}
+
+function generateSchemaSource(schemaObj: Schema, exportName: string): string {
+  const models = Object.entries(schemaObj)
+    .map(([modelName, modelDef]) => {
+      const fields = Object.entries(modelDef)
+        .map(([fieldName, fieldValue]) => {
+          const serialized = serializeFieldOrRelation(fieldValue);
+          return `    ${fieldName}: ${serialized}`;
+        })
+        .join(",\n");
+
+      return `  ${modelName}: defineModel({\n${fields}\n  })`;
+    })
+    .join(",\n");
+
+  if (exportName === "default") {
+    return `export default defineSchema({\n${models}\n});`;
+  }
+
+  return `export const ${exportName} = defineSchema({\n${models}\n});`;
+}
+
+function serializeFieldOrRelation(value: unknown): string {
+  // Handle FieldDef
+  if (value instanceof (global as any).FieldDef) {
+    const f = value as FieldDef<any, any, any, any>;
+    let expr = `field.${f.kind}(${f.rowName ? `"${f.rowName}"` : ""})`;
+
+    if (f.isId) expr += `.id()`;
+    if (f.isRequired) expr += `.required()`;
+    if (f.isArray) expr += `.array()`;
+    if (f.defaultValue !== undefined)
+      expr += `.default(${JSON.stringify(f.defaultValue)})`;
+
+    return expr;
+  }
+
+  // Handle RelationDef
+  if (value instanceof (global as any).RelationDef) {
+    const r = value as RelationDef<any, any, any, any>;
+    let expr = `relation.to("${r.pointTo}"${r.relName ? `, "${r.relName}"` : ""})`;
+
+    switch (r.relDirection) {
+      case "incoming":
+        expr += `.incoming()`;
+        break;
+      case "outgoing":
+        expr += `.outgoing()`;
+        break;
+      case "both":
+        expr += `.both()`;
+        break;
+    }
+
+    if (r.isRequired) expr += `.required()`;
+    if (r.isArray) expr += `.array()`;
+
+    return expr;
+  }
+
+  // fallback
+  return JSON.stringify(value);
 }

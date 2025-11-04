@@ -81,7 +81,7 @@ vi.mock("@/kit", () => {
 });
 
 // --- Now import the module under test (after mocks) ---
-import program from "@/kit/cli";
+import program from "@/kit";
 
 // We need some helpers from the module to test (they are not exported in your original file).
 // Vitest can import actual module implementation to access internal named exports if they exist.
@@ -94,7 +94,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   // attempt to import internal named exports (works if your build exposes them)
   try {
-    helpers = await vi.importActual<typeof import("@/kit/cli")>("@/kit/cli");
+    helpers = await vi.importActual<typeof import("@/kit")>("@/kit");
   } catch {
     // Not fatal; some helper tests will be skipped if not available.
     helpers = null;

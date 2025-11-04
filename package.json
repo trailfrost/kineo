@@ -3,52 +3,52 @@
   "version": "0.6.0",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
-  "main": "./dist/client.js",
-  "types": "./dist/client.d.ts",
-  "bin": "./dist/kit/cli.js",
+  "main": "./dist/client.mjs",
+  "types": "./dist/client.d.mts",
+  "bin": "./dist/kit/main.mjs",
   "engines": {
     "node": ">= 20.5"
   },
   "exports": {
     "./client": {
-      "types": "./dist/client.d.ts",
-      "default": "./dist/client.js"
+      "types": "./dist/client.d.mts",
+      "import": "./dist/client.mjs"
     },
     "./error": {
-      "types": "./dist/error.d.ts",
-      "default": "./dist/error.js"
+      "types": "./dist/error.d.mts",
+      "import": "./dist/error.mjs"
     },
     "./adapter": {
-      "types": "./dist/adapter/index.d.ts",
-      "default": "./dist/adapter/index.js"
+      "types": "./dist/adapter/index.d.mts",
+      "import": "./dist/adapter/index.mjs"
     },
     "./adapter/neo4j": {
-      "types": "./dist/adapter/neo4j.d.ts",
-      "default": "./dist/adapter/neo4j.js"
+      "types": "./dist/adapter/neo4j.d.mts",
+      "import": "./dist/adapter/neo4j.mjs"
     },
     "./compiler/cypher": {
-      "types": "./dist/compiler/cypher.d.ts",
-      "default": "./dist/compiler/cypher.js"
+      "types": "./dist/compiler/cypher.d.mts",
+      "import": "./dist/compiler/cypher.mjs"
     },
     "./ir": {
-      "types": "./dist/ir.d.ts",
-      "default": "./dist/ir.js"
+      "types": "./dist/ir.d.mts",
+      "import": "./dist/ir.mjs"
     },
     "./model": {
-      "types": "./dist/model.d.ts",
-      "default": "./dist/model.js"
+      "types": "./dist/model.d.mts",
+      "import": "./dist/model.mjs"
     },
     "./schema": {
-      "types": "./dist/schema.d.ts",
-      "default": "./dist/schema.js"
+      "types": "./dist/schema.d.mts",
+      "import": "./dist/schema.mjs"
     },
     "./kit": {
-      "types": "./dist/kit/index.d.ts",
-      "default": "./dist/kit/index.js"
+      "types": "./dist/kit/index.d.mts",
+      "import": "./dist/kit/index.mjs"
     },
     "./kit/cli": {
-      "types": "./dist/kit/cli.d.ts",
-      "default": "./dist/kit/cli.js"
+      "types": "./dist/kit/cli.d.mts",
+      "import": "./dist/kit/cli.mjs"
     }
   },
   "files": [
@@ -58,11 +58,11 @@
     "test": "vitest tests",
     "format": "prettier --check .",
     "format!": "prettier --write .",
-    "kit": "jiti src/kit/cli.ts",
+    "kit": "jiti src/kit/main.ts",
     "lint": "eslint .",
     "lint!": "eslint --fix .",
-    "check": "tsc -b --noEmit",
-    "build": "tsc -b tsconfig.app.json && tsc-alias -p tsconfig.app.json"
+    "check": "tsc -b tsconfig.app.json",
+    "build": "tsdown"
   },
   "keywords": [
     "ogm",
@@ -74,7 +74,7 @@
   "license": "MIT",
   "packageManager": "pnpm@10.20.0",
   "dependencies": {
-    "convoker": "^0.3.2",
+    "convoker": "^0.3.4",
     "jiti": "^2.5.1"
   },
   "optionalDependencies": {
@@ -86,7 +86,7 @@
     "eslint": "^9.36.0",
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
-    "tsc-alias": "^1.8.16",
+    "tsdown": "^0.16.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.0",
     "vitest": "^4.0.5"

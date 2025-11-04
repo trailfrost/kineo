@@ -5,9 +5,9 @@ import { existsSync, promises as fs } from "node:fs";
 import { color, Command, i, log, prompt } from "convoker";
 import { createJiti } from "jiti";
 
+import * as kit from ".";
 import type { Kineo } from "@/client";
 import type { FieldDef, RelationDef, Schema } from "@/schema";
-import * as kit from ".";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
 
 const CONFIG_FILES = [
@@ -557,3 +557,5 @@ function serializeFieldOrRelation(value: unknown): string {
   // fallback
   return JSON.stringify(value);
 }
+
+export default program;

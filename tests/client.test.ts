@@ -15,8 +15,8 @@ const adapter: Adapter<typeof GraphModel, any> = {
   },
   exec() {
     return {
-      rows: [],
-      rowCount: 0,
+      entries: [],
+      entryCount: 0,
     };
   },
 };

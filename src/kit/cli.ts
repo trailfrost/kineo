@@ -7,7 +7,7 @@ import { createJiti } from "jiti";
 
 import * as kit from ".";
 import type { Kineo } from "@/client";
-import type { FieldDef, RelationDef, Schema } from "@/schema";
+import { FieldDef, RelationDef, type Schema } from "@/schema";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
 
 const CONFIG_FILES = [
@@ -472,11 +472,11 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
 void program.run();
 
-function importPath(file: string) {
+export function importPath(file: string) {
   return `"${file.startsWith(".") ? file : `./${file}`}"`;
 }
 
-function ensureImports(source: string): string {
+export function ensureImports(source: string): string {
   const hasImports =
     source.includes("defineSchema") &&
     source.includes("defineModel") &&
@@ -495,7 +495,10 @@ function ensureImports(source: string): string {
   return importLine + source;
 }
 
-function generateSchemaSource(schemaObj: Schema, exportName: string): string {
+export function generateSchemaSource(
+  schemaObj: Schema,
+  exportName: string
+): string {
   const models = Object.entries(schemaObj)
     .map(([modelName, modelDef]) => {
       const fields = Object.entries(modelDef)
@@ -516,9 +519,9 @@ function generateSchemaSource(schemaObj: Schema, exportName: string): string {
   return `export const ${exportName} = defineSchema({\n${models}\n});`;
 }
 
-function serializeFieldOrRelation(value: unknown): string {
+export function serializeFieldOrRelation(value: unknown): string {
   // Handle FieldDef
-  if (value instanceof (global as any).FieldDef) {
+  if (value instanceof FieldDef) {
     const f = value as FieldDef<any, any, any, any>;
     let expr = `field.${f.kind}(${f.rowName ? `"${f.rowName}"` : ""})`;
 
@@ -532,7 +535,7 @@ function serializeFieldOrRelation(value: unknown): string {
   }
 
   // Handle RelationDef
-  if (value instanceof (global as any).RelationDef) {
+  if (value instanceof RelationDef) {
     const r = value as RelationDef<any, any, any, any>;
     let expr = `relation.to("${r.pointTo}"${r.relName ? `, "${r.relName}"` : ""})`;
 

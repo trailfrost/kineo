@@ -276,7 +276,7 @@ function collectEdges(value: any, edges: any[]) {
  * @param opts The authentication options.
  * @returns An authentication token.
  */
-function auth(opts: Auth) {
+export function auth(opts: Auth): neo4j.AuthToken {
   switch (opts.type) {
     case "basic":
       return neo4j.auth.basic(opts.username, opts.password, opts.realm);

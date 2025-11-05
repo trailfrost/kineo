@@ -4,3 +4,6 @@ node_modules/
 # build output
 dist/
 *.tsbuildinfo
+
+# databases
+data/

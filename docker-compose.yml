@@ -1,0 +1,95 @@
+services:
+  test-runner:
+    build: .
+    container_name: kineo_test_runner
+    depends_on:
+      mysql:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      sqlite:
+        condition: service_started
+    environment:
+      # Database connection URLs your kineo can use
+      DATABASE_URL_MYSQL: mysql://root:root@mysql:3306/test
+      DATABASE_URL_POSTGRES: postgres://postgres:postgres@postgres:5432/test
+      DATABASE_URL_NEO4J: bolt://neo4j:test@neo4j:7687
+      DATABASE_URL_SQLITE: file:/data/test.db
+    volumes:
+      - .:/app
+      - ./data/sqlite:/data
+    networks:
+      - kineotest
+
+  mysql:
+    image: mysql:8.4
+    container_name: kineo_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: test
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 10
+    networks:
+      - kineotest
+
+  postgres:
+    image: postgres:16
+    container_name: kineo_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: test
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+    networks:
+      - kineotest
+
+  neo4j:
+    image: neo4j:5
+    container_name: kineo_neo4j
+    environment:
+      NEO4J_AUTH: neo4j/password
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j:/data
+    networks:
+      - kineotest
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c '</dev/tcp/localhost/7687' >/dev/null 2>&1 || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  # SQLite doesn't need a daemon, but this keeps everything testable via Docker
+  sqlite:
+    image: alpine:3.20
+    container_name: kineo_sqlite
+    volumes:
+      - ./data/sqlite:/data
+    command: >
+      sh -c "apk add --no-cache sqlite && sqlite3 /data/test.db '.databases' && sleep infinity"
+    networks:
+      - kineotest
+
+networks:
+  kineotest:
+    driver: bridge
+
+volumes:
+  neo4j:

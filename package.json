@@ -36,6 +36,10 @@
       "types": "./dist/compiler/cypher.d.mts",
       "import": "./dist/compiler/cypher.mjs"
     },
+    "./compiler/sql": {
+      "types": "./dist/compiler/sql.d.mts",
+      "import": "./dist/compiler/sql.mjs"
+    },
     "./ir": {
       "types": "./dist/ir.d.mts",
       "import": "./dist/ir.mjs"

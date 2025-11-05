@@ -1,13 +1,5 @@
 import { describe, test, expect, vi } from "vitest";
-import {@/kit/utils
-  push,
-  pull,
-  generate,
-  deploy,
-  status,
-  rollback,
-  getDiff,
-} from "@/kit/cli";
+import { push, pull, generate, deploy, status, rollback, getDiff } from "@/kit";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
 import { defineModel, defineSchema, field } from "@/schema";
 import type { Adapter } from "@/adapter";

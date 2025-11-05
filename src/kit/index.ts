@@ -23,7 +23,7 @@ const jiti = createJiti(CWD);
 
 let config: kit.ParsedConfig;
 
-const program = new Command("kineo")
+export const program = new Command("kineo")
   .version("0.6.0")
   .description("Manages migrations and schema.")
   .input({
@@ -568,4 +568,3 @@ export function serializeFieldOrRelation(value: unknown): string {
 }
 
 export * from "./utils";
-export default program;

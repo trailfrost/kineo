@@ -1,13 +1,32 @@
+/**
+ * Types of errors related to Kineo.
+ */
 export const enum KineoErrorKind {}
 
+/**
+ * A Kineo error.
+ */
 export class KineoError extends Error {
+  /**
+   * The type of error.
+   */
   kind: KineoErrorKind;
 
+  /**
+   * Creates a new Kineo error.
+   * @param kind The type of error.
+   * @param message The message.
+   */
   constructor(kind: KineoErrorKind, message?: string) {
     super(message ?? KineoError.getMessageFromKind(kind));
     this.kind = kind;
   }
 
+  /**
+   * Gets a message for a type of error.
+   * @param kind The type.
+   * @returns A message.
+   */
   static getMessageFromKind(kind: KineoErrorKind) {
     switch (kind) {
       default:
@@ -16,6 +35,9 @@ export class KineoError extends Error {
   }
 }
 
+/**
+ * A KineoKit (migration manager) related error.
+ */
 export const enum KineoKitErrorKind {
   MissingSchema = "MissingSchema",
   MissingClient = "MissingClient",
@@ -24,16 +46,36 @@ export const enum KineoKitErrorKind {
   FilePathNecessary = "FilePathNecessary",
 }
 
+/**
+ * A KineoKit error.
+ */
 export class KineoKitError<T> extends Error {
+  /**
+   * The type of error.
+   */
   kind: KineoKitErrorKind;
+  /**
+   * Associated data.
+   */
   data?: T;
 
+  /**
+   * Creates a new KineoKit error.
+   * @param kind The type of error.
+   * @param data Associated data.
+   * @param message The error message.
+   */
   constructor(kind: KineoKitErrorKind, data?: T, message?: string) {
     super(message ?? KineoKitError.getMessageFromKind(kind));
     this.kind = kind;
     this.data = data;
   }
 
+  /**
+   * Gets a message for a type of error.
+   * @param kind The kind.
+   * @returns A message.
+   */
   static getMessageFromKind(kind: KineoKitErrorKind) {
     switch (kind) {
       case KineoKitErrorKind.NoSupport:

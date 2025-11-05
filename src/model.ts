@@ -6,7 +6,6 @@ import * as ir from "@/ir";
 
 /**
  * Filter interface for primitive types.
- * @param T The primitive type.
  */
 export type PrimitiveFilter<T> = T extends string
   ? {
@@ -44,7 +43,6 @@ export type PrimitiveFilter<T> = T extends string
 
 /**
  * Filter for a field.
- * @param T The field's type.
  */
 export type FieldFilter<T> = T | PrimitiveFilter<T>;
 
@@ -65,9 +63,6 @@ export type IdOf<M> = {
 
 /**
  * Query options (`findFirst`, `findMany`, etc.)
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface QueryOpts<
   S extends Schema,
@@ -93,9 +88,6 @@ export interface QueryOpts<
 
 /**
  * Create options (`create`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface CreateOpts<
   S extends Schema,
@@ -111,9 +103,6 @@ export interface CreateOpts<
 
 /**
  * Update options (`update`, `updateMany`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface UpdateOpts<
   S extends Schema,
@@ -130,9 +119,6 @@ export interface UpdateOpts<
 
 /**
  * Delete options (`delete`, `deleteMany`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface DeleteOpts<
   S extends Schema,
@@ -148,9 +134,6 @@ export interface DeleteOpts<
 
 /**
  * Upsert options (`upsert`, `upsertMany`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface UpsertOpts<
   S extends Schema,
@@ -170,10 +153,6 @@ export interface UpsertOpts<
 
 /**
  * If select/include specified, infer shape, otherwise return full model.
- * @param S The schema.
- * @param M The model definition.
- * @param O The options passed into the function.
- * @param MType _Do not pass_ The inferred type of the model definition.
  */
 export type ResultPayload<
   S extends Schema,
@@ -189,10 +168,6 @@ export type ResultPayload<
 /** Handle select: pick subset */
 /**
  * Picks a subset of the fields, based on the `select` option.
- * @param S The schema.
- * @param M The model definition.
- * @param Sel The fields to select.
- * @param MType _Do not pass_ The inferred type from the model definition.
  */
 export type SelectedFields<
   S extends Schema,
@@ -210,10 +185,6 @@ export type SelectedFields<
 
 /**
  * Adds nested relations.
- * @param S The schema.
- * @param M The model definition.
- * @param Inc The included relations.
- * @param MType _Do not pass_ The inferred type from the model definition.
  */
 export type IncludedFields<
   S extends Schema,
@@ -312,8 +283,6 @@ export type UpsertManyReturn<
 
 /**
  * A model. This is different from a model definition; the definition is just the schema, the class provides the functionality.
- * @param S The schema.
- * @param M The model definition.
  */
 export class Model<S extends Schema, M extends ModelDef> {
   // ? Not sure if these will be necessary
@@ -453,9 +422,6 @@ export class Model<S extends Schema, M extends ModelDef> {
 
 /**
  * Path options (`findPath`, `findShortestPath`, etc.).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface PathOpts<
   S extends Schema,
@@ -476,9 +442,6 @@ export interface PathOpts<
 
 /**
  * Connect options (`connect`, `disconnect`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
  */
 export interface ConnectOpts<
   S extends Schema,
@@ -493,10 +456,7 @@ export interface ConnectOpts<
 }
 
 /**
- * Traverse options (`traverse`).
- * @param S The schema.
- * @param M The model definition.
- * @param MType _Do not pass_ Inferred type of the model definition.
+ * Traverse options (`traverse`)..
  */
 export interface TraverseOpts<
   S extends Schema,
@@ -552,8 +512,6 @@ export type TraverseReturn<S extends Schema, M extends ModelDef> = Promise<{
 
 /**
  * Provides utility methods for graph databases on top of the default model.
- * @param S The schema.
- * @param M The model definition.
  */
 export class GraphModel<S extends Schema, M extends ModelDef> extends Model<
   S,

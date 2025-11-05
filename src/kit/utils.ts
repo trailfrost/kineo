@@ -7,12 +7,21 @@ import { FieldDef, RelationDef, type Schema } from "@/schema";
 
 import type { Jiti } from "jiti/lib/types";
 
+/**
+ * A file path based import in the configuration file.
+ */
 export interface FileExport {
   file: string;
   export: string;
 }
 
+/**
+ * A reference function.
+ */
 export type ReferenceFn<T> = () => Promise<T> | T;
+/**
+ * A reference to a file.
+ */
 export type Reference<T> =
   | string
   | FileExport
@@ -20,16 +29,36 @@ export type Reference<T> =
   | Promise<T>
   | ReferenceFn<T>;
 
+/**
+ * High-level Kineo configuration.
+ */
 export interface KineoConfig {
+  /**
+   * The schema reference.
+   */
   schema: Reference<Schema>;
+  /**
+   * The client reference.
+   */
   client: Reference<Kineo<any, any>>;
+  /**
+   * The migrations directory.
+   */
   migrations: string;
 }
 
+/**
+ * Adds type definitions to an object.
+ * @param config The configuration.
+ * @returns The same configuration.
+ */
 export function defineConfig(config: KineoConfig) {
   return config;
 }
 
+/**
+ * Low-level Kineo config.
+ */
 export interface ParsedConfig {
   schema: Schema;
   schemaMod?: FileExport;
@@ -38,10 +67,16 @@ export interface ParsedConfig {
   migrations: string;
 }
 
+/**
+ *
+ * @param jiti The Jiti instance.
+ * @param module The Kineo configuration.
+ * @returns Parsed configuration, or undefined.
+ */
 export async function parseConfig(
   jiti: Jiti,
   module: KineoConfig
-): Promise<ParsedConfig | undefined> {
+): Promise<ParsedConfig> {
   const { exported: client, module: clientMod } = await extract(
     jiti,
     module.client
@@ -68,6 +103,12 @@ export async function parseConfig(
   };
 }
 
+/**
+ * Imports a module from a reference.
+ * @param jiti The Jiti instance.
+ * @param ref The reference to extract.
+ * @returns The imported module.
+ */
 async function extract<T>(
   jiti: Jiti,
   ref: Reference<T>
@@ -103,6 +144,12 @@ function isFileExport(ref: Reference<any>): ref is FileExport {
   return typeof ref === "object" && "file" in ref && "export" in ref;
 }
 
+/**
+ * Pushes a schema to the database.
+ * @param adapter The adapter.
+ * @param newSchema The new schema to push.
+ * @param force To not throw an error on breaking changes.
+ */
 export async function push(
   adapter: Adapter<any, any>,
   newSchema: Schema,
@@ -123,11 +170,26 @@ export async function push(
   await adapter.push(newSchema);
 }
 
+/**
+ * Differences between two schemas.
+ */
 export interface SchemaDiff {
+  /**
+   * Descriptions of the breaking changes.
+   */
   breaking: string[];
+  /**
+   * Descriptions of the non-breaking changes.
+   */
   nonBreaking: string[];
 }
 
+/**
+ * Calculates the difference between two schemas.
+ * @param prev The previous schema.
+ * @param cur The current schema.
+ * @returns A diff between the two schemas.
+ */
 export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   const breaking: string[] = [];
   const nonBreaking: string[] = [];
@@ -240,11 +302,23 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   return { breaking, nonBreaking };
 }
 
+/**
+ * Pulls a schema from the database.
+ * @param adapter The adapter.
+ * @returns The schema.
+ */
 export async function pull(adapter: Adapter<any, any>) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.pull();
 }
 
+/**
+ * Generates migrations based on two schemas.
+ * @param adapter The adapter.
+ * @param prevSchema The previous schema.
+ * @param newSchema The current schema.
+ * @returns The generated migrations.
+ */
 export async function generate(
   adapter: Adapter<any, any>,
   prevSchema: Schema,
@@ -254,16 +328,32 @@ export async function generate(
   return await adapter.generate(prevSchema, newSchema);
 }
 
+/**
+ * Deploys a migration.
+ * @param adapter The adapter.
+ * @param migration The migration.
+ */
 export async function deploy(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.deploy(migration, crypto.hash("sha512", migration));
 }
 
+/**
+ * Gets the status for a migration.
+ * @param adapter The adapter.
+ * @param migration The migration.
+ * @returns If the migration has been deployed or not.
+ */
 export async function status(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.status(migration, crypto.hash("sha512", migration));
 }
 
+/**
+ * Rolls back (reverts) a migration.
+ * @param adapter The adapter.
+ * @param migration The migration.
+ */
 export async function rollback(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.rollback) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.rollback(migration, crypto.hash("sha1", migration));

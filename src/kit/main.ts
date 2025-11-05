@@ -10,6 +10,9 @@ const __dirname = dirname(__filename);
 // Only use Jiti in development (when running from .ts files)
 const isTs = extname(__filename) === ".ts";
 
+/**
+ * The main function. Gets called when running KineoKit.
+ */
 async function main() {
   let program: Command;
 

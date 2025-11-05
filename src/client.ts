@@ -18,8 +18,6 @@ type ModelsForSchema<
 
 /**
  * A Kineo client.
- * @param TSchema The schema to generate models from.
- * @param TAdapter The adapter used in this client.
  */
 export type Kineo<
   TSchema extends Schema,
@@ -37,7 +35,6 @@ export type Kineo<
 
 /**
  * Infers a schema from a client.
- * @param T The client to infer types frmom.
  */
 export type InferClient<T> =
   T extends Kineo<infer TSchema, any> ? InferSchema<TSchema> : never;

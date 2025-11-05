@@ -39,7 +39,6 @@ export interface ExecResult<T = any> {
 
 /**
  * An adapter. Contains functions necessary to interact with the database of choice.
- * @param TModel The model class extension this adapter uses.
  */
 export interface Adapter<
   TModelCtor extends {

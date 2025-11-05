@@ -3,8 +3,8 @@ import pkg from "./package.json" with { type: "json" };
 
 export default defineConfig({
   entry: [
-    ...Object.entries(pkg.bin).map(([, value]) => format(value)),
-    ...Object.entries(pkg.exports).map(([, value]) => format(value.import)),
+    ...Object.values(pkg.bin).map(format),
+    ...Object.values(pkg.exports).map((value) => format(value.import)),
   ],
   tsconfig: "./tsconfig.app.json",
   format: ["esm"],

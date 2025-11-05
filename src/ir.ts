@@ -1,5 +1,8 @@
 import type * as model from "./model";
 
+/**
+ * A type of statement.
+ */
 export const enum StatementType {
   Find = "Find",
   Count = "Count",

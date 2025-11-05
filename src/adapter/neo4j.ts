@@ -3,47 +3,121 @@ import { GraphModel } from "@/model";
 import { compile } from "@/compiler/cypher";
 import * as neo4j from "neo4j-driver";
 
+/**
+ * Authentication options for Neo4j.
+ */
 export type Auth =
   | {
+      /**
+       * Basic (username and password) authentication.
+       */
       type: "basic";
+      /**
+       * The username.
+       */
       username: string;
+      /**
+       * The password.
+       */
       password: string;
+      /**
+       * An optional realm.
+       */
       realm?: string;
     }
   | {
+      /**
+       * Bearer token authentication.
+       */
       type: "bearer";
+      /**
+       * The token.
+       */
       token: string;
     }
   | {
+      /**
+       * Kerberos ticket authentication.
+       */
       type: "kerberos";
+      /**
+       * The ticket.
+       */
       ticket: string;
     }
   | {
+      /**
+       * Customized authentication.
+       */
       type: "custom";
+      /**
+       * The username.
+       */
       principal: string;
+      /**
+       * The credentials.
+       */
       credentials: string;
+      /**
+       * The realm of the authentication.
+       */
       realm: string;
+      /**
+       * The scheme (`basic`, `bearer`, etc.)
+       */
       scheme: string;
+      /**
+       * Optional parameters.
+       */
       params: Record<string, any>;
     };
 
 export type Neo4jOpts =
   | {
+      /**
+       * The driver.
+       */
       driver: neo4j.Driver;
+      /**
+       * The session.
+       */
       session?: neo4j.Session | neo4j.SessionConfig;
     }
   | {
+      /**
+       * The URL of your database.
+       */
       url: string;
+      /**
+       * Authentication options.
+       */
       auth: Auth;
+      /**
+       * Configuration for a Neo4j session.
+       */
       session?: neo4j.SessionConfig;
     };
 
+/**
+ * A Neo4j adapter.
+ */
 export interface Neo4jAdapter
   extends Adapter<typeof GraphModel, neo4j.ResultSummary> {
+  /**
+   * The driver.
+   */
   driver: neo4j.Driver;
+  /**
+   * The session.
+   */
   session: neo4j.Session;
 }
 
+/**
+ * Creates a new Neo4j adapter.
+ * @param opts Options for creating the adapter.
+ * @returns A Neo4j adapter.
+ */
 export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
   const driver =
     "driver" in opts ? opts.driver : neo4j.driver(opts.url, auth(opts.auth));
@@ -102,6 +176,11 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
   };
 }
 
+/**
+ * Converts a Neo4j value to a vanilla JavaScript type.
+ * @param value The value to convert.
+ * @returns The converted value.
+ */
 function toNative(value: any): any {
   if (neo4j.isInt(value)) {
     // convert neo4j.Integer -> number (safe)
@@ -154,6 +233,11 @@ function toNative(value: any): any {
   return value;
 }
 
+/**
+ * Collects edges/relationship-like objects.
+ * @param value The value.
+ * @param edges The array to collect to.
+ */
 function collectEdges(value: any, edges: any[]) {
   if (!value) return;
 
@@ -187,6 +271,11 @@ function collectEdges(value: any, edges: any[]) {
   }
 }
 
+/**
+ * Creates an authentication token.
+ * @param opts The authentication options.
+ * @returns An authentication token.
+ */
 function auth(opts: Auth) {
   switch (opts.type) {
     case "basic":

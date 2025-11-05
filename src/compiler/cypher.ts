@@ -1,8 +1,16 @@
 import type { Compiler } from "@/adapter";
 import * as IR from "@/ir";
 
+/**
+ * Parameters.
+ */
 type Params = Record<string, any>;
 
+/**
+ * Compiles an IR to Cypher.
+ * @param ir The IR to compile.
+ * @returns A compilation result.
+ */
 export const compile: Compiler = (ir) => {
   const ctx = createCompileContext();
   const chunks: string[] = [];
@@ -46,11 +54,18 @@ export const compile: Compiler = (ir) => {
 /*                               Compiler Context                             */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Shared state between compile functions.
+ */
 interface CompileContext {
   params: Params;
   nextParamName(base?: string): string;
 }
 
+/**
+ * Creates a shared compiler context.
+ * @returns A new compiler context.
+ */
 function createCompileContext(): CompileContext {
   let idx = 0;
   const params: Params = {};
@@ -62,6 +77,13 @@ function createCompileContext(): CompileContext {
 /*                              Helper Utilities                              */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Compiles properties to Cypher.
+ * @param ctx The compiler context.
+ * @param prefix The prefix of the property.
+ * @param props The properties to convert.
+ * @returns The compiled properties.
+ */
 function propsToCypher(
   ctx: CompileContext,
   prefix: string,
@@ -76,7 +98,12 @@ function propsToCypher(
   return entries.length ? `{ ${entries.join(", ")} }` : "{}";
 }
 
-/** Convert recursive where object into a valid Cypher boolean expression */
+/**
+ * Convert recursive where object into a valid Cypher boolean expression.
+ * @param ctx The compiler context.
+ * @param alias The result alias.
+ * @param where The where object.
+ */
 function whereToCypher(
   ctx: CompileContext,
   alias: string,
@@ -149,6 +176,13 @@ function whereToCypher(
       : "1=1";
 }
 
+/**
+ * Projects `select`/`include` objects into Cypher.
+ * @param alias The return alias.
+ * @param select The select projection.
+ * @param include The include projection.
+ * @returns A Cypher string.
+ */
 function projection(
   alias: string,
   select?: Record<string, any>,
@@ -172,6 +206,13 @@ function projection(
   return fields.join(", ");
 }
 
+/**
+ * Collects projections from an include object.
+ * @param parentAlias The return alias.
+ * @param include The include object.
+ * @param acc Accumulator.
+ * @returns Compiled Cypher chunks.
+ */
 function collectIncludeProjections(
   parentAlias: string,
   include: Record<string, any>,
@@ -192,6 +233,12 @@ function collectIncludeProjections(
 /*                            Statement Compilers                             */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Compiles a Find statement.
+ * @param ctx The compiler context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileFindStatement(
   ctx: CompileContext,
   s: IR.FindStatement
@@ -222,6 +269,14 @@ function compileFindStatement(
     .join("\n");
 }
 
+/**
+ * Compiles includes recursively.
+ * @param ctx Compiler context.
+ * @param parentAlias The return alias.
+ * @param include The include object.
+ * @param depth The current include depth.
+ * @returns Cypher queries.
+ */
 function compileIncludesRecursive(
   ctx: CompileContext,
   parentAlias: string,
@@ -264,6 +319,12 @@ function compileIncludesRecursive(
   return lines;
 }
 
+/**
+ * Compiles a Count statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileCountStatement(
   ctx: CompileContext,
   s: IR.CountStatement
@@ -276,6 +337,12 @@ function compileCountStatement(
   ].join("\n");
 }
 
+/**
+ * Compiles a Create statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileCreateStatement(
   ctx: CompileContext,
   s: IR.CreateStatement
@@ -288,6 +355,12 @@ function compileCreateStatement(
   );
 }
 
+/**
+ * Compiles an Upsert statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileUpsertStatement(
   ctx: CompileContext,
   s: IR.UpdateStatement
@@ -337,6 +410,12 @@ function compileUpsertStatement(
     .join("\n");
 }
 
+/**
+ * Compiles a Delete statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileDeleteStatement(
   ctx: CompileContext,
   s: IR.DeleteStatement
@@ -349,6 +428,12 @@ function compileDeleteStatement(
   ].join("\n");
 }
 
+/**
+ * Compiles a Connect query statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileConnectStatement(
   ctx: CompileContext,
   s: IR.ConnectQueryStatement
@@ -375,6 +460,12 @@ function compileConnectStatement(
   ].join("\n");
 }
 
+/**
+ * Compiles a direction.
+ * @param min The minimum value.
+ * @param max The maximum value.
+ * @param direction The direction.
+ */
 function directionalRel(
   min: number,
   max: number,
@@ -390,7 +481,12 @@ function directionalRel(
       return `-[:*${min}..${max}]-`;
   }
 }
-
+/**
+ * Compiles a Relation query statement.
+ * @param ctx The context.
+ * @param s The statement.
+ * @returns A Cypher query.
+ */
 function compileRelationStatement(
   ctx: CompileContext,
   s: IR.RelationQueryStatement

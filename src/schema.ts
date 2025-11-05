@@ -14,7 +14,6 @@ export interface ModelDef {
 
 /**
  * Infers a type from a field definition.
- * @param TField The field definition.
  */
 export type InferField<TField extends FieldDef<any, any, any, any>> =
   TField extends FieldDef<
@@ -36,8 +35,6 @@ export type InferField<TField extends FieldDef<any, any, any, any>> =
 
 /**
  * Infers a type from a relationship definition.
- * @param TRelation The relationship definition.
- * @param TSchema The schema the relationship definition comes from.
  */
 export type InferRelationship<
   TRelation extends RelationDef<any, any, any, any>,
@@ -67,8 +64,6 @@ export type InferRelationship<
 
 /**
  * Infer a single model's properties.
- * @param TDef The model definition.
- * @param TSchema The schema the model comes from.
  */
 export type InferModelDef<
   TDef extends ModelDef,
@@ -83,7 +78,6 @@ export type InferModelDef<
 
 /**
  * Infers a whole schema.
- * @param TSchema The schema.
  */
 export type InferSchema<TSchema extends Schema> = {
   [M in keyof TSchema]: InferModelDef<TSchema[M], TSchema>;
@@ -126,10 +120,6 @@ export type Direction = "incoming" | "outgoing" | "both";
 
 /**
  * A field definition.
- * @param TKind The `Kind`/type of field.
- * @param TDefault Type of default value of the field.
- * @param TRequired If this field is required.
- * @param TArray If this field is an array.
  */
 export class FieldDef<
   TKind extends Kind,
@@ -250,10 +240,6 @@ export class FieldDef<
 
 /**
  * A relationship definition.
- * @param To Where this relationship is pointing to.
- * @param TDefault The default value of the relationship.
- * @param TRequired If this relationship is required.
- * @param TArray If this relationship is an array.
  */
 export class RelationDef<
   To extends string,

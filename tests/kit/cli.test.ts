@@ -66,7 +66,8 @@ vi.mock("jiti", () => {
 });
 
 // --- Mock the kit utilities (the main toolkit) ---
-vi.mock("@/kit", () => {
+vi.mock("@/kit", async () => {
+  const actual = await vi.importActual("@/kit");
   return {
     // parseConfig should return a minimal config object shape used by CLI
     parseConfig: vi.fn().mockResolvedValue({}),
@@ -76,12 +77,12 @@ vi.mock("@/kit", () => {
     deploy: vi.fn().mockResolvedValue(undefined),
     rollback: vi.fn().mockResolvedValue(undefined),
     status: vi.fn().mockResolvedValue("completed"),
-    // types are not needed at runtime
+    ...actual,
   };
 });
 
 // --- Now import the module under test (after mocks) ---
-import program from "@/kit";
+import { program } from "@/kit";
 
 // We need some helpers from the module to test (they are not exported in your original file).
 // Vitest can import actual module implementation to access internal named exports if they exist.

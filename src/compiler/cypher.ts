@@ -34,12 +34,12 @@ export const compile: Compiler = (ir) => {
         break;
       case IR.StatementType.ConnectQuery:
         chunks.push(
-          compileConnectStatement(ctx, stmt as IR.ConnectQueryStatement)
+          compileConnectStatement(ctx, stmt as IR.ConnectQueryStatement),
         );
         break;
       case IR.StatementType.RelationQuery:
         chunks.push(
-          compileRelationStatement(ctx, stmt as IR.RelationQueryStatement)
+          compileRelationStatement(ctx, stmt as IR.RelationQueryStatement),
         );
         break;
       default:
@@ -87,7 +87,7 @@ function createCompileContext(): CompileContext {
 function propsToCypher(
   ctx: CompileContext,
   prefix: string,
-  props: Record<string, any>
+  props: Record<string, any>,
 ): string {
   const entries: string[] = [];
   for (const [k, v] of Object.entries(props || {})) {
@@ -107,7 +107,7 @@ function propsToCypher(
 function whereToCypher(
   ctx: CompileContext,
   alias: string,
-  where?: Record<string, any>
+  where?: Record<string, any>,
 ): string {
   if (!where || Object.keys(where).length === 0) return "1=1";
 
@@ -136,7 +136,7 @@ function whereToCypher(
         ctx.params[pname] = val;
         const opHandler = opMap[op];
         parts.push(
-          opHandler ? opHandler(field, pname) : `${field} = $${pname}`
+          opHandler ? opHandler(field, pname) : `${field} = $${pname}`,
         );
       }
     } else if (Array.isArray(value)) {
@@ -186,7 +186,7 @@ function whereToCypher(
 function projection(
   alias: string,
   select?: Record<string, any>,
-  include?: Record<string, any>
+  include?: Record<string, any>,
 ): string {
   const fields: string[] = [];
 
@@ -216,7 +216,7 @@ function projection(
 function collectIncludeProjections(
   parentAlias: string,
   include: Record<string, any>,
-  acc: string[] = []
+  acc: string[] = [],
 ): string[] {
   for (const [relName, relOpts] of Object.entries(include)) {
     const relAlias = `${parentAlias}_${relName}`;
@@ -241,7 +241,7 @@ function collectIncludeProjections(
  */
 function compileFindStatement(
   ctx: CompileContext,
-  s: IR.FindStatement
+  s: IR.FindStatement,
 ): string {
   const alias = s.alias ?? "n";
   const match = `MATCH (${alias}:${s.model})`;
@@ -281,7 +281,7 @@ function compileIncludesRecursive(
   ctx: CompileContext,
   parentAlias: string,
   include?: Record<string, any>,
-  depth = 0
+  depth = 0,
 ): string[] {
   if (!include) return [];
 
@@ -301,7 +301,7 @@ function compileIncludesRecursive(
         whereClause,
       ]
         .filter(Boolean)
-        .join("\n")
+        .join("\n"),
     );
 
     // Recursively compile nested includes
@@ -310,7 +310,7 @@ function compileIncludesRecursive(
         ctx,
         relAlias,
         (relOpts as any).include,
-        depth + 1
+        depth + 1,
       );
       lines.push(...nested);
     }
@@ -327,7 +327,7 @@ function compileIncludesRecursive(
  */
 function compileCountStatement(
   ctx: CompileContext,
-  s: IR.CountStatement
+  s: IR.CountStatement,
 ): string {
   const alias = s.alias ?? "n";
   return [
@@ -345,13 +345,13 @@ function compileCountStatement(
  */
 function compileCreateStatement(
   ctx: CompileContext,
-  s: IR.CreateStatement
+  s: IR.CreateStatement,
 ): string {
   const alias = s.alias ?? "n";
   const props = propsToCypher(ctx, "create", s.data || {});
   const create = `CREATE (${alias}:${s.model} ${props})`;
   return [create, `RETURN ${projection(alias, s.select, s.include)}`].join(
-    "\n"
+    "\n",
   );
 }
 
@@ -363,7 +363,7 @@ function compileCreateStatement(
  */
 function compileUpsertStatement(
   ctx: CompileContext,
-  s: IR.UpdateStatement
+  s: IR.UpdateStatement,
 ): string {
   const alias = s.alias ?? "n";
 
@@ -372,7 +372,7 @@ function compileUpsertStatement(
     const props = propsToCypher(
       ctx,
       "upsert_create",
-      (s.data as any).create || {}
+      (s.data as any).create || {},
     );
     const create = `CREATE (${alias}:${s.model} ${props})`;
     return [create, `RETURN properties(${alias}) AS ${alias}`].join("\n");
@@ -418,7 +418,7 @@ function compileUpsertStatement(
  */
 function compileDeleteStatement(
   ctx: CompileContext,
-  s: IR.DeleteStatement
+  s: IR.DeleteStatement,
 ): string {
   const alias = s.alias ?? "n";
   return [
@@ -436,7 +436,7 @@ function compileDeleteStatement(
  */
 function compileConnectStatement(
   ctx: CompileContext,
-  s: IR.ConnectQueryStatement
+  s: IR.ConnectQueryStatement,
 ): string {
   const from = "a";
   const to = "b";
@@ -469,7 +469,7 @@ function compileConnectStatement(
 function directionalRel(
   min: number,
   max: number,
-  direction?: "IN" | "OUT" | "BOTH"
+  direction?: "IN" | "OUT" | "BOTH",
 ) {
   switch (direction) {
     case "IN":
@@ -489,7 +489,7 @@ function directionalRel(
  */
 function compileRelationStatement(
   ctx: CompileContext,
-  s: IR.RelationQueryStatement
+  s: IR.RelationQueryStatement,
 ): string {
   const from = "a";
   const to = "b";

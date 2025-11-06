@@ -37,7 +37,7 @@ export const db = Kineo(
       password: "password",
     },
   }),
-  schema
+  schema,
 );
 
 const user = await db.users.findFirst({

@@ -7,7 +7,7 @@ const mockDialect = {
   identifier: vi.fn((name: string) => `"${name}"`),
   string: vi.fn((value: string) => `'${value}'`),
   array: vi.fn(
-    (values: unknown[]) => `(${values.map((v) => `'${v}'`).join(", ")})`
+    (values: unknown[]) => `(${values.map((v) => `'${v}'`).join(", ")})`,
   ),
   limitOffset: vi.fn((limit?: number, offset?: number) => {
     const clauses = [];
@@ -22,11 +22,11 @@ const mockDialect = {
   autoIncrement: vi.fn(() => "SERIAL"),
   now: vi.fn(() => "CURRENT_TIMESTAMP"),
   jsonExtract: vi.fn(
-    (column: string, path: string) => `JSON_EXTRACT(${column}, '${path}')`
+    (column: string, path: string) => `JSON_EXTRACT(${column}, '${path}')`,
   ),
   type: vi.fn((type: string) => type.toUpperCase()),
   returning: vi.fn((columns?: string[]) =>
-    columns?.length ? `RETURNING ${columns.join(", ")}` : ""
+    columns?.length ? `RETURNING ${columns.join(", ")}` : "",
   ),
 };
 
@@ -81,7 +81,7 @@ describe("SQL Compiler", () => {
 
     const result = compile(ir, mockDialect);
     expect(result.command).toBe(
-      'SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE'
+      'SELECT COUNT(*) AS count FROM "User" WHERE "active" = TRUE',
     );
   });
 
@@ -99,7 +99,7 @@ describe("SQL Compiler", () => {
 
     const result = compile(ir, mockDialect);
     expect(result.command).toBe(
-      'INSERT INTO "User" ("name", "age") VALUES (\'Alice\', 30) RETURNING id'
+      'INSERT INTO "User" ("name", "age") VALUES (\'Alice\', 30) RETURNING id',
     );
   });
 

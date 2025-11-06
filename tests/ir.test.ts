@@ -209,7 +209,7 @@ describe("compileToIR", () => {
 
   test("throws on unknown operation", () => {
     expect(() => compileToIR("User", "invalidOp", {})).toThrowError(
-      /Unknown operation type: invalidOp/
+      /Unknown operation type: invalidOp/,
     );
   });
 });

@@ -319,7 +319,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The first element that matches the filter, or `null` if not found.
    */
   async findFirst<O extends QueryOpts<S, M>>(
-    opts: O
+    opts: O,
   ): FindFirstReturn<S, M, O> {
     const { entries: rows } = await this.$exec(opts, "findFirst");
     return (rows[0] ?? null) as any;
@@ -411,7 +411,7 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that were upserted.
    */
   async upsertMany<O extends UpsertOpts<S, M>>(
-    opts: O
+    opts: O,
   ): UpsertManyReturn<S, M, O> {
     const { entries: rows } = await this.$exec(opts, "upsertMany");
     return rows as any;

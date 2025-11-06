@@ -49,7 +49,7 @@ function makeFakeAdapter() {
         }
         case "update": {
           const updated = rows.map((r) =>
-            r.id === params.where.id ? { ...r, ...params.data } : r
+            r.id === params.where.id ? { ...r, ...params.data } : r,
           );
           store[name] = updated;
           entries = updated.filter((r) => r.id === params.where.id);

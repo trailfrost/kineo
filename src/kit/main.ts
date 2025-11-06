@@ -21,11 +21,14 @@ async function main() {
     const jiti = createJiti(__dirname, {
       alias: { "@": resolve(__dirname, "../") },
     });
-    program = (await jiti.import("./index.ts", { default: true })) as Command;
+    ({ program } = (await jiti.import("./index.ts")) as Record<
+      string,
+      Command
+    >);
   } else {
     // Run from compiled JS (prod)
     const mod = await import("./index.js");
-    program = (mod.default ?? mod) as any;
+    program = mod.program as any;
   }
 
   void program.run();

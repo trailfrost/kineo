@@ -118,7 +118,7 @@ const compile: Compiler<Dialect> = (ir, dialect) => {
       case IR.StatementType.ConnectQuery:
       case IR.StatementType.RelationQuery:
         throw new Error(
-          `${stmt.type} is not supported by the SQL compiler (graph operations).`
+          `${stmt.type} is not supported by the SQL compiler (graph operations).`,
         );
       default:
         throw new Error(`Unsupported statement type: ${(stmt as any).type}`);
@@ -130,7 +130,7 @@ const compile: Compiler<Dialect> = (ir, dialect) => {
     command: sqlStatements.join(";"),
     params: ctx.params.reduce(
       (acc, val, i) => (acc[`__param_${i}`] = val),
-      {} as Record<string, any>
+      {} as Record<string, any>,
     ),
   };
 };
@@ -165,7 +165,7 @@ function literalForValue(ctx: Ctx, val: unknown): string {
  */
 function compileWhere(
   ctx: Ctx,
-  where?: Record<string, any>
+  where?: Record<string, any>,
 ): string | undefined {
   if (!where || Object.keys(where).length === 0) return undefined;
 
@@ -223,7 +223,7 @@ function compileWhere(
               // fallback to JSON contains or LIKE depending on type
               if (typeof operand === "string") {
                 pieces.push(
-                  `${colExpr} LIKE ${literalForValue(ctx, `%${operand}%`)}`
+                  `${colExpr} LIKE ${literalForValue(ctx, `%${operand}%`)}`,
                 );
               } else {
                 pieces.push(`${colExpr} = ${literalForValue(ctx, operand)}`); // best-effort
@@ -237,14 +237,14 @@ function compileWhere(
       } else if (Array.isArray(v)) {
         // IN
         pieces.push(
-          `${compileColumnOrJson(ctx, k)} IN ${ctx.dialect.array(v)}`
+          `${compileColumnOrJson(ctx, k)} IN ${ctx.dialect.array(v)}`,
         );
       } else if (v === null) {
         pieces.push(`${compileColumnOrJson(ctx, k)} IS NULL`);
       } else {
         // equality
         pieces.push(
-          `${compileColumnOrJson(ctx, k)} = ${literalForValue(ctx, v)}`
+          `${compileColumnOrJson(ctx, k)} = ${literalForValue(ctx, v)}`,
         );
       }
     }
@@ -265,7 +265,7 @@ function compileCreate(ctx: Ctx, s: IR.CreateStatement): string {
   const columns = Object.keys(data);
   if (columns.length === 0)
     return `INSERT INTO ${table} DEFAULT VALUES ${d.returning(
-      s.select ? Object.keys(s.select) : undefined
+      s.select ? Object.keys(s.select) : undefined,
     )}`.trim();
 
   const colList = columns.map((c) => d.identifier(c)).join(", ");
@@ -286,12 +286,12 @@ function compileUpsert(ctx: Ctx, s: IR.UpdateStatement): string {
 
   const createCols = Object.keys(createData);
   const insertValues = createCols.map((c) =>
-    literalForValue(ctx, createData[c])
+    literalForValue(ctx, createData[c]),
   );
   const conflictCols = s.where ? Object.keys(s.where) : [];
 
   const updateAssignments = Object.keys(updateData).map(
-    (k) => `${d.identifier(k)} = ${literalForValue(ctx, updateData[k])}`
+    (k) => `${d.identifier(k)} = ${literalForValue(ctx, updateData[k])}`,
   );
 
   const returning = d.returning(s.select ? Object.keys(s.select) : undefined);

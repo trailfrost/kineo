@@ -1,28 +1,4 @@
 services:
-  test-runner:
-    build: .
-    container_name: kineo_test_runner
-    depends_on:
-      mysql:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-      sqlite:
-        condition: service_started
-    environment:
-      # Database connection URLs your kineo can use
-      DATABASE_URL_MYSQL: mysql://root:root@mysql:3306/test
-      DATABASE_URL_POSTGRES: postgres://postgres:postgres@postgres:5432/test
-      DATABASE_URL_NEO4J: bolt://neo4j:test@neo4j:7687
-      DATABASE_URL_SQLITE: file:/data/test.db
-    volumes:
-      - .:/app
-      - ./data/sqlite:/data
-    networks:
-      - kineotest
-
   mysql:
     image: mysql:8.4
     container_name: kineo_mysql

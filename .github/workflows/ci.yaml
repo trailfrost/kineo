@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: pnpm/action-setup@v4
+
+      - name: Build and start Docker Compose
+        run: docker compose up -d --build
+
+      - name: Wait for all services to be healthy
+        run: |
+          echo "Waiting for database containers to become healthy..."
+          for service in mysql postgres neo4j; do
+            echo "Checking $service..."
+            for i in {1..30}; do
+              status=$(docker inspect --format='{{.State.Health.Status}}' kineo_${service} || echo "not found")
+              if [ "$status" = "healthy" ]; then
+                echo "$service is healthy!"
+                break
+              fi
+              echo "$service status: $status (attempt $i)"
+              sleep 5
+            done
+          done
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run type check
+        run: pnpm check
+
+      - name: Run ESLint
+        run: pnpm lint
+
+      - name: Run Prettier
+        run: pnpm format
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Shutdown Docker
+        if: always()
+        run: docker compose down -v

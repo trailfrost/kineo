@@ -67,7 +67,7 @@
     "kit": "jiti src/kit/main.ts",
     "lint": "eslint .",
     "lint!": "eslint --fix .",
-    "check": "tsc -b tsconfig.app.json",
+    "check": "tsc -b",
     "build": "tsdown"
   },
   "keywords": [

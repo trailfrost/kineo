@@ -1,1 +1,9 @@
+# pnpm stuff (for ci)
 pnpm-lock.yaml
+.pnpm-store/
+
+# build
+dist/
+
+# environment files
+.env*

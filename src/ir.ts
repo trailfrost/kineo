@@ -115,7 +115,7 @@ export interface RelationQueryStatement extends Statement {
  */
 export function compileFindStatement(
   modelName: string,
-  opts: model.QueryOpts<any, any>
+  opts: model.QueryOpts<any, any>,
 ): FindStatement {
   return {
     type: StatementType.Find,
@@ -135,7 +135,7 @@ export function compileFindStatement(
  */
 export function compileCountStatement(
   modelName: string,
-  opts: model.QueryOpts<any, any>
+  opts: model.QueryOpts<any, any>,
 ): CountStatement {
   return {
     type: StatementType.Count,
@@ -149,7 +149,7 @@ export function compileCountStatement(
  */
 export function compileCreateStatement(
   modelName: string,
-  opts: model.CreateOpts<any, any>
+  opts: model.CreateOpts<any, any>,
 ): CreateStatement {
   return {
     type: StatementType.Create,
@@ -165,7 +165,7 @@ export function compileCreateStatement(
  */
 export function compileUpsertStatement(
   modelName: string,
-  opts: model.UpsertOpts<any, any>
+  opts: model.UpsertOpts<any, any>,
 ): UpdateStatement {
   return {
     type: StatementType.Upsert,
@@ -185,7 +185,7 @@ export function compileUpsertStatement(
  */
 export function compileDeleteStatement(
   modelName: string,
-  opts: model.DeleteOpts<any, any>
+  opts: model.DeleteOpts<any, any>,
 ): DeleteStatement {
   return {
     type: StatementType.Delete,
@@ -199,7 +199,7 @@ export function compileDeleteStatement(
  */
 export function compileConnectQueryStatement(
   modelName: string,
-  opts: model.ConnectOpts<any, any>
+  opts: model.ConnectOpts<any, any>,
 ): ConnectQueryStatement {
   return {
     type: StatementType.ConnectQuery,
@@ -217,7 +217,7 @@ export function compileConnectQueryStatement(
  */
 export function compileRelationQueryStatement(
   modelName: string,
-  opts: model.PathOpts<any, any>
+  opts: model.PathOpts<any, any>,
 ): RelationQueryStatement {
   return {
     type: StatementType.RelationQuery,

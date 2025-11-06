@@ -121,7 +121,7 @@ describe("kineo CLI (unit)", () => {
       const src = "export const schema = defineSchema({})";
       const res = helpers.ensureImports(src);
       expect(res).toContain(
-        'import { defineSchema, defineModel, field, relation } from "kineo/schema";'
+        'import { defineSchema, defineModel, field, relation } from "kineo/schema";',
       );
       expect(res).toContain("defineSchema");
     });
@@ -180,15 +180,15 @@ describe("kineo CLI (unit)", () => {
       // verify fs.writeFile was called (node:fs promises mocked earlier)
       const fsMock = await import("node:fs");
       expect(
-        (fsMock.promises.writeFile as any).mock.calls.length
+        (fsMock.promises.writeFile as any).mock.calls.length,
       ).toBeGreaterThan(0);
 
       // verify logs were called to notify user
       expect(convoker.log.info).toHaveBeenCalledWith(
-        expect.stringContaining("\nGenerating configuration file.")
+        expect.stringContaining("\nGenerating configuration file."),
       );
       expect(convoker.log.info).toHaveBeenCalledWith(
-        "Configuration file generated! You can now start using Kineo migrations."
+        "Configuration file generated! You can now start using Kineo migrations.",
       );
     });
   });

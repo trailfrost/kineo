@@ -141,7 +141,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
     async exec(result) {
       const { records, summary } = await session.run(
         result.command,
-        result.params
+        result.params,
       );
 
       const entries: any[] = [];
@@ -250,8 +250,8 @@ function collectEdges(value: any, edges: any[]) {
       end: value.end,
       props: Object.fromEntries(
         Object.entries(value).filter(
-          ([k]) => !["identity", "type", "start", "end"].includes(k)
-        )
+          ([k]) => !["identity", "type", "start", "end"].includes(k),
+        ),
       ),
     });
   }
@@ -290,7 +290,7 @@ export function auth(opts: Auth): neo4j.AuthToken {
         opts.credentials,
         opts.realm,
         opts.scheme,
-        opts.params
+        opts.params,
       );
   }
 }

@@ -6,7 +6,7 @@ import type { Adapter } from "@/adapter";
 
 // A minimal fake adapter
 function createFakeAdapter(
-  overrides: Partial<Adapter<any, any>> = {}
+  overrides: Partial<Adapter<any, any>> = {},
 ): Adapter<any, any> {
   return {
     Model: class FakeModel {},
@@ -27,7 +27,7 @@ describe("push()", () => {
   test("throws if adapter lacks pull or push", async () => {
     const adapter = createFakeAdapter({});
     await expect(push(adapter, simpleSchema)).rejects.toThrowError(
-      KineoKitError
+      KineoKitError,
     );
   });
 
@@ -113,7 +113,7 @@ describe("generate()", () => {
   test("throws if adapter lacks generate", async () => {
     const adapter = createFakeAdapter({});
     await expect(generate(adapter, simpleSchema, simpleSchema)).rejects.toThrow(
-      KineoKitError
+      KineoKitError,
     );
   });
 

@@ -1,0 +1,90 @@
+---
+title: Using Existing Adapters
+description: Learn how to set up the built-in adapters in Kineo.
+sidebar:
+  order: 3
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+An adapter is an abstraction that interacts with the database driver directly. It contains low-level functions like `exec` to execute a raw query.
+
+Kineo, currently, only has one built-in adapter: the Neo4j adapter. SQL adapters are being worked on.
+
+## The Neo4j Adapter
+
+:::note
+Nothing in this section is associated with Neo4j. Kineo is a separate project, with no affiliation.
+
+This section assumes you have some knowledge of the Neo4j JavaScript driver.
+:::
+
+```ts
+import { Neo4jAdapter } from "kineo/adapter/neo4j";
+```
+
+The Neo4j adapter requires that you install `neo4j-driver`.
+
+<Tabs syncKey="package-manager">
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add neo4j-driver
+    ```
+  </TabItem>
+
+  <TabItem label="npm">
+    ```bash
+    npm install neo4j-driver --save
+    ```
+  </TabItem>
+
+  <TabItem label="yarn">
+    ```bash
+    yarn add neo4j-driver
+    ```
+  </TabItem>
+
+  <TabItem label="bun">
+    ```bash
+    bun add neo4j-driver
+    ```
+  </TabItem>
+
+  <TabItem label="deno">
+    :::caution
+    Deno support is experimental. Make sure to run Kineo with correct Node.js compatibility options, and to install from npm as `neo4j-driver` is not on JSR.
+    :::
+
+    ```bash
+    deno add npm:neo4j-driver
+    ```
+  </TabItem>
+</Tabs>
+
+The adapter itself takes in an object containing options. You can either pass:
+
+- an object with a `driver` key, containing a driver from `neo4j-driver`, and an optional `session` key, containing a session from the driver or a session configuration.
+- an object with `url`, containing the url to the database, `auth` containing authentication options, and optionally, `session`, containing session configuration.
+
+```ts
+Neo4jAdapter({ driver, session });
+Neo4jAdapter({ url, auth, session });
+```
+
+- `url`: A `string` containing your database URL.
+- `auth`: An `Auth` object containing authentication options. Can be one of:
+  - `type: "basic"`:
+    - `username: string`,
+    - `password: string`,
+    - `realm?: string`.
+  - `type: "bearer"`: `token: string`.
+  - `type: "kerberos"`: `ticket: string`.
+  - `type: "custom"`:
+    - `principal: string`,
+    - `credentials: string`,
+    - `realm: string`,
+    - `scheme: string`,
+    - `params: Record<string, any>`.
+- `session`: A `neo4j-driver` `SessionConfig` object.
+
+And that's it for adapters! Check [the guide for creating your own adapter](/guides/create-adapter) or [the Adapter API reference](/api/adapter) for more details.

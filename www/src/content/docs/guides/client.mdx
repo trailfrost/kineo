@@ -1,0 +1,30 @@
+---
+title: Creating a Client
+description: Learn how to create a Kineo client.
+sidebar:
+  order: 2
+---
+
+Clients are the piece of glue between your schema and your database. They construct classes based on your schema, allowing you to call methods to interact with your database.
+
+To create a client, you can import from `kineo/client`.
+
+```ts
+import { Kineo } from "kineo/client";
+```
+
+The `Kineo` function returns a client. It takes in an [adapter](/guides/adapter) and a [schema](/guides/schema).
+
+```ts
+import { MyAdapter } from "./my-adapter";
+import { schema } from "./schema";
+
+export const client = Kineo(
+  MyAdapter(),
+  schema,
+);
+```
+
+That's it! You will be able to access methods such as `client.User.findFirst`, if you have a model named `User` on your schema. Check [the Client API reference](/api/client) for more details.
+
+Keep in mind that not all adapters will make all model methods available. For example, the built-in SQL adapters don't support `connect`, as that's specific to graph databases, so it won't be available on `client.User`.

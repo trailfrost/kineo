@@ -1,0 +1,112 @@
+---
+title: Creating a Schema
+description: How to create a schema in Kineo.
+sidebar:
+  order: 1
+---
+
+A schema is a structured blueprint that defines how data is organized. It is used in your code as types, and in the database as tables, fields, relationships and constraints.
+
+Kineo provides utilities for creating schemas in its `kineo/schema` module.
+
+```ts
+import {
+  defineSchema,
+  defineModel,
+  field,
+  relation,
+  type InferSchema
+} from "kineo/schema";
+```
+
+## Defining a schema
+
+`defineSchema` simply adds schema type definitions to an object, and returns it. You can use it like this:
+
+```ts
+export const schema = defineSchema({
+  // Your schema goes here!
+});
+```
+
+## Defining a model
+
+`defineModel` simply adds model type definitions to an object, and returns it. You can use it like this:
+
+```ts
+export const schema = defineSchema({
+  User: defineModel({
+    // Your fields go here!
+  })
+});
+```
+
+## Defining a field
+
+`field` is an object containing all the data types Kineo supports. You can use it like this:
+
+```ts
+User: defineModel({
+  string: field.string("string"),
+  char: field.char("char"),
+  int: field.int("int"),
+  float: field.float("float"),
+  date: field.date("date"),
+  time: field.time("time"),
+  datetime: field.datetime("datetime"),
+  timestamp: field.timestamp("timestamp"),
+  bool: field.bool("bool"),
+  boolean: field.boolean("boolean"), // alias of bool
+});
+```
+
+All of these entries are functions with one optional parameter for the name of the field in the actual database. This is optional, as by default they share a name with the key in your object.
+
+To add additional metadata to fields, you can use the builder returned by the functions in `field`. You can chain as many of these as you want.
+
+- `type(Kind)`: Changes the type of the field. This is usually not necessary, you can change the type by calling a different function in `field`.
+- `name(string)`: Changes the name of the field in the database. This does not change the name in your object.
+- `default(any)`: Sets a default value, for when the field doesn't exist.
+- `required()`: Makes the field required.
+- `optional()`: Makes the field optional.
+- `id()`: Makes the field the identifier, or primary key.
+- `array()`: Makes the field an array.
+- `single()`: Makes the field a single element, or not an array.
+
+## Defining relationships
+
+`relation` is an object containing a single function, `to`, that defines a relationship to another model in your database. You can use it like this:
+
+```ts
+User: defineModel({
+  friends: relation.to("User", "friends"),
+})
+```
+
+The `to` function takes in a required model (the name of the model you want to reference) and an optional name. Again, this name is optional because, by default, they share a name with the key in your object.
+
+Relationship fields are very similar to regular fields. They are also builders, and have some of the same functionality.
+
+- `to(string)`: Changes where this relationship points to. This is usually not required, as you can specify the target model when defining the relationship.
+- `name(string)`: The name of the relationship field in the database. This does not change the name in your object.
+- `label(string)`: _Usually used only with graph databases._ A label for your relationship.
+- `direction(Direction)`: _Usually used only with graph databases._ The direction of the relationship.
+- `outgoing(string?)`: _Usually used only with graph databases._ Sets the direction of the relationship to outgoing and sets the label.
+- `incoming(string?)`: _Usually used only with graph databases._ Sets the direction of the relationship to incoming and sets the label.
+- `both(string?)`: _Usually used only with graph databases._ Sets the direction of the relationship to either side and sets the label.
+- `default(any)`: Sets a default value.
+- `required()`: Makes the relationship field required.
+- `optional()`: Makes the relationship field optional.
+- `array()`: Makes the relationship field an array.
+- `single()`: Makes the relationship field a single element, or not an array.
+
+
+## Inferring types with `InferSchema`
+
+You need to some way to get types from your schema. That can be done with the `InferSchema` utility type, which converts a whole schema object into a TypeScript type. You can use it like this:
+
+```ts
+export type Schema = InferSchema<typeof schema>;
+```
+
+That covers most functionality for schemas!

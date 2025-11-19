@@ -4,6 +4,7 @@ pnpm-lock.yaml
 
 # build
 dist/
+.astro/
 
 # documentation (mdx is being formmatted wrong)
 www/src/content/docs/

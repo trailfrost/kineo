@@ -1,0 +1,39 @@
+---
+title: Kineo
+description: The TypeScript ORM.
+template: splash
+hero:
+  tagline: Kineo is an ORM for TypeScript, from schema to execution.
+  image:
+    file: ../../assets/kineo.png
+  actions:
+    - text: Quick Start
+      link: /guides/quick-start
+      icon: right-arrow
+    - text: Migrations
+      link: /guides/migrations
+      icon: right-arrow
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<CardGrid>
+  <Card title="Fully type-safe" icon="seti:typescript">
+    Kineo is type-safe, allowing you to define schemas and infer types from
+    them.
+  </Card>
+  <Card title="End-to-end JS" icon="forward-slash">
+    Everything is defined using TypeScript or JavaScript, from schemas to
+    queries to execution.
+  </Card>
+  <Card title="Pass JavaScript objects" icon="pencil">
+    Kineo allows you to pass JavaScript objects to query your database.
+  </Card>
+  <Card title="Manage migrations" icon="right-arrow">
+    Kineo comes with a built-in migration manager.
+  </Card>
+  <Card title="Extensible" icon="puzzle">
+    Kineo can work with any database, provided there's an adapter for it.
+  </Card>
+</CardGrid>

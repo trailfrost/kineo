@@ -1,0 +1,71 @@
+---
+title: Quick Start
+description: The easiest way to get started using Kineo.
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+Kineo is a TypeScript library for interacting with your database. To install it, you can use the following commands:
+
+<Tabs syncKey="package-manager">
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add kineo
+    pnpm exec kineo init
+    ```
+
+    The package will be added to your package.json
+  </TabItem>
+
+  <TabItem label="npm">
+    ```bash
+    npm install kineo --save
+    npx kineo init
+    ```
+
+    The package will be added to your package.json
+  </TabItem>
+
+  <TabItem label="yarn">
+    ```bash
+    yarn add kineo
+    yarn run kineo init
+    ```
+
+    The package will be added to your package.json
+  </TabItem>
+
+  <TabItem label="bun">
+    ```bash
+    bun add kineo
+    bunx kineo init
+    ```
+
+    The package will be added to your package.json
+  </TabItem>
+
+  <TabItem label="deno">
+    :::caution
+    Deno support is experimental. Make sure to run Kineo with correct Node.js compatibility options, and install from npm as it's currently not on JSR.
+    :::
+
+    ```bash
+    deno add npm:kineo
+    deno run npm:kineo init
+    ```
+
+    The package will be added to your deno.json or package.json.
+  </TabItem>
+</Tabs>
+
+## The `init` command
+
+Kineo's `init` command will ask you a few questions and generate a `kineo.config.ts` file.
+
+- **Where is your client located?** (`--client-file`): Where your client is located (e.g. `src/db/client.ts`). The file will be created if it doesn't exist.
+- **What is the name of the export of your client?** (`--client-export`): The name of the export of your client (e.g. `default`, `client`). A default client will be created if it doesn't exist.
+- **Where is your schema located?** (`--schema-file`): Where your schema is located (e.g. `src/db/schema.ts`). The file will be created if it doesn't exist.
+- **What is the name of the export of your schema?** (`--schema-export`): The name of the export of your schema (e.g. `default`, `schema`). A default schema will be created if it doesn't exist.
+- **Where do you want your migrations to be stored?** (`--migrations-dir`): The directory you want your migrations to be generated in (e.g. `./migrations`). The directory will be created if it doesn't exist.
+
+And there it is! Kineo has been successfully set up in your project. You can start by [adding a schema](/guides/schema), [adding a client and adapter](/guides/client), or [running some migrations](/guides/migrations).

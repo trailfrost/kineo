@@ -5,5 +5,8 @@ pnpm-lock.yaml
 # build
 dist/
 
+# documentation (mdx is being formmatted wrong)
+www/src/content/docs/
+
 # environment files
 .env*

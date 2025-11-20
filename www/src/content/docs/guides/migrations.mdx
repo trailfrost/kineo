@@ -1,0 +1,54 @@
+---
+title: Managing Migrations
+sidebar:
+  order: 5
+---
+
+Kineo comes with a built-in migration manager CLI. It's called KineoKit, but you can only run it by `kineo` and not `kineokit`.
+
+This page will only focus on the migration management side of KineoKit. For the initialization command, check [the Quick Start guide](/guides/quick-start/#the-init-command).
+
+## The `push` command
+
+The `push` command skips migrations entirely, and pushes the schema to the database.
+
+**Options**:
+- `--force, -f`: Ignores any warnings. **This may cause data loss.**
+
+## The `pull` command
+
+The `pull` command generates a schema based on your database's current schema. **Not all databases support this command.**
+
+**Options**:
+- `--force, -f`: Ignores any warnings. **This will replace your current schema in your code.**
+
+## The `generate` and `migrate` commands
+
+These are aliases for each other. They generate migrations, and unless otherwise specified, deploys them.
+
+**Options**:
+- `--no-push, -n`: Don't deploy migrations, only generate them.
+
+## The `status` command
+
+The `status` command gets the status of all migrations. Where this status is stored depends on the adapter -- all the built-in store them in your database.
+
+## The `create` command
+
+The `create` command creates a migration file.
+
+**Options**:
+- `--name, -n`: The name of the migration file.
+
+## The `deploy` command
+
+The `deploy` command deploys migrations that haven't been deployed yet.
+
+## The `rollback` command
+
+The `rollback` command reverts the last n migrations.
+
+**Arguments**:
+- n (first argument): The number of migrations to roll back.
+
+And that's it for KineoKit! Check [the KineoKit API Reference](/api/kit) for more details.

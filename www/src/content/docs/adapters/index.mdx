@@ -1,0 +1,71 @@
+---
+title: Create Your Own Adapter
+description: Learn how to create your own adapters in Kineo.
+sidebar:
+  order: 0
+---
+
+Kineo provides the necessary APIs for creating adapters through its `kineo/adapter` module.
+
+```ts
+import type {
+  Compiler,
+  Adapter,
+} from "kineo/adapter";
+```
+
+## The `Adapter` interface
+
+Adapters are just functions that return this interface. It takes in two generic parameters: a constructor of one of the built-in inheritors of the [Model class](#models), and a summary type. Summaries are optional.
+
+```ts
+import { GraphModel } from "kineo/model";
+
+export interface IMyAdapter extends Adapter<typeof GraphModel> {
+  // Custom properties go here!
+}
+
+export function MyAdapter(): IMyAdapter {
+  return {
+    // ...
+  }
+}
+```
+
+It contains several properties and methods, that either provide metadata or talk to the database directly.
+
+**Metadata properties:**
+- `Model`: The model constructor. This needs to be passed both as a type-only generic parameter and as metadata. This can **not** be a custom class; it must come from `kineo/model`.
+- `fileExt?`: A `string` with the file extension of the adapter's generated migration files. By default, it's `.kineo`.
+
+**Runtime-related methods:**
+- `compile(IR): Promise<CompileResult>`: Compiles an intermediate representation (IR) into your database's query language and a record containing parameters.
+- `exec(CompileResult): Promise<ExecResult>`: Executes a compilation result, and returns an execution result.
+- `close`: Closes the database driver.
+
+**KineoKit-related methods:**
+
+:::note
+All KineoKit related methods are optional, and the CLI will stop the user if they try to use something the adapter doesn't include.
+:::
+
+- `push(Schema): Promise<void>`: Pushes a schema to the database.
+- `pull(): Promise<Schema>`: Pulls a schema from the database.
+- `generate(Schema, Schema): Promise<string[]>`: Generates migrations, given the previous and current schema.
+- `status(string, string): Promise<"completed" | "pending">`: Gets a migration status, given migration contents and a SHA512 hash of the contents.
+- `deploy(string, string): Promise<void>`: Deploys a migration, given migration contents and a SHA512 hash of the contents.
+- `rollback(string, string): Promise<void>`: Reverts a migration, given migration contents and a SHA512 hash of the contents.
+
+Once you've implemented all of these, you can now use your adapter in Kineo.
+
+## Models
+
+Kineo, in its `kineo/model` module, provides two `Model` classes. Your adapter must use one of these.
+
+### `Model`
+
+This is the base model. It contains functions like `findFirst` or `deleteMany`.
+
+### `GraphModel`
+
+This extends the base model, and adds graph database specific functions such as `connect` or `findPath`.

@@ -1,9 +1,9 @@
 # Kineo
 
-Object-relation/graph mapper for TypeScript.
+Object-Relation/Graph Mapper for TypeScript.
 
 ```ts
-import { Kineo } from "kineo";
+import { Kineo } from "kineo/client";
 import { Neo4jAdapter } from "kineo/adapter/neo4j";
 import {
   defineSchema,
@@ -14,16 +14,16 @@ import {
 } from "kineo/schema";
 
 export const schema = defineSchema({
-  users: defineModel({
+  User: defineModel({
     name: field.string().id(),
     password: field.string().required(),
     posts: relation.to("Post").outgoing("HAS_POST").array(),
   }),
 
-  posts: defineModel({
+  Post: defineModel({
     id: field.string().id(),
     title: field.string().required(),
-    author: relation.to("users").incoming("HAS_POST"),
+    author: relation.to("User").incoming("HAS_POST"),
   }),
 });
 
@@ -33,6 +33,7 @@ export const db = Kineo(
   Neo4jAdapter({
     url: "bolt://localhost:7687",
     auth: {
+      type: "basic",
       username: "neo4j",
       password: "password",
     },
@@ -40,7 +41,7 @@ export const db = Kineo(
   schema,
 );
 
-const user = await db.users.findFirst({
+const user = await db.User.findFirst({
   where: {
     name: {
       startsWith: "a",

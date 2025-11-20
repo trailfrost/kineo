@@ -14,7 +14,10 @@ export default defineConfig({
           href: "https://github.com/trailfrost/kineo",
         },
       ],
-      sidebar: [{ label: "Guides", autogenerate: { directory: "guides" } }],
+      sidebar: [
+        { label: "Guides", autogenerate: { directory: "guides" } },
+        { label: "Adapters", autogenerate: { directory: "adapters" } },
+      ],
     }),
   ],
 });

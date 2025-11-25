@@ -5,7 +5,7 @@ import {
   FieldDef,
   RelationDef,
   defineSchema,
-  defineModel,
+  model,
 } from "@/schema";
 
 describe("FieldDef", () => {
@@ -68,12 +68,13 @@ describe("RelationDef", () => {
 describe("Schema utilities", () => {
   test("defineSchema return the same schema object", () => {
     const schema = defineSchema({
-      User: defineModel({
+      users: model("User", {
         id: field.int("id").required(),
         name: field.string("name"),
       }),
     });
-    expect(schema.User.id.kind).toBe("int");
-    expect(schema.User.name.kind).toBe("string");
+    expect(schema.users.$modelName).toBe("User");
+    expect(schema.users.id.kind).toBe("int");
+    expect(schema.users.name.kind).toBe("string");
   });
 });

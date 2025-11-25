@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { defineModel, defineSchema, field, relation } from "@/schema";
+import { model, defineSchema, field, relation } from "@/schema";
 import { Kineo, type InferClient } from "@/client";
 import { GraphModel, Model } from "@/model";
 import type { Adapter } from "@/adapter";
@@ -22,12 +22,12 @@ const adapter: Adapter<typeof GraphModel, any> = {
 };
 
 const schema = defineSchema({
-  users: defineModel({
+  users: model({
     name: field.string().id(),
     bio: field.string(),
     posts: relation.to("posts").array().default([]),
   }),
-  posts: defineModel({
+  posts: model({
     id: field.int().id(),
     created: field.datetime(),
     updated: field.timestamp(),

@@ -201,6 +201,8 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
   for (const model of prevModels) {
     if (!cur[model]) {
       breaking.push(`Model "${model}" was removed`);
+    } else if (cur[model].$modelName !== prev[model].$modelName) {
+      breaking.push(`Model "${model}" was renamed to ${cur[model].$modelName}`);
     }
   }
 

@@ -7,23 +7,23 @@ import { Kineo } from "kineo";
 import { Neo4jAdapter } from "kineo/adapter/neo4j";
 import {
   defineSchema,
-  defineModel,
+  model,
   field,
   relation,
   type InferSchema,
 } from "kineo/schema";
 
 export const schema = defineSchema({
-  users: defineModel({
+  users: model("User", {
     name: field.string().id(),
     password: field.string().required(),
     posts: relation.to("Post").outgoing("HAS_POST").array(),
   }),
 
-  posts: defineModel({
+  posts: model("Post", {
     id: field.string().id(),
     title: field.string().required(),
-    author: relation.to("users").incoming("HAS_POST"),
+    author: relation.to("User").incoming("HAS_POST"),
   }),
 });
 

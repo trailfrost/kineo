@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from "vitest";
 import { push, pull, generate, deploy, status, rollback, getDiff } from "@/kit";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
-import { defineModel, defineSchema, field } from "@/schema";
+import { model, defineSchema, field } from "@/schema";
 import type { Adapter } from "@/adapter";
 
 // A minimal fake adapter
@@ -18,7 +18,7 @@ function createFakeAdapter(
 }
 
 const simpleSchema = defineSchema({
-  User: defineModel({
+  users: model("User", {
     id: field.int().required(),
   }),
 });
@@ -34,7 +34,7 @@ describe("push()", () => {
   test("throws on breaking schema diff", async () => {
     const adapter = createFakeAdapter({
       pull: vi.fn().mockResolvedValue({
-        User: defineModel({
+        User: model({
           id: field.int().id(),
           name: field.string(),
         }),
@@ -43,7 +43,7 @@ describe("push()", () => {
     });
 
     const newSchema = defineSchema({
-      User: defineModel({
+      users: model("User", {
         id: field.int().id(),
       }),
     });
@@ -84,8 +84,10 @@ describe("getDiff()", () => {
   });
 
   test("detects added and removed fields", () => {
-    const prev = defineSchema({ User: defineModel({ id: field.int() }) });
-    const cur = defineSchema({ User: defineModel({ name: field.string() }) });
+    const prev = defineSchema({ users: model("User", { id: field.int() }) });
+    const cur = defineSchema({
+      users: model("User", { name: field.string() }),
+    });
     const diff = getDiff(prev, cur);
     expect(diff.breaking[0]).toMatch(/id/);
     expect(diff.nonBreaking[0]).toMatch(/name/);

@@ -50,7 +50,7 @@ export function Kineo<
 >(adapter: TAdapter, schema: TSchema): Kineo<TSchema, TAdapter> {
   const client: Record<string, Model<any, any>> = {};
   for (const key in schema) {
-    client[key] = new adapter.Model(schema, schema[key], adapter);
+    client[key] = new adapter.Model(schema[key].$modelName ?? key, adapter);
   }
 
   return {

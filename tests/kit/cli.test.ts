@@ -121,7 +121,7 @@ describe("kineo CLI (unit)", () => {
       const src = "export const schema = defineSchema({})";
       const res = helpers.ensureImports(src);
       expect(res).toContain(
-        'import { defineSchema, defineModel, field, relation } from "kineo/schema";',
+        'import { defineSchema, model, field, relation } from "kineo/schema";',
       );
       expect(res).toContain("defineSchema");
     });
@@ -129,7 +129,7 @@ describe("kineo CLI (unit)", () => {
     test("ensureImports does not duplicate when imports are present", () => {
       if (!helpers || !helpers.ensureImports) return;
       const src =
-        'import { defineSchema, defineModel, field, relation } from "kineo/schema";\nexport const schema = defineSchema({})';
+        'import { defineSchema, model, field, relation } from "kineo/schema";\nexport const schema = defineSchema({})';
       const res = helpers.ensureImports(src);
       expect(res).toBe(src);
     });

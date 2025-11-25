@@ -485,13 +485,13 @@ export function importPath(file: string) {
 export function ensureImports(source: string): string {
   const hasImports =
     source.includes("defineSchema") &&
-    source.includes("defineModel") &&
+    source.includes("model") &&
     source.includes("field") &&
     source.includes("relation");
 
   if (hasImports) return source;
 
-  const importLine = `import { defineSchema, defineModel, field, relation } from "kineo/schema";\n`;
+  const importLine = `import { defineSchema, model, field, relation } from "kineo/schema";\n`;
 
   // Insert before first import or at top
   if (/^import\s/m.test(source)) {
@@ -514,7 +514,7 @@ export function generateSchemaSource(
         })
         .join(",\n");
 
-      return `  ${modelName}: defineModel({\n${fields}\n  })`;
+      return `  ${modelName}: model({\n${fields}\n  })`;
     })
     .join(",\n");
 

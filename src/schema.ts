@@ -7,10 +7,30 @@ export interface Schema {
 
 /**
  * A model definition.
+ * Note: you will have to check if the field is an instance of FieldDef or RelationDef manually, as due to TypeScript index signature constraints, each key can be a string or undefined.
  */
 export interface ModelDef {
-  [key: string]: FieldDef<any, any, any, any> | RelationDef<any, any, any, any>;
+  $modelName?: string;
+  [key: string]:
+    | FieldDef<any, any, any, any>
+    | RelationDef<any, any, any, any>
+    | string
+    | undefined;
 }
+
+/**
+ * Finds a model by its internal name.
+ */
+export type FindModelByName<TSchema extends Schema, TName extends string> = {
+  [K in keyof TSchema]: TSchema[K]["$modelName"] extends string // If user specified a name → match it
+    ? TSchema[K]["$modelName"] extends TName
+      ? TSchema[K]
+      : never
+    : // Otherwise fall back to schema key
+      K extends TName
+      ? TSchema[K]
+      : never;
+}[keyof TSchema];
 
 /**
  * Infers a type from a field definition.
@@ -46,20 +66,21 @@ export type InferRelationship<
     infer TRequired,
     infer TArray
   >
-    ? To extends keyof TSchema
-      ? // resolve referenced model and apply array/required/default logic
-        (
-          TArray extends true
-            ? InferModelDef<TSchema[To], TSchema>[]
-            : InferModelDef<TSchema[To], TSchema>
-        ) extends infer Base
-        ? TRequired extends true
-          ? Base
-          : TDefault extends undefined
-            ? Base | undefined
-            : Base
-        : never
-      : unknown // referenced model not present in S
+    ? FindModelByName<TSchema, To> extends infer TargetModel
+      ? TargetModel extends ModelDef
+        ? (
+            TArray extends true
+              ? InferModelDef<TargetModel, TSchema>[]
+              : InferModelDef<TargetModel, TSchema>
+          ) extends infer Base
+          ? TRequired extends true
+            ? Base
+            : TDefault extends undefined
+              ? Base | undefined
+              : Base
+          : never
+        : unknown
+      : unknown
     : never;
 
 /**
@@ -486,19 +507,41 @@ export const relation = {
 };
 
 /**
+ * Creates a new model.
+ * @param name The model name in the database. This does not change the model name in your schema.
+ * @param model The model definition.
+ * @returns The created model;
+ */
+export function model<TName extends string, TModel extends ModelDef>(
+  name: TName,
+  model: TModel,
+): TModel & { $modelName: TName };
+
+/**
+ * Creates a new model.
+ * @param model The model definition.
+ * @returns The created model.
+ */
+export function model<TModel extends ModelDef>(
+  model: TModel,
+): TModel & { $modelName: undefined };
+
+export function model<TName extends string, TModel extends ModelDef>(
+  nameOrModel: TName | TModel,
+  def?: TModel,
+) {
+  if (typeof nameOrModel === "string") {
+    return Object.assign(def!, { $modelName: nameOrModel });
+  }
+
+  return nameOrModel;
+}
+
+/**
  * Adds schema type definitions to an object.
  * @param schema The object.
  * @returns The same object.
  */
 export function defineSchema<TSchema extends Schema>(schema: TSchema): TSchema {
   return schema;
-}
-
-/**
- * Adds model type definitions to an object.
- * @param model The object.
- * @returns The same object.
- */
-export function defineModel<TModel extends ModelDef>(model: TModel): TModel {
-  return model;
 }

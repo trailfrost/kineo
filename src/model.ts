@@ -285,7 +285,6 @@ export type UpsertManyReturn<
  * A model. This is different from a model definition; the definition is just the schema, the class provides the functionality.
  */
 export class Model<S extends Schema, M extends ModelDef> {
-  // ? Not sure if these will be necessary
   /**
    * The name of the model.
    */

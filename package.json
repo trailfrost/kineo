@@ -1,12 +1,12 @@
 {
   "name": "kineo",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
-  "main": "./dist/client.mjs",
-  "types": "./dist/client.d.mts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "bin": {
-    "kineo": "./dist/kit/main.mjs"
+    "kineo": "./dist/main.mjs"
   },
   "repository": {
     "type": "git",
@@ -16,45 +16,25 @@
     "node": ">= 20.5"
   },
   "exports": {
-    "./client": {
-      "types": "./dist/client.d.mts",
-      "import": "./dist/client.mjs"
-    },
-    "./error": {
-      "types": "./dist/error.d.mts",
-      "import": "./dist/error.mjs"
-    },
-    "./adapter": {
-      "types": "./dist/adapter/index.d.mts",
-      "import": "./dist/adapter/index.mjs"
-    },
-    "./adapter/neo4j": {
-      "types": "./dist/adapter/neo4j.d.mts",
-      "import": "./dist/adapter/neo4j.mjs"
-    },
-    "./compiler/cypher": {
-      "types": "./dist/compiler/cypher.d.mts",
-      "import": "./dist/compiler/cypher.mjs"
-    },
-    "./compiler/sql": {
-      "types": "./dist/compiler/sql.d.mts",
-      "import": "./dist/compiler/sql.mjs"
-    },
-    "./ir": {
-      "types": "./dist/ir.d.mts",
-      "import": "./dist/ir.mjs"
-    },
-    "./model": {
-      "types": "./dist/model.d.mts",
-      "import": "./dist/model.mjs"
-    },
-    "./schema": {
-      "types": "./dist/schema.d.mts",
-      "import": "./dist/schema.mjs"
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     },
     "./kit": {
       "types": "./dist/kit/index.d.mts",
       "import": "./dist/kit/index.mjs"
+    },
+    "./neo4j": {
+      "types": "./dist/adapter/neo4j.d.mts",
+      "import": "./dist/adapter/neo4j.mjs"
+    },
+    "./cypher": {
+      "types": "./dist/compiler/cypher.d.mts",
+      "import": "./dist/compiler/cypher.mjs"
+    },
+    "./sql": {
+      "types": "./dist/compiler/sql.d.mts",
+      "import": "./dist/compiler/sql.mjs"
     }
   },
   "files": [

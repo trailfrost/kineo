@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { fileURLToPath } from "url";
-import { dirname, resolve, extname } from "path";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve, extname } from "node:path";
 import { createJiti } from "jiti";
 import type { Command } from "convoker";
 

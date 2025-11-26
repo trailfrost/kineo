@@ -3,15 +3,15 @@
 Object-relation/graph mapper for TypeScript.
 
 ```ts
-import { Kineo } from "kineo";
-import { Neo4jAdapter } from "kineo/adapter/neo4j";
 import {
+  Kineo,
   defineSchema,
   model,
   field,
   relation,
   type InferSchema,
-} from "kineo/schema";
+} from "kineo";
+import { Neo4jAdapter } from "kineo/neo4j";
 
 export const schema = defineSchema({
   users: model("User", {

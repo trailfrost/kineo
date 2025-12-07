@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { compile } from "@/compiler/cypher";
+import { compile } from "@/compilers/cypher";
 import * as IR from "@/ir";
 
 describe("compile()", () => {
@@ -113,7 +113,7 @@ describe("compile()", () => {
         "merge_email_1",
         "oncreate_name_2",
         "onmatch_age_3",
-      ]),
+      ])
     );
   });
 

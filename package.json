@@ -1,80 +1,24 @@
 {
-  "name": "kineo",
-  "version": "0.8.0",
+  "name": "kineo-monorepo",
   "type": "module",
-  "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
-  "bin": {
-    "kineo": "./dist/main.mjs"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/trailfrost/kineo"
-  },
-  "engines": {
-    "node": ">= 20.5"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.mts",
-      "import": "./dist/index.mjs"
-    },
-    "./kit": {
-      "types": "./dist/kit/index.d.mts",
-      "import": "./dist/kit/index.mjs"
-    },
-    "./neo4j": {
-      "types": "./dist/adapter/neo4j.d.mts",
-      "import": "./dist/adapter/neo4j.mjs"
-    },
-    "./cypher": {
-      "types": "./dist/compiler/cypher.d.mts",
-      "import": "./dist/compiler/cypher.mjs"
-    },
-    "./sql": {
-      "types": "./dist/compiler/sql.d.mts",
-      "import": "./dist/compiler/sql.mjs"
-    }
-  },
-  "files": [
-    "dist"
-  ],
   "scripts": {
-    "test": "vitest tests",
-    "format": "prettier --check .",
-    "format!": "prettier --write .",
-    "kit": "jiti src/kit/main.ts",
+    "test": "turbo run test",
+    "check": "turbo run check",
+    "build": "turbo run build",
     "lint": "eslint .",
     "lint!": "eslint --fix .",
-    "check": "tsc -b",
-    "build": "tsdown"
+    "format": "prettier --check .",
+    "format!": "prettier --write ."
   },
-  "keywords": [
-    "ogm",
-    "orm",
-    "object-graph-mapper",
-    "object-relation-mapper"
-  ],
-  "author": "trailfrost",
-  "license": "MIT",
-  "packageManager": "pnpm@10.20.0",
-  "dependencies": {
-    "convoker": "^0.3.4",
-    "jiti": "^2.5.1"
-  },
-  "optionalDependencies": {
-    "neo4j-driver": "^6.0.0"
-  },
+  "packageManager": "pnpm@10.24.0",
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.5.2",
     "eslint": "^9.36.0",
     "globals": "^16.4.0",
     "prettier": "^3.6.2",
-    "tsdown": "^0.16.0",
+    "turbo": "^2.6.3",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.44.0",
-    "vitest": "^4.0.5"
+    "typescript-eslint": "^8.44.0"
   }
 }

@@ -1,0 +1,39 @@
+
+
+> kineo@0.8.0 build /mnt/tb/Users/namefox/Desktop/Projetos/libraries/kineo/packages/kineo
+> tsdown
+
+[34mℹ[39m tsdown [2mv0.16.0[22m powered by rolldown [2mv1.0.0-beta.46[22m
+[34mℹ[39m Using tsdown config: [4m/mnt/tb/Users/namefox/Desktop/Projetos/libraries/kineo/packages/kineo/tsdown.config.ts[24m
+[34mℹ[39m entry: [34msrc/kit/main.ts[39m
+[34mℹ[39m target: [34mnode20.5.0[39m
+[34mℹ[39m entry: [34msrc/index.ts, src/adapter/neo4j.ts, src/compiler/cypher.ts, src/compiler/sql.ts, src/kit/index.ts[39m
+[34mℹ[39m target: [34mnode20.5.0[39m
+[34mℹ[39m tsconfig: [34mtsconfig.app.json[39m
+[34mℹ[39m tsconfig: [34mtsconfig.app.json[39m
+[34mℹ[39m Build start
+[34mℹ[39m Cleaning 17 files
+[34mℹ[39m Granting execute permission to [4mdist/main.mjs[24m
+[34mℹ[39m [2mdist/[22m[1mmain.mjs[22m          [2m 0.39 kB[22m [2m│ gzip: 0.28 kB[22m
+[34mℹ[39m [2mdist/[22mkit-CQikv9l4.mjs  [2m14.61 kB[22m [2m│ gzip: 4.42 kB[22m
+[34mℹ[39m 2 files, total: 15.00 kB
+[32m✔[39m Build complete in [32m218ms[39m
+[34mℹ[39m [2mdist/[22m[1madapter/neo4j.mjs[22m      [2m1529.81 kB[22m
+[34mℹ[39m [2mdist/[22m[1mkit/index.mjs[22m          [2m  20.47 kB[22m [2m│ gzip: 5.17 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcompiler/sql.mjs[22m       [2m   6.58 kB[22m [2m│ gzip: 1.97 kB[22m
+[34mℹ[39m [2mdist/[22m[1mindex.mjs[22m              [2m   0.86 kB[22m [2m│ gzip: 0.43 kB[22m
+[34mℹ[39m [2mdist/[22m[1mcompiler/cypher.mjs[22m    [2m   0.10 kB[22m [2m│ gzip: 0.10 kB[22m
+[34mℹ[39m [2mdist/[22mcypher-DsbvFXRr.mjs    [2m  10.81 kB[22m [2m│ gzip: 2.80 kB[22m
+[34mℹ[39m [2mdist/[22merror-6ccts7N1.mjs     [2m   7.39 kB[22m [2m│ gzip: 1.65 kB[22m
+[34mℹ[39m [2mdist/[22mmodel-DJhb_9to.mjs     [2m   5.14 kB[22m [2m│ gzip: 1.21 kB[22m
+[34mℹ[39m [2mdist/[22mir-BxBQy9VM.mjs        [2m   4.04 kB[22m [2m│ gzip: 1.06 kB[22m
+[34mℹ[39m [2mdist/[22mchunk-Pg7Fvlu1.mjs     [2m   1.46 kB[22m [2m│ gzip: 0.69 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mkit/index.d.mts[22m[39m        [2m   4.14 kB[22m [2m│ gzip: 1.24 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mindex.d.mts[22m[39m            [2m   3.26 kB[22m [2m│ gzip: 1.06 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1madapter/neo4j.d.mts[22m[39m    [2m   2.06 kB[22m [2m│ gzip: 0.69 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcompiler/sql.d.mts[22m[39m     [2m   1.70 kB[22m [2m│ gzip: 0.63 kB[22m
+[34mℹ[39m [2mdist/[22m[32m[1mcompiler/cypher.d.mts[22m[39m  [2m   0.26 kB[22m [2m│ gzip: 0.19 kB[22m
+[34mℹ[39m [2mdist/[22m[32mindex-Q4UjAL-Z.d.mts[39m   [2m  29.90 kB[22m [2m│ gzip: 6.05 kB[22m
+[34mℹ[39m [2mdist/[22m[32mclient-Tfgk5qQy.d.mts[39m  [2m   1.15 kB[22m [2m│ gzip: 0.46 kB[22m
+[34mℹ[39m 17 files, total: 1629.14 kB
+[32m✔[39m Build complete in [32m1821ms[39m

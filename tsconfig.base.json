@@ -8,12 +8,6 @@
     "esModuleInterop": true,
     "declaration": true,
     "skipLibCheck": true,
-    "verbatimModuleSyntax": true,
-
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@test/*": ["tests/*"]
-    }
+    "verbatimModuleSyntax": true
   }
 }

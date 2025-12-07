@@ -1,6 +1,7 @@
-import type { IR } from "@/ir";
-import type { Model } from "@/model";
-import type { Schema } from "@/schema";
+import type { IR } from "./ir";
+import type { Model } from "./model";
+import type { Schema } from "./schema";
+import type { Plugin } from "./plugin";
 
 // Either a Promise or not
 type OptPromise<T> = T | Promise<T>;
@@ -54,6 +55,10 @@ export interface Adapter<
    * What the file extension for migrations should be.
    */
   fileExt?: string;
+  /**
+   * What plugins to apply together with this adapter.
+   */
+  plugins?: Plugin[];
 
   // Runtime related functions
   /**

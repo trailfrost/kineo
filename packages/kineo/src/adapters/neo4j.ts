@@ -1,6 +1,6 @@
-import type { Adapter } from ".";
+import type { Adapter } from "@/adapter";
 import { GraphModel } from "@/model";
-import { compile } from "@/compiler/cypher";
+import { compile } from "@/compilers/cypher";
 import * as neo4j from "neo4j-driver";
 
 /**

@@ -1,5 +1,6 @@
 import type { Adapter } from "./adapter";
 import type { Direction, InferModelDef, ModelDef, Schema } from "./schema";
+import type { Plugin } from "./plugin";
 import * as ir from "@/ir";
 
 // ---------- Generic Utility Types ---------- //
@@ -293,15 +294,21 @@ export class Model<S extends Schema, M extends ModelDef> {
    * The adapter.
    */
   protected $adapter: Adapter<any, any>;
+  /**
+   * The plugins applied to the client.
+   */
+  $plugins: Plugin[];
 
   /**
    * Creates a new model. This is usually done by Kineo -- it is not recommended to create a model manually like this.
    * @param name The name of the model.
    * @param adapter The adapter.
+   * @param plugins The plugins applied to the client.
    */
-  constructor(name: string, adapter: Adapter<any, any>) {
+  constructor(name: string, adapter: Adapter<any, any>, plugins: Plugin[]) {
     this.$name = name;
     this.$adapter = adapter;
+    this.$plugins = plugins;
   }
 
   protected async $exec(opts: any, op: string) {
@@ -320,8 +327,8 @@ export class Model<S extends Schema, M extends ModelDef> {
   async findFirst<O extends QueryOpts<S, M>>(
     opts: O,
   ): FindFirstReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "findFirst");
-    return (rows[0] ?? null) as any;
+    const { entries } = await this.$exec(opts, "findFirst");
+    return (entries[0] ?? null) as any;
   }
 
   /**
@@ -330,8 +337,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The elements that match the filter.
    */
   async findMany<O extends QueryOpts<S, M>>(opts: O): FindManyReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "findMany");
-    return rows as any;
+    const { entries } = await this.$exec(opts, "findMany");
+    return entries as any;
   }
 
   /**
@@ -350,8 +357,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The just created element.
    */
   async create<O extends CreateOpts<S, M>>(opts: O): CreateReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "create");
-    return (rows[0] ?? null) as any;
+    const { entries } = await this.$exec(opts, "create");
+    return (entries[0] ?? null) as any;
   }
 
   /**
@@ -360,8 +367,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was updated.
    */
   async update<O extends UpdateOpts<S, M>>(opts: O): UpdateReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "update");
-    return (rows[0] ?? null) as any;
+    const { entries } = await this.$exec(opts, "update");
+    return (entries[0] ?? null) as any;
   }
 
   /**
@@ -370,8 +377,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were updated.
    */
   async updateMany<O extends UpdateOpts<S, M>>(opts: O): UpdateManyReturn {
-    const { entries: rows } = await this.$exec(opts, "updateMany");
-    return rows as any;
+    const { entries } = await this.$exec(opts, "updateMany");
+    return entries as any;
   }
 
   /**
@@ -380,8 +387,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was deleted.
    */
   async delete<O extends DeleteOpts<S, M>>(opts: O): DeleteReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "delete");
-    return (rows[0] ?? null) as any;
+    const { entries } = await this.$exec(opts, "delete");
+    return (entries[0] ?? null) as any;
   }
 
   /**
@@ -390,8 +397,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The amount of elements that were deleted.
    */
   async deleteMany<O extends DeleteOpts<S, M>>(opts: O): DeleteManyReturn {
-    const { entries: rows } = await this.$exec(opts, "deleteMany");
-    return rows as any;
+    const { entries } = await this.$exec(opts, "deleteMany");
+    return entries as any;
   }
 
   /**
@@ -400,8 +407,8 @@ export class Model<S extends Schema, M extends ModelDef> {
    * @returns The element that was upserted.
    */
   async upsert<O extends UpsertOpts<S, M>>(opts: O): UpsertReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "upsert");
-    return (rows[0] ?? null) as any;
+    const { entries } = await this.$exec(opts, "upsert");
+    return (entries[0] ?? null) as any;
   }
 
   /**
@@ -412,8 +419,8 @@ export class Model<S extends Schema, M extends ModelDef> {
   async upsertMany<O extends UpsertOpts<S, M>>(
     opts: O,
   ): UpsertManyReturn<S, M, O> {
-    const { entries: rows } = await this.$exec(opts, "upsertMany");
-    return rows as any;
+    const { entries } = await this.$exec(opts, "upsertMany");
+    return entries as any;
   }
 }
 

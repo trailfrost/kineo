@@ -45,7 +45,11 @@ export interface ExecResult<T = any> {
  */
 export interface Adapter<
   TModelCtor extends {
-    new (name: string, adapter: Adapter<any, any>): Model<any, any>;
+    new (
+      name: string,
+      adapter: Adapter<any, any>,
+      plugins: Plugin[],
+    ): Model<any, any>;
   },
   Summary = any,
 > {

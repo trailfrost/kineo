@@ -104,6 +104,14 @@ export function Kineo<
 
     $extendSchema(...extensions) {
       deepMerge(this.$schema, ...extensions);
+      for (const key in this.$schema) {
+        if (!this[key])
+          this[key] = new adapter.Model(
+            this.$schema[key].$modelName ?? key,
+            adapter,
+            isPluginArray ? adapterOrPlugins : []
+          );
+      }
     },
 
     $plugin(plugin) {
@@ -136,12 +144,10 @@ export function Kineo<
 type PlainObject = { [key: string]: any };
 
 /**
- * Returns true if value is a plain object (created by {} or new Object).
+ * Returns true if value is a mergeable object (created by {}, new Object or a clsas instance).
  */
-function isPlainObject(value: any): value is PlainObject {
-  if (value === null || typeof value !== "object") return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
+function isMergeableObject(value: any): boolean {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 /**
@@ -152,49 +158,33 @@ function deepMerge<T extends PlainObject>(target: T, ...sources: any[]) {
 
   for (const source of sources) {
     if (source === null || source === undefined) continue;
-    if (!isPlainObject(source) && !Array.isArray(source)) {
-      // Non-plain source (e.g., a Date) — not merging top-level non-objects: assign
-      // But typical use expects objects; we skip non-objects here.
-      continue;
-    }
 
-    // iterate keys (own enumerable properties)
+    // NEW: allow any object (model definitions, classes, objects with prototypes)
+    if (!isMergeableObject(source)) continue;
+
     for (const key of Object.keys(source)) {
-      if (dangerousKeys.has(key)) continue; // prevent prototype pollution
+      if (dangerousKeys.has(key)) continue;
 
-      const srcVal = (source as PlainObject)[key];
+      const srcVal = source[key];
       const tgtVal = target[key];
 
-      // if both are plain objects -> merge recursively
-      if (isPlainObject(srcVal) && isPlainObject(tgtVal)) {
+      // recursive merge for any non-array object
+      if (isMergeableObject(srcVal) && isMergeableObject(tgtVal)) {
         deepMerge(tgtVal, srcVal);
         continue;
       }
 
-      // if both are arrays -> replace target array with source array (mutating target)
-      if (Array.isArray(srcVal) && Array.isArray(tgtVal)) {
-        // mutate the existing target array in place to preserve references
-        tgtVal.length = 0;
-        for (let i = 0; i < srcVal.length; i++) {
-          (tgtVal as any[]).push(srcVal[i]);
-        }
-        continue;
-      }
-
-      // if source is array but target isn't -> set (mutating target)
       if (Array.isArray(srcVal)) {
-        (target as any)[key] = srcVal.slice(); // copy array reference (shallow copy)
+        (target as any)[key] = srcVal.slice();
         continue;
       }
 
-      // if source is plain object but target is not -> create a new plain object on target and merge
-      if (isPlainObject(srcVal) && !isPlainObject(tgtVal)) {
+      if (isMergeableObject(srcVal) && !isMergeableObject(tgtVal)) {
         (target as any)[key] = {};
-        deepMerge((target as any)[key], srcVal);
+        deepMerge(target[key], srcVal);
         continue;
       }
 
-      // all other cases: assign/overwrite
       (target as any)[key] = srcVal;
     }
   }

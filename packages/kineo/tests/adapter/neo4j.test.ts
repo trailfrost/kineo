@@ -76,7 +76,7 @@ describe("Neo4jAdapter (integration)", () => {
   test("connects and runs simple write/read queries", async () => {
     const createRes = await adapter.session.run(
       "CREATE (n:Person {name: $name, age: $age}) RETURN n",
-      { name: "Alice", age: 30 }
+      { name: "Alice", age: 30 },
     );
 
     expect(createRes.records.length).toBe(1);
@@ -98,7 +98,7 @@ describe("Neo4jAdapter (integration)", () => {
 
   test("handles relationships correctly", async () => {
     await adapter.session.run(
-      `CREATE (a:Person {name: 'Bob'})-[:KNOWS {since: 2020}]->(b:Person {name: 'Charlie'})`
+      `CREATE (a:Person {name: 'Bob'})-[:KNOWS {since: 2020}]->(b:Person {name: 'Charlie'})`,
     );
 
     const result = await adapter.exec({

@@ -93,7 +93,7 @@ export function Kineo<
     modelsForSchema[key] = new adapter.Model(
       schema[key].$modelName ?? key,
       adapter,
-      isPluginArray ? adapterOrPlugins : []
+      isPluginArray ? adapterOrPlugins : [],
     );
   }
 
@@ -109,7 +109,7 @@ export function Kineo<
           this[key] = new adapter.Model(
             this.$schema[key].$modelName ?? key,
             adapter,
-            isPluginArray ? adapterOrPlugins : []
+            isPluginArray ? adapterOrPlugins : [],
           );
       }
     },

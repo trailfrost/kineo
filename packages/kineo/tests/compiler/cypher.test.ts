@@ -113,7 +113,7 @@ describe("compile()", () => {
         "merge_email_1",
         "oncreate_name_2",
         "onmatch_age_3",
-      ])
+      ]),
     );
   });
 

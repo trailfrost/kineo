@@ -3,8 +3,10 @@ import type { Model } from "./model";
 import type { Schema } from "./schema";
 import type { Plugin } from "./plugin";
 
-// Either a Promise or not
-type OptPromise<T> = T | Promise<T>;
+/**
+ * Either a Promise or not.
+ */
+export type OptPromise<T> = T | Promise<T>;
 
 /**
  * A result from a compiler.

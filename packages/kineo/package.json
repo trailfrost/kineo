@@ -25,16 +25,16 @@
       "import": "./dist/kit/index.mjs"
     },
     "./neo4j": {
-      "types": "./dist/adapter/neo4j.d.mts",
-      "import": "./dist/adapter/neo4j.mjs"
+      "types": "./dist/adapters/neo4j.d.mts",
+      "import": "./dist/adapters/neo4j.mjs"
     },
     "./cypher": {
-      "types": "./dist/compiler/cypher.d.mts",
-      "import": "./dist/compiler/cypher.mjs"
+      "types": "./dist/compilers/cypher.d.mts",
+      "import": "./dist/compilers/cypher.mjs"
     },
     "./sql": {
-      "types": "./dist/compiler/sql.d.mts",
-      "import": "./dist/compiler/sql.mjs"
+      "types": "./dist/compilers/sql.d.mts",
+      "import": "./dist/compilers/sql.mjs"
     }
   },
   "files": [

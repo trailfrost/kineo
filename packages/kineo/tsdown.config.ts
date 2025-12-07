@@ -5,12 +5,13 @@ export default defineConfig([
     entry: [
       "src/index.ts",
       "src/kit/index.ts",
-      "src/adapter/neo4j.ts",
-      "src/compiler/sql.ts",
-      "src/compiler/cypher.ts",
+      "src/adapters/neo4j.ts",
+      "src/compilers/sql.ts",
+      "src/compilers/cypher.ts",
     ],
     tsconfig: "tsconfig.app.json",
     format: ["esm"],
+    external: ["neo4j-driver"],
     dts: true,
   },
   {

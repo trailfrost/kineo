@@ -1,6 +1,7 @@
-# pnpm stuff (for ci)
+# pnpm/turbo stuff
 pnpm-lock.yaml
 .pnpm-store/
+.turbo/
 
 # build
 dist/

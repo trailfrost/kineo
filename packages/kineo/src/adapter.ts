@@ -48,7 +48,7 @@ export interface Adapter<
     new (
       name: string,
       adapter: Adapter<any, any>,
-      plugins: Plugin[],
+      plugins: Plugin[]
     ): Model<any, any>;
   },
   Summary = any,
@@ -90,11 +90,11 @@ export interface Adapter<
   /**
    * Gets a schema from the database.
    */
-  pull?(): OptPromise<Schema>;
+  pull?(): OptPromise<{ schema: Schema; full?: boolean }>;
   /**
    * Generates migrations.
    */
-  generate?(prev: Schema, cur: Schema): OptPromise<string[]>;
+  generate?(prev: Schema, cur: Schema): OptPromise<Migration[]>;
   /**
    * Gets a status for a migration.
    * @param migration The migration to get the status for.
@@ -114,3 +114,18 @@ export interface Adapter<
    */
   rollback?(migration: string, hash: string): OptPromise<void>;
 }
+
+/**
+ *
+ */
+export type Migration =
+  | {
+      type: "command";
+      command: string;
+      description?: string;
+    }
+  | {
+      type: "note";
+      note: string;
+      description?: string;
+    };

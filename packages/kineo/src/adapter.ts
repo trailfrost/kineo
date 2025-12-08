@@ -48,7 +48,7 @@ export interface Adapter<
     new (
       name: string,
       adapter: Adapter<any, any>,
-      plugins: Plugin[]
+      plugins: Plugin[],
     ): Model<any, any>;
   },
   Summary = any,
@@ -94,38 +94,56 @@ export interface Adapter<
   /**
    * Generates migrations.
    */
-  generate?(prev: Schema, cur: Schema): OptPromise<Migration[]>;
+  generate?(prev: Schema, cur: Schema): OptPromise<MigrationEntry[]>;
   /**
    * Gets a status for a migration.
    * @param migration The migration to get the status for.
    * @param hash The hash of the migration.
    */
-  status?(migration: string, hash: string): OptPromise<"pending" | "completed">;
+  status?(
+    migration: MigrationEntry[],
+    hash: string,
+  ): OptPromise<"pending" | "completed">;
   /**
    * Deploys a migration.
    * @param migration The migration to deploy.
    * @param hash The hash of the migration.
    */
-  deploy?(migration: string, hash: string): OptPromise<void>;
+  deploy?(migration: MigrationEntry[], hash: string): OptPromise<void>;
   /**
    * Rolls back a migration.
    * @param migration The migration to roll back.
    * @param hash The hash of the migration.
    */
-  rollback?(migration: string, hash: string): OptPromise<void>;
+  rollback?(migration: MigrationEntry[], hash: string): OptPromise<void>;
 }
 
 /**
- *
+ * A migration entry. Can either be a note or comment, or a command.
  */
-export type Migration =
-  | {
-      type: "command";
-      command: string;
-      description?: string;
-    }
-  | {
-      type: "note";
-      note: string;
-      description?: string;
-    };
+export type MigrationEntry = MigrationCommand | MigrationNote;
+
+/**
+ * A migration note.
+ */
+export interface MigrationNote {
+  type: "note";
+  note: string;
+  description?: string;
+}
+
+/**
+ * A migration command.
+ */
+export interface MigrationCommand {
+  type: "command";
+  /**
+   * The command to run;
+   */
+  command: string;
+  /**
+   * The reverse of the command to run, in case of rollbacks.
+   */
+  reverse?: string;
+  description?: string;
+}

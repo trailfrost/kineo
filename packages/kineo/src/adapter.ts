@@ -48,7 +48,7 @@ export interface Adapter<
     new (
       name: string,
       adapter: Adapter<any, any>,
-      plugins: Plugin[],
+      plugins: Plugin[]
     ): Model<any, any>;
   },
   Summary = any,
@@ -57,10 +57,6 @@ export interface Adapter<
    * What extension of the model class you're using. This can be just the default model or `GraphModel`. Right now, this can't be a custom class.
    */
   Model: TModelCtor;
-  /**
-   * What the file extension for migrations should be.
-   */
-  fileExt?: string;
   /**
    * What plugins to apply together with this adapter.
    */
@@ -102,7 +98,7 @@ export interface Adapter<
    */
   status?(
     migration: MigrationEntry[],
-    hash: string,
+    hash: string
   ): OptPromise<"pending" | "completed">;
   /**
    * Deploys a migration.
@@ -110,12 +106,6 @@ export interface Adapter<
    * @param hash The hash of the migration.
    */
   deploy?(migration: MigrationEntry[], hash: string): OptPromise<void>;
-  /**
-   * Rolls back a migration.
-   * @param migration The migration to roll back.
-   * @param hash The hash of the migration.
-   */
-  rollback?(migration: MigrationEntry[], hash: string): OptPromise<void>;
 }
 
 /**

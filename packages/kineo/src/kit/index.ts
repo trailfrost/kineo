@@ -9,6 +9,7 @@ import * as kit from "./utils";
 import type { Kineo } from "@/client";
 import { FieldDef, RelationDef, type Schema } from "@/schema";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
+import type { MigrationCommand, MigrationEntry } from "@/adapter";
 
 const CONFIG_FILES = [
   "kineo.config.ts",
@@ -36,7 +37,7 @@ export const program = new Command("kineo")
   .use(
     async (
       { clientExport, clientFile, schemaExport, schemaFile, migrations },
-      next,
+      next
     ) => {
       await log.setup();
       if (!config) {
@@ -53,7 +54,7 @@ export const program = new Command("kineo")
                 typeof e === "object" && e !== null && "message" in e
                   ? `: ${e.message}`
                   : ""
-              }. trying to import next file.`,
+              }. trying to import next file.`
             );
             continue;
           }
@@ -61,7 +62,7 @@ export const program = new Command("kineo")
 
         if (!config) {
           await log.warn(
-            "could not import a configuration file. make sure to create one using `kineo init` or pass options to this command. see `kineo --help` for more details.",
+            "could not import a configuration file. make sure to create one using `kineo init` or pass options to this command. see `kineo --help` for more details."
           );
           config = {} as any;
         }
@@ -80,7 +81,7 @@ export const program = new Command("kineo")
         config.schema = mod[config.schemaMod.export];
       } else {
         await log.warn(
-          "config missing schemaFile. either pass `--schema-file` to this command or create a configuration file using `kineo init`.",
+          "config missing schemaFile. either pass `--schema-file` to this command or create a configuration file using `kineo init`."
         );
       }
 
@@ -97,7 +98,7 @@ export const program = new Command("kineo")
         config.client = mod[config.clientMod.export];
       } else {
         await log.warn(
-          "config missing clientFile. either pass `--client-file` to this command or create a configuration file using `kineo init`.",
+          "config missing clientFile. either pass `--client-file` to this command or create a configuration file using `kineo init`."
         );
       }
 
@@ -105,12 +106,12 @@ export const program = new Command("kineo")
         config.migrations = migrations;
       } else {
         await log.warn(
-          "config missing migrations directory. either pass `--migrations-dir` to this command or create a configuration file using `kineo init`.",
+          "config missing migrations directory. either pass `--migrations-dir` to this command or create a configuration file using `kineo init`."
         );
       }
 
       await next();
-    },
+    }
   );
 
 program
@@ -263,15 +264,15 @@ module.exports = defineConfig({
           await fs.writeFile(path.join(CWD, fileName), contents, "utf-8");
 
           await log.info(
-            "Configuration file generated! You can now start using Kineo migrations.",
+            "Configuration file generated! You can now start using Kineo migrations."
           );
-        },
-      ),
+        }
+      )
   )
   .subCommand("push", (c) =>
     c
       .description(
-        "Pushes the current schema to the database, warning you for breaking changes.",
+        "Pushes the current schema to the database, warning you for breaking changes."
       )
       .input({
         force: i.option("boolean", "-f", "--force").optional(),
@@ -285,7 +286,7 @@ module.exports = defineConfig({
             if ((data?.breaking.length ?? 0) > 0) {
               await log.info(
                 `Changes:\n${color.bold("- Breaking:")}\n${data?.breaking.map((entry) => `  ${entry}`).join("\n")}
-${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}`)}`,
+${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}`)}`
               );
               const confirmed = await prompt.confirm({
                 message:
@@ -299,12 +300,12 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
           throw e;
         }
-      }),
+      })
   )
   .subCommand("pull", (c) =>
     c
       .description(
-        "Pulls the current schema from the database. This only works for file path style imports in the configuration.",
+        "Pulls the current schema from the database. This only works for file path style imports in the configuration."
       )
       .input({
         force: i.option("boolean", "-f", "--force").optional(),
@@ -322,13 +323,13 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
         const schema = await kit.pull(config.client.$adapter);
         const contents = ensureImports(
-          await fs.readFile(config.schemaMod.file, "utf-8"),
+          await fs.readFile(config.schemaMod.file, "utf-8")
         );
 
         const newExport = generateSchemaSource(schema, config.schemaMod.export);
         const namedExportRegex = new RegExp(
           `export\\s+const\\s+${config.schemaMod.export}\\s*=([\\s\\S]*?);`,
-          "m",
+          "m"
         );
         const defaultExportRegex =
           /export\s+default\s+defineSchema\([\s\S]*?\);?/m;
@@ -348,7 +349,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         }
 
         await fs.writeFile(config.schemaMod.file, updatedContents, "utf8");
-      }),
+      })
   )
   .subCommand(["generate", "migrate"], (c) =>
     c
@@ -356,32 +357,23 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         noPush: i.option("boolean", "--no-push", "-n").optional(),
       })
       .description(
-        "Generates migrations based on the current database state and the current schema.",
+        "Generates migrations based on the current database state and the current schema."
       )
       .action(async ({ noPush }) => {
         const adapter = config.client.$adapter;
-        const migrations = await kit.generate(
+        const entries = await kit.generate(
           adapter,
           await kit.pull(adapter),
-          config.schema,
+          config.schema
         );
 
-        await Promise.all(
-          migrations.map(async (migration) => {
-            await fs.writeFile(
-              path.join(
-                CWD,
-                config.migrations,
-                `${Date.now()}.${adapter.fileExt}`,
-              ),
-              migration,
-              "utf-8",
-            );
-
-            if (!noPush) await kit.deploy(config.client.$adapter, migration);
-          }),
+        const contents = entryArrayToString(entries);
+        await fs.writeFile(
+          path.join(CWD, config.migrations, `migration-${currentDate()}.json`),
+          contents
         );
-      }),
+        if (!noPush) await kit.deploy(adapter, entries);
+      })
   )
   .subCommand("status", (c) =>
     c.description("Gets status for existing migrations.").action(async () => {
@@ -389,21 +381,20 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       const statuses = await Promise.all(
         entries.map(async (entry) => {
-          const migration = await fs.readFile(
-            path.join(CWD, config.migrations, entry),
-            "utf-8",
+          const migration = stringToEntryArray(
+            await fs.readFile(path.join(CWD, config.migrations, entry), "utf-8")
           );
           return {
             entry,
             status: await kit.status(config.client.$adapter, migration),
           };
-        }),
+        })
       );
 
       for (const status of statuses) {
         await log.info(`${status.entry}: ${status.status}`);
       }
-    }),
+    })
   )
   .subCommand("create", (c) =>
     c
@@ -415,7 +406,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         const filePath = path.join(
           CWD,
           config.migrations,
-          `${name ?? Date.now()}.${config.client.$adapter.fileExt}`,
+          `${name ?? Date.now()}.${config.client.$adapter.fileExt}`
         );
         await log.trace("creating migration", filePath);
 
@@ -427,7 +418,7 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
         }
 
         await fs.writeFile(filePath, "", "utf-8");
-      }),
+      })
   )
   .subCommand("deploy", (c) =>
     c.description("Deploys existing migrations.").action(async () => {
@@ -435,17 +426,16 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
 
       await Promise.all(
         entries.map(async (entry) => {
-          const migration = await fs.readFile(
-            path.join(CWD, config.migrations, entry),
-            "utf-8",
+          const migration = stringToEntryArray(
+            await fs.readFile(path.join(CWD, config.migrations, entry), "utf-8")
           );
           const status = await kit.status(config.client.$adapter, migration);
           if (status === "completed") return;
 
           await kit.deploy(config.client.$adapter, migration);
-        }),
+        })
       );
-    }),
+    })
   )
   .subCommand("rollback", (c) =>
     c
@@ -460,23 +450,54 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
             const fullPath = path.join(CWD, config.migrations, entry);
             const stat = await fs.stat(fullPath);
             return { entry: fullPath, mtime: stat.mtime };
-          }),
+          })
         ).then((entries) =>
           entries
             .sort((a, b) => b.mtime.getTime() - a.mtime.getTime())
-            .map(({ entry }) => entry),
+            .map(({ entry }) => entry)
         );
 
         await Promise.all(
           sortedEntries.slice(0, n).map(async (entry) => {
-            const migration = await fs.readFile(entry, "utf-8");
-            await kit.rollback(config.client.$adapter, migration);
-          }),
+            const contents = await fs.readFile(entry, "utf-8");
+            const migration = stringToEntryArray(contents).filter(
+              (entry) => entry.type === "command" && !!entry.reverse
+            );
+
+            await kit.deploy(config.client.$adapter, migration);
+          })
         );
-      }),
+      })
   );
 
 void program.run();
+
+export function entryArrayToString(entries: MigrationEntry[]): string {
+  // TODO
+  return "";
+}
+
+export function stringToEntryArray(str: string): MigrationEntry[] {
+  // TODO
+  return [];
+}
+
+export function currentDate(): string {
+  const now = new Date();
+
+  // date components
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+
+  // time components
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  // convert to string
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
 
 export function importPath(file: string) {
   return `"${file.startsWith(".") ? file : `./${file}`}"`;
@@ -503,7 +524,7 @@ export function ensureImports(source: string): string {
 
 export function generateSchemaSource(
   schemaObj: Schema,
-  exportName: string,
+  exportName: string
 ): string {
   const models = Object.entries(schemaObj)
     .map(([modelName, modelDef]) => {

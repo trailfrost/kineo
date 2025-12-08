@@ -7,6 +7,9 @@ import { FieldDef, RelationDef, type Schema } from "@/schema";
 
 import type { Jiti } from "jiti/lib/types";
 
+// TODO add handling for new migration entry type
+// write a section with reverse commands, another section with forward commands
+
 /**
  * A file path based import in the configuration file.
  */
@@ -75,15 +78,15 @@ export interface ParsedConfig {
  */
 export async function parseConfig(
   jiti: Jiti,
-  module: KineoConfig
+  module: KineoConfig,
 ): Promise<ParsedConfig> {
   const { exported: client, module: clientMod } = await extract(
     jiti,
-    module.client
+    module.client,
   );
   const { exported: schema, module: schemaMod } = await extract(
     jiti,
-    module.schema
+    module.schema,
   );
 
   if (!client) {
@@ -111,7 +114,7 @@ export async function parseConfig(
  */
 async function extract<T>(
   jiti: Jiti,
-  ref: Reference<T>
+  ref: Reference<T>,
 ): Promise<{ module?: FileExport; exported?: T }> {
   if (isReferenceFn(ref)) {
     return { exported: await ref() };
@@ -153,7 +156,7 @@ function isFileExport(ref: Reference<any>): ref is FileExport {
 export async function push(
   adapter: Adapter<any, any>,
   newSchema: Schema,
-  force?: boolean
+  force?: boolean,
 ) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   if (!adapter.push) throw new KineoKitError(KineoKitErrorKind.NoSupport);
@@ -248,13 +251,13 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
       if (bothFields) {
         if (prevField.kind !== curField.kind) {
           breaking.push(
-            `In model "${model}", field "${key}" changed kind from "${prevField.kind}" to "${curField.kind}"`
+            `In model "${model}", field "${key}" changed kind from "${prevField.kind}" to "${curField.kind}"`,
           );
         }
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`
+            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
           );
         }
 
@@ -262,40 +265,40 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
           breaking.push(`In model "${model}", field "${key}" became required`);
         } else if (prevField.isRequired && !curField.isRequired) {
           nonBreaking.push(
-            `In model "${model}", field "${key}" became optional`
+            `In model "${model}", field "${key}" became optional`,
           );
         }
       } else if (bothRelations) {
         if (prevField.pointTo !== curField.pointTo) {
           breaking.push(
-            `In model "${model}", relation "${key}" now points to "${curField.pointTo}" instead of "${prevField.pointTo}"`
+            `In model "${model}", relation "${key}" now points to "${curField.pointTo}" instead of "${prevField.pointTo}"`,
           );
         }
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`
+            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
           );
         }
 
         if (!prevField.isRequired && curField.isRequired) {
           breaking.push(
-            `In model "${model}", relation "${key}" became required`
+            `In model "${model}", relation "${key}" became required`,
           );
         } else if (prevField.isRequired && !curField.isRequired) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" became optional`
+            `In model "${model}", relation "${key}" became optional`,
           );
         }
 
         if (prevField.relDirection !== curField.relDirection) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} → ${curField.relDirection})`
+            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} → ${curField.relDirection})`,
           );
         }
       } else if (prevField.constructor !== curField.constructor) {
         breaking.push(
-          `In model "${model}", property "${key}" changed type (field ↔ relation)`
+          `In model "${model}", property "${key}" changed type (field ↔ relation)`,
         );
       }
     }
@@ -326,7 +329,7 @@ export async function pull(adapter: Adapter<any, any>) {
 export async function generate(
   adapter: Adapter<any, any>,
   prevSchema: Schema,
-  newSchema: Schema
+  newSchema: Schema,
 ) {
   if (!adapter.generate) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.generate(prevSchema, newSchema);

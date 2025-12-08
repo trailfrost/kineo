@@ -1,4 +1,4 @@
-import type { Adapter, Migration } from "@/adapter";
+import type { Adapter, MigrationCommand, MigrationEntry } from "@/adapter";
 import { GraphModel } from "@/model";
 import { compile } from "@/compilers/cypher";
 import * as neo4j from "neo4j-driver";
@@ -151,7 +151,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
     async exec(result) {
       const { records, summary } = await session.run(
         result.command,
-        result.params
+        result.params,
       );
 
       const entries: any[] = [];
@@ -202,7 +202,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // 2. Sample node properties from each label
         for (const label of labels) {
           const sampleRes = await session.run(
-            `MATCH (n:\`${label}\`) RETURN n LIMIT 50`
+            `MATCH (n:\`${label}\`) RETURN n LIMIT 50`,
           );
 
           for (const record of sampleRes.records) {
@@ -217,7 +217,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       MATCH (a)-[r]->(b)
       RETURN labels(a) AS fromLabels, type(r) AS relType, labels(b) AS toLabels
       LIMIT 1000
-      `
+      `,
         );
 
         for (const row of relRes.records) {
@@ -246,27 +246,146 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       };
     },
 
-    async push(schema) {
-      // TODO
+    async push(schema: Schema) {
+      // Wrap everything so one exception doesn't stop the rest
+      async function tryRun(cypher: string) {
+        try {
+          await session.run(cypher);
+        } catch (err: any) {
+          // Neo4j will error with "already exists" → ignore
+          console.warn(
+            "[neo4j] Skipped:",
+            cypher,
+            "Reason:",
+            err.code || err.message,
+          );
+        }
+      }
+
+      // Convert schema key or $modelName to label
+      function getLabel(name: string, model: ModelDef): string {
+        return model.$modelName ?? name;
+      }
+
+      /**
+       * For each model → produce constraints & indexes
+       */
+      for (const [modelKey, modelDef] of Object.entries(schema)) {
+        const label = getLabel(modelKey, modelDef);
+
+        const fieldEntries = Object.entries(modelDef).filter(
+          ([k, v]) => k !== "$modelName" && v instanceof FieldDef,
+        ) as [string, FieldDef<any, any, any, any>][];
+
+        const relationEntries = Object.entries(modelDef).filter(
+          ([k, v]) => k !== "$modelName" && v instanceof RelationDef,
+        ) as [string, RelationDef<any, any, any, any>][];
+
+        // ------------------------------------------------------------
+        // 1. FIELD-BASED NODE CONSTRAINTS
+        // ------------------------------------------------------------
+
+        for (const [propName, field] of fieldEntries) {
+          const neoProp = field.rowName ?? propName;
+
+          // 1a. ID → unique constraint
+          if (field.isId) {
+            const cypher = `
+          CREATE CONSTRAINT ${label}_${neoProp}_unique
+          IF NOT EXISTS
+          FOR (n:${label})
+          REQUIRE n.${neoProp} IS UNIQUE
+        `;
+            await tryRun(cypher);
+          }
+
+          // 1b. Required → existence constraint
+          if (field.isRequired) {
+            const cypher = `
+          CREATE CONSTRAINT ${label}_${neoProp}_exists
+          IF NOT EXISTS
+          FOR (n:${label})
+          REQUIRE n.${neoProp} IS NOT NULL
+        `;
+            await tryRun(cypher);
+          }
+
+          // 1c. Optional index (useful for search)
+          if (!field.isId) {
+            const cypher = `
+          CREATE INDEX ${label}_${neoProp}_index
+          IF NOT EXISTS
+          FOR (n:${label})
+          ON (n.${neoProp})
+        `;
+            await tryRun(cypher);
+          }
+        }
+
+        // ------------------------------------------------------------
+        // 2. RELATIONSHIP CONSTRAINTS
+        // ------------------------------------------------------------
+
+        for (const [relName, rel] of relationEntries) {
+          const relLabel = rel.relLabel ?? relName;
+
+          // Directions:
+          // outgoing: (a)-[:REL]->(b)
+          // incoming: (a)<-[:REL]-(b)
+          // both:     (a)-[:REL]-(b)
+          const direction = rel.relDirection;
+
+          // Required relationship existence constraint
+          if (rel.isRequired) {
+            // For required rels we at least enforce presence of the relationship.
+            // Neo4j supports relationship property constraints, but required relationships
+            // must be enforced through pattern constraints (Neo4j 5+):
+            //
+            //   FOR (a:Label) REQUIRE (a)-[:REL]->() IS NOT EMPTY
+            //
+            let pattern = "";
+            if (direction === "outgoing") {
+              pattern = `(a:${label})-[:${relLabel}]->()`;
+            } else if (direction === "incoming") {
+              pattern = `(a:${label})<-[:${relLabel}]-()`;
+            } else {
+              pattern = `(a:${label})-[:${relLabel}]-()`;
+            }
+
+            const cypher = `
+          CREATE CONSTRAINT ${label}_${relLabel}_rel_required
+          IF NOT EXISTS
+          FOR (a:${label})
+          REQUIRE ${pattern} IS NOT EMPTY
+        `;
+            await tryRun(cypher);
+          }
+        }
+      }
+
+      console.log("[neo4j] Schema push completed.");
     },
 
-    async deploy(migration) {
-      await session.run(migration);
+    async deploy(migration, hash) {
+      const joined = migration
+        .filter((entry) => entry.type === "command")
+        .map((entry) => entry.command)
+        .join("\n");
+      await session.run(joined);
+      // TODO set migration status
     },
 
     generate(prev, cur) {
-      const migrations: Migration[] = [];
+      const migrations: MigrationEntry[] = [];
 
       const prevModels = new Set(Object.keys(prev || {}));
       const curModels = new Set(Object.keys(cur || {}));
 
-      // helper to find id field name in a model def (first FieldDef with isId === true)
       function findIdFieldName(modelDef: ModelDef): string | undefined {
         for (const k of Object.keys(modelDef)) {
           const v = (modelDef as any)[k];
           if (isFieldDef(v)) {
             if ((v as FieldDef<any, any, any, any>).isId) {
-              // the property key in the schema is the default property name unless rowName set
               return (v as FieldDef<any, any, any, any>).rowName || k;
             }
           }
@@ -279,13 +398,14 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         if (!prevModels.has(m)) {
           const def = cur[m];
           const label = modelLabel(m, def);
-          // create constraint if id field exists
           const idProp = findIdFieldName(def);
+
           if (idProp) {
             migrations.push({
               type: "command",
               description: `Create uniqueness constraint for new model ${label}`,
               command: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${idProp} IS UNIQUE;`,
+              reverse: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${idProp} IS UNIQUE;`,
             });
           } else {
             migrations.push({
@@ -303,6 +423,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
           const def = prev[m];
           const label = modelLabel(m, def);
           const idProp = findIdFieldName(def);
+
           if (idProp) {
             migrations.push({
               type: "command",
@@ -310,64 +431,64 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               command:
                 `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${idProp} IS UNIQUE;\n` +
                 `MATCH (n:${label}) DETACH DELETE n;`,
+              reverse: "", // cannot bring deleted nodes back
             });
           } else {
             migrations.push({
               type: "command",
               description: `Delete nodes for removed model ${label}`,
               command: `MATCH (n:${label}) DETACH DELETE n;`,
+              reverse: "", // irreversible
             });
           }
         }
       }
 
-      // ---------- Existing models: compare fields and relations ----------
+      // ---------- Existing models ----------
       for (const m of Object.keys(cur)) {
-        if (!prev[m]) {
-          // already handled as new model
-          continue;
-        }
+        if (!prev[m]) continue;
 
         const prevDef = prev[m];
         const curDef = cur[m];
         const label = modelLabel(m, curDef);
 
-        // gather field keys
         const prevKeys = new Set(
-          Object.keys(prevDef || {}).filter((k) => k !== "$modelName")
+          Object.keys(prevDef || {}).filter((k) => k !== "$modelName"),
         );
         const curKeys = new Set(
-          Object.keys(curDef || {}).filter((k) => k !== "$modelName")
+          Object.keys(curDef || {}).filter((k) => k !== "$modelName"),
         );
 
-        // keys present in cur but not in prev => added
+        // ---------- Added keys ----------
         for (const key of Array.from(curKeys)) {
           if (!prevKeys.has(key)) {
             const val = (curDef as any)[key];
+
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
               const propName = fieldDef.rowName || key;
-              // if there is a default, set it for existing nodes that don't have it
+
               if (fieldDef.defaultValue !== undefined) {
                 migrations.push({
                   type: "command",
                   description: `Set default for added field ${propName} on ${label}`,
                   command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(fieldDef.defaultValue)};`,
+                  reverse: `MATCH (n:${label}) REMOVE n.${propName};`,
                 });
               } else {
                 migrations.push({
                   type: "note",
                   description: `Field ${propName} added to ${label}`,
-                  note: `Field '${propName}' added to model '${label}'. No default provided — existing nodes left untouched.`,
+                  note: `Field '${propName}' added with no default; existing nodes unchanged.`,
                 });
               }
 
-              // if this field is id -> create uniqueness constraint
               if (fieldDef.isId) {
                 migrations.push({
                   type: "command",
                   description: `Create uniqueness constraint for newly-added id field ${propName} on ${label}`,
                   command: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                  reverse: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
                 });
               }
             } else if (isRelationDef(val)) {
@@ -375,127 +496,127 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
               migrations.push({
                 type: "note",
                 description: `Relation ${key} added on ${label}`,
-                note: `Relation '${key}' added on '${label}' pointing to '${rel.pointTo}'. Automatic creation of relationships between existing nodes cannot be inferred; you must create data-migration cypher if you want to populate relationships.`,
+                note: `Relation '${key}' added on '${label}' pointing to '${rel.pointTo}'.`,
               });
             } else {
-              // unknown type - ignore
               migrations.push({
                 type: "note",
                 description: `Unknown key ${String(key)} added`,
-                note: `Key '${String(key)}' added to model '${label}', but it wasn't recognized as a FieldDef or RelationDef.`,
+                note: `Key '${String(key)}' added but not recognized.`,
               });
             }
           }
         }
 
-        // keys present in prev but not in cur => removed
+        // ---------- Removed keys ----------
         for (const key of Array.from(prevKeys)) {
           if (!curKeys.has(key)) {
             const val = (prevDef as any)[key];
+
             if (isFieldDef(val)) {
               const fieldDef = val as FieldDef<any, any, any, any>;
               const propName = fieldDef.rowName || key;
-              // remove property from nodes
+
               migrations.push({
                 type: "command",
                 description: `Remove property for removed field ${propName} on ${label}`,
                 command: `MATCH (n:${label}) REMOVE n.${propName};`,
+                reverse: "", // cannot restore old values
               });
-              // if it was an id field -> drop constraint
+
               if (fieldDef.isId) {
                 migrations.push({
                   type: "command",
-                  description: `Drop uniqueness constraint for removed id field ${propName} on ${label}`,
+                  description: `Drop uniqueness constraint for removed id field ${propName}`,
                   command: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                  reverse: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
                 });
               }
             } else if (isRelationDef(val)) {
-              const rel = val as RelationDef<any, any, any, any>;
               migrations.push({
                 type: "note",
                 description: `Relation ${key} removed from ${label}`,
-                note: `Relation '${key}' removed from '${label}'. Automatic deletion of existing relationships is NOT performed. If you want to delete relationship data, add a Cypher step (e.g. MATCH (a:${label})-[r:\`${rel.relLabel || key}\`]-() DELETE r).`,
+                note: `Relation '${key}' removed; relationship data not automatically deleted.`,
               });
             } else {
               migrations.push({
                 type: "note",
                 description: `Unknown key ${String(key)} removed`,
-                note: `Key '${String(key)}' removed from model '${label}', but it wasn't recognized as a FieldDef or RelationDef.`,
+                note: `Key '${String(key)}' removed from '${label}'.`,
               });
             }
           }
         }
 
-        // keys present in both => check for changes (id flag changes, default changes)
+        // ---------- Modified keys ----------
         for (const key of Array.from(curKeys)) {
-          if (!prevKeys.has(key)) continue; // skip added handled above
+          if (!prevKeys.has(key)) continue;
+
           const prevVal = (prevDef as any)[key];
           const curVal = (curDef as any)[key];
 
-          // field -> field changes
           if (isFieldDef(prevVal) && isFieldDef(curVal)) {
             const p = prevVal as FieldDef<any, any, any, any>;
             const c = curVal as FieldDef<any, any, any, any>;
             const propName = c.rowName || key;
 
-            // changed default value (simple equality check)
             if (p.defaultValue !== c.defaultValue) {
               if (c.defaultValue !== undefined) {
                 migrations.push({
                   type: "command",
                   description: `Apply new default for ${propName} on ${label}`,
                   command: `MATCH (n:${label}) WHERE n.${propName} IS NULL OR NOT exists(n.${propName}) SET n.${propName} = ${serializeDefault(c.defaultValue)};`,
+                  reverse:
+                    p.defaultValue !== undefined
+                      ? `MATCH (n:${label}) WHERE n.${propName} = ${serializeDefault(c.defaultValue)} SET n.${propName} = ${serializeDefault(p.defaultValue)};`
+                      : `MATCH (n:${label}) REMOVE n.${propName};`,
                 });
               } else {
-                // default removed: nothing to do to data
                 migrations.push({
                   type: "note",
                   description: `Default removed for ${propName} on ${label}`,
-                  note: `Default value removed for '${propName}' on '${label}'. Existing nodes are left as-is.`,
+                  note: `Default removed; no data change.`,
                 });
               }
             }
 
-            // id flag went from false -> true
             if (!p.isId && c.isId) {
               migrations.push({
                 type: "command",
-                description: `Create uniqueness constraint for newly-marked id ${propName} on ${label}`,
+                description: `Create uniqueness constraint for ${propName}`,
                 command: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                reverse: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
               });
             }
 
-            // id flag went from true -> false
             if (p.isId && !c.isId) {
               migrations.push({
                 type: "command",
-                description: `Drop uniqueness constraint for ${propName} on ${label} (id flag removed)`,
+                description: `Drop uniqueness constraint for ${propName}`,
                 command: `DROP CONSTRAINT IF EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
+                reverse: `CREATE CONSTRAINT IF NOT EXISTS FOR (n:${label}) REQUIRE n.${propName} IS UNIQUE;`,
               });
             }
 
-            // type changes (kind) cannot be safely migrated automatically; warn
             if (p.kind !== c.kind) {
               migrations.push({
                 type: "note",
-                description: `Type changed for ${propName} on ${label}`,
-                note: `Field '${propName}' changed type from '${p.kind}' to '${c.kind}'. Automatic data conversion is NOT performed; add custom Cypher if conversion is desired.`,
+                description: `Type changed for ${propName}`,
+                note: `Type changed from '${p.kind}' to '${c.kind}'.`,
               });
             }
 
-            // array flag changes — warn
             if (p.isArray !== c.isArray) {
               migrations.push({
                 type: "note",
-                description: `Array flag changed for ${propName} on ${label}`,
-                note: `Array-ness changed for field '${propName}' on '${label}'. Converting existing data may require custom Cypher.`,
+                description: `Array flag changed for ${propName}`,
+                note: `Array-ness changed; may require custom migration.`,
               });
             }
           } else if (isRelationDef(prevVal) && isRelationDef(curVal)) {
-            // relation changes
-            const p = prevVal as RelationDef<any, any, any, any>;
-            const c = curVal as RelationDef<any, any, any, any>;
-            // If the target changed or label changed -> note
+            const p = prevVal;
+            const c = curVal;
+
             if (
               p.pointTo !== c.pointTo ||
               p.relLabel !== c.relLabel ||
@@ -503,33 +624,25 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
             ) {
               migrations.push({
                 type: "note",
-                description: `Relation changed for ${key} on ${label}`,
-                note: [
-                  `Relation '${key}' on '${label}' changed.`,
-                  `  - to: ${p.pointTo} -> ${c.pointTo}`,
-                  `  - relLabel: ${p.relLabel} -> ${c.relLabel}`,
-                  `  - direction: ${p.relDirection} -> ${c.relDirection}`,
-                  `Automatic data migration of relationships cannot be safely inferred; please provide custom Cypher to migrate relationship data.`,
-                ].join("\n"),
+                description: `Relation changed for '${key}'`,
+                note: `Relation '${key}' changed; cannot auto-migrate data.`,
               });
             }
           } else {
-            // type changed between field and relation or unknown types
             migrations.push({
               type: "note",
-              description: `Key ${key} changed type on ${label}`,
-              note: `Key '${key}' on '${label}' changed its kind (field <-> relation or unknown). No automatic migration generated.`,
+              description: `Key ${key} changed type`,
+              note: `Field <-> relation change; no automatic migration.`,
             });
           }
-        } // end keys present in both
-      } // end per-model loop
+        }
+      }
 
-      // If nothing produced, add an informational note
       if (migrations.length === 0) {
         migrations.push({
           type: "note",
           description: "No detectable changes",
-          note: "No differences detected between prev and cur schema snapshots.",
+          note: "No differences between prev and cur schema.",
         });
       }
 
@@ -538,10 +651,19 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 
     async status(migration, hash) {
       // TODO
+      return "completed";
     },
 
     async rollback(migration, hash) {
-      // TODO
+      const joined = migration
+        .filter(
+          (entry): entry is MigrationCommand =>
+            entry.type === "command" && !!entry.reverse,
+        )
+        .map((entry) => entry.reverse!)
+        .join("\n");
+      await session.run(joined);
+      // TODO set migration status
     },
   };
 }
@@ -662,8 +784,8 @@ function collectEdges(value: any, edges: any[]) {
       end: value.end,
       props: Object.fromEntries(
         Object.entries(value).filter(
-          ([k]) => !["identity", "type", "start", "end"].includes(k)
-        )
+          ([k]) => !["identity", "type", "start", "end"].includes(k),
+        ),
       ),
     });
   }
@@ -702,7 +824,7 @@ export function auth(opts: Auth): neo4j.AuthToken {
         opts.credentials,
         opts.realm,
         opts.scheme,
-        opts.params
+        opts.params,
       );
   }
 }
@@ -746,7 +868,7 @@ function mergeRelationship(
   from: string,
   relType: string,
   to: string,
-  direction: "outgoing" | "incoming"
+  direction: "outgoing" | "incoming",
 ) {
   const model = models[from] ?? (models[from] = { $modelName: from });
 

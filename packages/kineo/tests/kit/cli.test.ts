@@ -1,6 +1,6 @@
 // tests/kit/cli.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { FieldDef, RelationDef } from "@/schema";
+import { describe, expect, test, vi } from "vitest";
+import { defineSchema, field, FieldDef, model, RelationDef } from "@/schema";
 
 // --- Mock convoker but keep real Command and parsing ---
 vi.mock("convoker", async () => {
@@ -65,42 +65,9 @@ vi.mock("jiti", () => {
   };
 });
 
-// --- Mock the kit utilities (the main toolkit) ---
-vi.mock("@/kit", async () => {
-  const actual = await vi.importActual("@/kit");
-  return {
-    // parseConfig should return a minimal config object shape used by CLI
-    parseConfig: vi.fn().mockResolvedValue({}),
-    push: vi.fn().mockResolvedValue(undefined),
-    pull: vi.fn().mockResolvedValue({}),
-    generate: vi.fn().mockResolvedValue(["migration-content"]),
-    deploy: vi.fn().mockResolvedValue(undefined),
-    rollback: vi.fn().mockResolvedValue(undefined),
-    status: vi.fn().mockResolvedValue("completed"),
-    ...actual,
-  };
-});
-
 // --- Now import the module under test (after mocks) ---
 import { program } from "@/kit";
-
-// We need some helpers from the module to test (they are not exported in your original file).
-// Vitest can import actual module implementation to access internal named exports if they exist.
-// Since your file defines helper functions but doesn't export them, we'll re-import the file using
-// vi.importActual to access the module's exports (if compiled to exports). If helpers are not exported
-// you can alternatively test behavior via CLI flows (init/pull/create) which exercise those functions.
-// Try to import actual module to get any exported helpers:
-let helpers: any;
-beforeEach(async () => {
-  vi.clearAllMocks();
-  // attempt to import internal named exports (works if your build exposes them)
-  try {
-    helpers = await vi.importActual<typeof import("@/kit")>("@/kit");
-  } catch {
-    // Not fatal; some helper tests will be skipped if not available.
-    helpers = null;
-  }
-});
+import * as helpers from "@/kit";
 
 describe("kineo CLI (unit)", () => {
   test("program.run exists and is callable", async () => {
@@ -136,9 +103,12 @@ describe("kineo CLI (unit)", () => {
 
     test("generateSchemaSource produces a valid string", () => {
       if (!helpers || !helpers.generateSchemaSource) return;
-      const schemaObj = {
-        User: { id: 1, name: "joe" },
-      };
+      const schemaObj = defineSchema({
+        User: model({
+          id: field.int().id(),
+          name: field.string().required(),
+        }),
+      });
       const generated = helpers.generateSchemaSource(schemaObj, "schema");
       expect(generated).toContain("export const schema = defineSchema");
       expect(generated).toContain("User");

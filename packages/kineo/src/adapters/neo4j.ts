@@ -151,7 +151,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
     async exec(result) {
       const { records, summary } = await session.run(
         result.command,
-        result.params
+        result.params,
       );
 
       const entries: any[] = [];
@@ -202,7 +202,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // 2. Sample node properties from each label
         for (const label of labels) {
           const sampleRes = await session.run(
-            `MATCH (n:\`${label}\`) RETURN n LIMIT 50`
+            `MATCH (n:\`${label}\`) RETURN n LIMIT 50`,
           );
 
           for (const record of sampleRes.records) {
@@ -217,7 +217,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       MATCH (a)-[r]->(b)
       RETURN labels(a) AS fromLabels, type(r) AS relType, labels(b) AS toLabels
       LIMIT 1000
-      `
+      `,
         );
 
         for (const row of relRes.records) {
@@ -257,7 +257,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
             "[kineo/neo4j] Skipped:",
             cypher,
             "Reason:",
-            err.code || err.message
+            err.code || err.message,
           );
         }
       }
@@ -274,11 +274,11 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         const label = getLabel(modelKey, modelDef);
 
         const fieldEntries = Object.entries(modelDef).filter(
-          ([k, v]) => k !== "$modelName" && v instanceof FieldDef
+          ([k, v]) => k !== "$modelName" && v instanceof FieldDef,
         ) as [string, FieldDef<any, any, any, any>][];
 
         const relationEntries = Object.entries(modelDef).filter(
-          ([k, v]) => k !== "$modelName" && v instanceof RelationDef
+          ([k, v]) => k !== "$modelName" && v instanceof RelationDef,
         ) as [string, RelationDef<any, any, any, any>][];
 
         // ------------------------------------------------------------
@@ -458,10 +458,10 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         const label = modelLabel(m, curDef);
 
         const prevKeys = new Set(
-          Object.keys(prevDef || {}).filter((k) => k !== "$modelName")
+          Object.keys(prevDef || {}).filter((k) => k !== "$modelName"),
         );
         const curKeys = new Set(
-          Object.keys(curDef || {}).filter((k) => k !== "$modelName")
+          Object.keys(curDef || {}).filter((k) => k !== "$modelName"),
         );
 
         // ---------- Added keys ----------
@@ -772,8 +772,8 @@ function collectEdges(value: any, edges: any[]) {
       end: value.end,
       props: Object.fromEntries(
         Object.entries(value).filter(
-          ([k]) => !["identity", "type", "start", "end"].includes(k)
-        )
+          ([k]) => !["identity", "type", "start", "end"].includes(k),
+        ),
       ),
     });
   }
@@ -812,7 +812,7 @@ export function auth(opts: Auth): neo4j.AuthToken {
         opts.credentials,
         opts.realm,
         opts.scheme,
-        opts.params
+        opts.params,
       );
   }
 }
@@ -856,7 +856,7 @@ function mergeRelationship(
   from: string,
   relType: string,
   to: string,
-  direction: "outgoing" | "incoming"
+  direction: "outgoing" | "incoming",
 ) {
   const model = models[from] ?? (models[from] = { $modelName: from });
 

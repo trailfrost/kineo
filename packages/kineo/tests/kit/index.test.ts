@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from "vitest";
-import { push, pull, generate, deploy, status, rollback, getDiff } from "@/kit";
+import { push, pull, generate, deploy, status, getDiff } from "@/kit";
 import { KineoKitError, KineoKitErrorKind } from "@/error";
 import { model, defineSchema, field } from "@/schema";
 import type { Adapter } from "@/adapter";
@@ -34,10 +34,13 @@ describe("push()", () => {
   test("throws on breaking schema diff", async () => {
     const adapter = createFakeAdapter({
       pull: vi.fn().mockResolvedValue({
-        User: model({
-          id: field.int().id(),
-          name: field.string(),
-        }),
+        schema: {
+          User: model({
+            id: field.int().id(),
+            name: field.string(),
+          }),
+        },
+        full: true,
       }),
       push: vi.fn(),
     });
@@ -55,7 +58,7 @@ describe("push()", () => {
 
   test("calls push when no breaking changes", async () => {
     const adapter = createFakeAdapter({
-      pull: vi.fn().mockResolvedValue(simpleSchema),
+      pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
       push: vi.fn(),
     });
 
@@ -102,7 +105,7 @@ describe("pull()", () => {
 
   test("returns schema if adapter.pull exists", async () => {
     const adapter = createFakeAdapter({
-      pull: vi.fn().mockResolvedValue(simpleSchema),
+      pull: vi.fn().mockResolvedValue({ schema: simpleSchema, full: true }),
     });
 
     const result = await pull(adapter);
@@ -132,7 +135,7 @@ describe("generate()", () => {
 describe("deploy()", () => {
   test("throws if adapter lacks deploy", async () => {
     const adapter = createFakeAdapter({});
-    await expect(deploy(adapter, "m1")).rejects.toThrow(KineoKitError);
+    await expect(deploy(adapter, [])).rejects.toThrow(KineoKitError);
   });
 
   test("calls deploy with hash", async () => {
@@ -145,7 +148,7 @@ describe("deploy()", () => {
       default: { hash: vi.fn().mockReturnValue("hash123") },
     }));
 
-    await deploy(adapter, "migration1");
+    await deploy(adapter, []);
     expect(adapter.deploy).toHaveBeenCalled();
   });
 });
@@ -153,7 +156,7 @@ describe("deploy()", () => {
 describe("status()", () => {
   test("throws if adapter lacks status", async () => {
     const adapter = createFakeAdapter({});
-    await expect(status(adapter, "m1")).rejects.toThrow(KineoKitError);
+    await expect(status(adapter, [])).rejects.toThrow(KineoKitError);
   });
 
   test("calls status with hash", async () => {
@@ -165,28 +168,8 @@ describe("status()", () => {
       default: { hash: vi.fn().mockReturnValue("hash123") },
     }));
 
-    const result = await status(adapter, "migration1");
+    const result = await status(adapter, []);
     expect(adapter.status).toHaveBeenCalled();
     expect(result).toBe("completed");
-  });
-});
-
-describe("rollback()", () => {
-  test("throws if adapter lacks rollback", async () => {
-    const adapter = createFakeAdapter({});
-    await expect(rollback(adapter, "m1")).rejects.toThrow(KineoKitError);
-  });
-
-  test("calls rollback with hash", async () => {
-    const adapter = createFakeAdapter({
-      rollback: vi.fn(),
-    });
-
-    vi.mock("node:crypto", () => ({
-      default: { hash: vi.fn().mockReturnValue("hash123") },
-    }));
-
-    await rollback(adapter, "migration1");
-    expect(adapter.rollback).toHaveBeenCalled();
   });
 });

@@ -48,7 +48,7 @@ export interface Adapter<
     new (
       name: string,
       adapter: Adapter<any, any>,
-      plugins: Plugin[]
+      plugins: Plugin[],
     ): Model<any, any>;
   },
   Summary = any,
@@ -98,7 +98,7 @@ export interface Adapter<
    */
   status?(
     migration: MigrationEntry[],
-    hash: string
+    hash: string,
   ): OptPromise<"pending" | "completed">;
   /**
    * Deploys a migration.

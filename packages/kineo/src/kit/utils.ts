@@ -7,9 +7,6 @@ import { FieldDef, RelationDef, type Schema } from "@/schema";
 
 import type { Jiti } from "jiti/lib/types";
 
-// TODO add handling for new migration entry type
-// write a section with reverse commands, another section with forward commands
-
 /**
  * A file path based import in the configuration file.
  */
@@ -78,15 +75,15 @@ export interface ParsedConfig {
  */
 export async function parseConfig(
   jiti: Jiti,
-  module: KineoConfig
+  module: KineoConfig,
 ): Promise<ParsedConfig> {
   const { exported: client, module: clientMod } = await extract(
     jiti,
-    module.client
+    module.client,
   );
   const { exported: schema, module: schemaMod } = await extract(
     jiti,
-    module.schema
+    module.schema,
   );
 
   if (!client) {
@@ -114,7 +111,7 @@ export async function parseConfig(
  */
 async function extract<T>(
   jiti: Jiti,
-  ref: Reference<T>
+  ref: Reference<T>,
 ): Promise<{ module?: FileExport; exported?: T }> {
   if (isReferenceFn(ref)) {
     return { exported: await ref() };
@@ -156,7 +153,7 @@ function isFileExport(ref: Reference<any>): ref is FileExport {
 export async function push(
   adapter: Adapter<any, any>,
   newSchema: Schema,
-  force?: boolean
+  force?: boolean,
 ) {
   if (!adapter.pull) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   if (!adapter.push) throw new KineoKitError(KineoKitErrorKind.NoSupport);
@@ -251,13 +248,13 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
       if (bothFields) {
         if (prevField.kind !== curField.kind) {
           breaking.push(
-            `In model "${model}", field "${key}" changed kind from "${prevField.kind}" to "${curField.kind}"`
+            `In model "${model}", field "${key}" changed kind from "${prevField.kind}" to "${curField.kind}"`,
           );
         }
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`
+            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
           );
         }
 
@@ -265,40 +262,40 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
           breaking.push(`In model "${model}", field "${key}" became required`);
         } else if (prevField.isRequired && !curField.isRequired) {
           nonBreaking.push(
-            `In model "${model}", field "${key}" became optional`
+            `In model "${model}", field "${key}" became optional`,
           );
         }
       } else if (bothRelations) {
         if (prevField.pointTo !== curField.pointTo) {
           breaking.push(
-            `In model "${model}", relation "${key}" now points to "${curField.pointTo}" instead of "${prevField.pointTo}"`
+            `In model "${model}", relation "${key}" now points to "${curField.pointTo}" instead of "${prevField.pointTo}"`,
           );
         }
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`
+            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
           );
         }
 
         if (!prevField.isRequired && curField.isRequired) {
           breaking.push(
-            `In model "${model}", relation "${key}" became required`
+            `In model "${model}", relation "${key}" became required`,
           );
         } else if (prevField.isRequired && !curField.isRequired) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" became optional`
+            `In model "${model}", relation "${key}" became optional`,
           );
         }
 
         if (prevField.relDirection !== curField.relDirection) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} → ${curField.relDirection})`
+            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} → ${curField.relDirection})`,
           );
         }
       } else if (prevField.constructor !== curField.constructor) {
         breaking.push(
-          `In model "${model}", property "${key}" changed type (field ↔ relation)`
+          `In model "${model}", property "${key}" changed type (field ↔ relation)`,
         );
       }
     }
@@ -329,7 +326,7 @@ export async function pull(adapter: Adapter<any, any>) {
 export async function generate(
   adapter: Adapter<any, any>,
   prevSchema: Schema,
-  newSchema: Schema
+  newSchema: Schema,
 ) {
   if (!adapter.generate) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.generate(prevSchema, newSchema);
@@ -342,12 +339,12 @@ export async function generate(
  */
 export async function deploy(
   adapter: Adapter<any, any>,
-  migration: MigrationEntry[]
+  migration: MigrationEntry[],
 ) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.deploy(
     migration,
-    crypto.hash("sha512", JSON.stringify(migration))
+    crypto.hash("sha512", JSON.stringify(migration)),
   );
 }
 
@@ -359,11 +356,97 @@ export async function deploy(
  */
 export async function status(
   adapter: Adapter<any, any>,
-  migration: MigrationEntry[]
+  migration: MigrationEntry[],
 ) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.status(
     migration,
-    crypto.hash("sha512", JSON.stringify(migration))
+    crypto.hash("sha512", JSON.stringify(migration)),
   );
+}
+
+/**
+ * A simple "up", "down" migration array.
+ */
+export type Migration = [string, string];
+
+/**
+ * Compiles migration entries to a simpler "up", "down" array.
+ * @param entries The migration entries.
+ * @returns The compiled object.
+ */
+export function compileEntries(entries: MigrationEntry[]): Migration {
+  let up = "";
+  let down = "";
+
+  for (const entry of entries) {
+    if (entry.type === "command") {
+      up += `${entry.command}${entry.description ? ` -- ${entry.description}` : ""}\n\n`;
+      if (entry.reverse) down += `${entry.reverse}\n\n`;
+    } else if (entry.type === "note") {
+      up += `${entry.description ? `-- ${entry.description}\n` : ""}-- ${entry.note}\n`;
+      down += `-- Revert: ${entry.description ? `${entry.description}\n` : `-- ${entry.note}`}\n`;
+    }
+  }
+
+  return [up, down];
+}
+
+/**
+ * Decompiles a a simple "up", "down" array to migration entries.
+ * @param array The compiled entries.
+ * @returns The decompiled entries.
+ */
+export function decompileEntries([up, down]: Migration): MigrationEntry[] {
+  const migrations: MigrationEntry[] = [];
+
+  const upSplit = up.split("\n\n");
+  const downSplit = down.split("\n\n");
+
+  decompile(upSplit, migrations, "command");
+  decompile(downSplit, migrations, "reverse");
+
+  return migrations;
+}
+
+/**
+ * Decompiles a string array into a migration entry array.
+ * @param statements The list of commands.
+ * @param migrations The migrations.
+ * @param key The key to insert, either `command` or `reverse`.
+ */
+function decompile(
+  statements: string[],
+  migrations: MigrationEntry[],
+  key: "command" | "reverse",
+) {
+  for (const stmt of statements) {
+    const split = stmt.split("\n");
+    for (let i = 0; i < split.length; i++) {
+      const entry = split[i];
+      if (entry.startsWith("--")) {
+        let note: string;
+        let description: string | undefined;
+        if (split[i + 1].startsWith("--")) {
+          description = entry;
+          note = split[++i];
+        } else {
+          note = entry;
+        }
+
+        migrations.push({
+          type: "note",
+          description,
+          note,
+        });
+      } else {
+        const [command, description] = entry.split(" -- ");
+        migrations.push({
+          type: "command",
+          description,
+          [key]: command,
+        } as any);
+      }
+    }
+  }
 }

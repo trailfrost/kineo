@@ -96,16 +96,13 @@ export interface Adapter<
    * @param migration The migration to get the status for.
    * @param hash The hash of the migration.
    */
-  status?(
-    migration: MigrationEntry[],
-    hash: string,
-  ): OptPromise<"pending" | "completed">;
+  status?(migration: string, hash: string): OptPromise<"pending" | "completed">;
   /**
    * Deploys a migration.
    * @param migration The migration to deploy.
    * @param hash The hash of the migration.
    */
-  deploy?(migration: MigrationEntry[], hash: string): OptPromise<void>;
+  deploy?(migration: string, hash: string): OptPromise<void>;
 }
 
 /**

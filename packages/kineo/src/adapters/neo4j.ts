@@ -1,4 +1,4 @@
-import type { Adapter, MigrationCommand, MigrationEntry } from "@/adapter";
+import type { Adapter, MigrationEntry } from "@/adapter";
 import { GraphModel } from "@/model";
 import { compile } from "@/compilers/cypher";
 import * as neo4j from "neo4j-driver";
@@ -10,6 +10,8 @@ import {
   type ModelDef,
   type Schema,
 } from "@/schema";
+
+const META_LABEL = "`__MIGRATION$META__`";
 
 /**
  * Authentication options for Neo4j.
@@ -137,7 +139,6 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         : driver.session(opts.session);
   return {
     Model: GraphModel,
-    fileExt: "cypher",
 
     async close() {
       await session.close();
@@ -214,10 +215,10 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         // 3. Sample relationships for each label
         const relRes = await session.run(
           `
-      MATCH (a)-[r]->(b)
-      RETURN labels(a) AS fromLabels, type(r) AS relType, labels(b) AS toLabels
-      LIMIT 1000
-      `,
+          MATCH (a)-[r]->(b)
+          RETURN labels(a) AS fromLabels, type(r) AS relType, labels(b) AS toLabels
+          LIMIT 1000
+          `,
         );
 
         for (const row of relRes.records) {
@@ -236,8 +237,6 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         }
       } catch (err) {
         console.error("[kineo/neo4j] schema pulling error:", err);
-      } finally {
-        await session.close();
       }
 
       return {
@@ -252,7 +251,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         try {
           await session.run(cypher);
         } catch (err: any) {
-          // Neo4j will error with "already exists" → ignore
+          // Neo4j will error with "already exists" -> ignore
           console.warn(
             "[kineo/neo4j] Skipped:",
             cypher,
@@ -268,7 +267,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
       }
 
       /**
-       * For each model → produce constraints & indexes
+       * For each model -> produce constraints & indexes
        */
       for (const [modelKey, modelDef] of Object.entries(schema)) {
         const label = getLabel(modelKey, modelDef);
@@ -288,7 +287,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
         for (const [propName, field] of fieldEntries) {
           const neoProp = field.rowName ?? propName;
 
-          // 1a. ID → unique constraint
+          // 1a. ID -> unique constraint
           if (field.isId) {
             const cypher = `
           CREATE CONSTRAINT ${label}_${neoProp}_unique
@@ -299,7 +298,7 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
             await tryRun(cypher);
           }
 
-          // 1b. Required → existence constraint
+          // 1b. Required -> existence constraint
           if (field.isRequired) {
             const cypher = `
           CREATE CONSTRAINT ${label}_${neoProp}_exists
@@ -367,17 +366,39 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
     },
 
     async deploy(migration, hash) {
-      const joined = migration
-        .filter((entry) => entry.type === "command")
-        .map((entry) => entry.command)
-        .join("\n");
-      await session.run(joined);
-      // TODO set migration status
+      await session.run(migration);
+
+      await session.run(
+        `
+        CREATE INDEX migration_meta_idx IF NOT EXISTS
+        FOR (m:${META_LABEL}) ON (m.id)
+        `,
+      );
+
+      await session.run(
+        `
+        MERGE (m:${META_LABEL} { id: $hash })
+        SET m.deployed = true
+        `,
+        { hash },
+      );
     },
 
-    async status(migration, hash) {
-      // TODO
-      return "completed";
+    async status(_, hash) {
+      const result = await session.run(
+        `
+        MATCH (m:${META_LABEL} { id: $hash })
+        RETURN m.deployed AS deployed
+        `,
+        { hash },
+      );
+
+      if (result.records.length === 0) {
+        return "pending";
+      }
+
+      const deployed = result.records[0].get("deployed");
+      return deployed ? "completed" : "pending";
     },
 
     generate(prev, cur) {

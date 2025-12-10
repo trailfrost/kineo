@@ -22,7 +22,7 @@ export interface ModelDef {
  * Finds a model by its internal name.
  */
 export type FindModelByName<TSchema extends Schema, TName extends string> = {
-  [K in keyof TSchema]: TSchema[K]["$modelName"] extends string // If user specified a name → match it
+  [K in keyof TSchema]: TSchema[K]["$modelName"] extends string // If user specified a name -> match it
     ? TSchema[K]["$modelName"] extends TName
       ? TSchema[K]
       : never

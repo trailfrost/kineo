@@ -2,8 +2,6 @@ import { describe, test, expect, vi, beforeAll, afterAll } from "vitest";
 import neo4j from "neo4j-driver";
 import { Neo4jAdapter, auth } from "@/adapters/neo4j";
 import { defineSchema, field, model } from "@/schema";
-import type { MigrationEntry } from "@/adapter";
-import { compileEntries } from "@/kit";
 
 // Neo4j connection settings
 const NEO4J_URL = "bolt://localhost:7687";

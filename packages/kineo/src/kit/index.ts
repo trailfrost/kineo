@@ -371,7 +371,8 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           path.join(CWD, config.migrations, `${currentDate()}_migration.json`),
           contents,
         );
-        if (!noPush) await kit.deploy(adapter, entries);
+        if (!noPush)
+          await kit.deploy(adapter, kit.filterEntries(entries, "command"));
       }),
   )
   .subCommand("status", (c) =>
@@ -390,7 +391,10 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
           );
           return {
             entry,
-            status: await kit.status(config.client.$adapter, migration),
+            status: await kit.status(
+              config.client.$adapter,
+              kit.filterEntries(migration, "command"),
+            ),
           };
         }),
       );
@@ -438,10 +442,11 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
               ),
             ),
           );
-          const status = await kit.status(config.client.$adapter, migration);
+          const command = kit.filterEntries(migration, "command");
+          const status = await kit.status(config.client.$adapter, command);
           if (status === "completed") return;
 
-          await kit.deploy(config.client.$adapter, migration);
+          await kit.deploy(config.client.$adapter, command);
         }),
       );
     }),
@@ -479,7 +484,11 @@ ${color.bold("- Not Breaking:")}\n${data?.nonBreaking.map((entry) => `  ${entry}
               JSON.stringify(kit.compileEntries(migration)),
             );
 
-            if (!noPush) await kit.deploy(config.client.$adapter, migration);
+            if (!noPush)
+              await kit.deploy(
+                config.client.$adapter,
+                kit.filterEntries(migration, "reverse"),
+              );
           }),
         );
       }),

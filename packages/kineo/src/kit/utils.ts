@@ -254,7 +254,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
+            `In model "${model}", field "${key}" changed array flag (${prevField.isArray} -> ${curField.isArray})`,
           );
         }
 
@@ -274,7 +274,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
 
         if (prevField.isArray !== curField.isArray) {
           breaking.push(
-            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} → ${curField.isArray})`,
+            `In model "${model}", relation "${key}" changed array flag (${prevField.isArray} -> ${curField.isArray})`,
           );
         }
 
@@ -290,7 +290,7 @@ export function getDiff(prev: Schema, cur: Schema): SchemaDiff {
 
         if (prevField.relDirection !== curField.relDirection) {
           nonBreaking.push(
-            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} → ${curField.relDirection})`,
+            `In model "${model}", relation "${key}" changed direction (${prevField.relDirection} -> ${curField.relDirection})`,
           );
         }
       } else if (prevField.constructor !== curField.constructor) {
@@ -337,10 +337,7 @@ export async function generate(
  * @param adapter The adapter.
  * @param migration The migration.
  */
-export async function deploy(
-  adapter: Adapter<any, any>,
-  migration: MigrationEntry[],
-) {
+export async function deploy(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.deploy(
     migration,
@@ -354,10 +351,7 @@ export async function deploy(
  * @param migration The migration.
  * @returns If the migration has been deployed or not.
  */
-export async function status(
-  adapter: Adapter<any, any>,
-  migration: MigrationEntry[],
-) {
+export async function status(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.status(
     migration,
@@ -424,10 +418,15 @@ function decompile(
     const split = stmt.split("\n");
     for (let i = 0; i < split.length; i++) {
       const entry = split[i];
+      // skip empty lines, to avoid creating blank commands
+      if (!entry || entry.trim() === "") continue;
+
       if (entry.startsWith("--")) {
+        if (key === "reverse") continue;
+
         let note: string;
         let description: string | undefined;
-        if (split[i + 1].startsWith("--")) {
+        if (i + 1 < split.length && split[i + 1].startsWith("--")) {
           description = entry;
           note = split[++i];
         } else {
@@ -449,4 +448,14 @@ function decompile(
       }
     }
   }
+}
+
+export function filterEntries(
+  entries: MigrationEntry[],
+  key: "command" | "reverse",
+) {
+  return entries
+    .filter((entry) => entry.type === "command")
+    .map((entry) => entry[key])
+    .join("\n");
 }

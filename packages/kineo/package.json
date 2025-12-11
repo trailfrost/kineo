@@ -60,10 +60,5 @@
   },
   "optionalDependencies": {
     "neo4j-driver": "^6.0.0"
-  },
-  "devDependencies": {
-    "tsdown": "^0.17.0",
-    "typescript": "^5.9.2",
-    "vitest": "^4.0.15"
   }
 }

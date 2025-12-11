@@ -1,0 +1,23 @@
+{
+  "name": "@kineojs/better-auth",
+  "version": "0.1.0",
+  "description": "Kineo plugin/adapter for Better-Auth.",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "check": "tsc -b",
+    "build": "tsdown",
+    "test": "vitest"
+  },
+  "keywords": [
+    "kineo",
+    "better-auth"
+  ],
+  "author": "trailfrost",
+  "license": "MIT",
+  "packageManager": "pnpm@10.24.0",
+  "peerDependencies": {
+    "better-auth": "^1.0.0",
+    "kineo": "workspace:*"
+  }
+}

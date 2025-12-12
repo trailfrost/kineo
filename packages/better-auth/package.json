@@ -19,5 +19,8 @@
   "peerDependencies": {
     "better-auth": "^1.0.0",
     "kineo": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2"
   }
 }

@@ -47,6 +47,10 @@ importers:
       kineo:
         specifier: workspace:*
         version: link:../kineo
+    devDependencies:
+      '@types/node':
+        specifier: ^24.5.2
+        version: 24.5.2
 
   packages/kineo:
     dependencies:

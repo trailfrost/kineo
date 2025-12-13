@@ -4,6 +4,7 @@ export default defineConfig([
   {
     entry: [
       "src/index.ts",
+      "src/ir.ts",
       "src/kit/index.ts",
       "src/adapters/neo4j.ts",
       "src/compilers/sql.ts",

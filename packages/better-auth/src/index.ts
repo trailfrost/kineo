@@ -1,6 +1,7 @@
-import type { Kineo } from "kineo";
+import type { Adapter, Kineo, Schema } from "kineo";
 import { createAdapterFactory } from "better-auth/adapters";
-import fs from "fs/promises";
+import { createSchema } from "./schema";
+import { compile } from "./compiler";
 
 export const kineoAdapter = (client: Kineo<any, any>) =>
   createAdapterFactory({
@@ -8,74 +9,48 @@ export const kineoAdapter = (client: Kineo<any, any>) =>
       adapterId: "@kineojs/better-auth",
     },
     adapter: () => ({
-      // TODO
-
-      async createSchema({ tables, file }) {
-        const { client, schema } = await deleteClientAndSchema(file);
-
-        const tableBuilder: string[] = [];
-        const tableIndent = " ".repeat(2);
-        for (const key in tables) {
-          const table = tables[key];
-          const fields: string[] = [];
-          const fieldIndent = " ".repeat(4);
-          for (const key in table.fields) {
-            const field = table.fields[key];
-
-            const fieldBuilder: string[] = [];
-            if (field.references)
-              fieldBuilder.push(`relation.to(${field.references.model})`);
-            else
-              fieldBuilder.push(
-                `field.${typeof field.type === "string" ? (field.type.endsWith("[]") ? `${field.type}().array()` : `${field.type}()`) : "string().array()"}`
-              );
-
-            if (field.fieldName) fieldBuilder.push(`name(${field.fieldName})`);
-            if (field.defaultValue)
-              fieldBuilder.push(
-                `default(${typeof field.defaultValue === "function" ? field.defaultValue() : field.defaultValue})`
-              );
-            if (field.index) fieldBuilder.push(`index()`);
-            if (field.required) fieldBuilder.push("required()");
-            fields.push(`${fieldIndent}${key}: ${fieldBuilder.join(".")},`);
-          }
-
-          tableBuilder.push(`${tableIndent}${key}: model("${table.modelName}", {
-${fields.join("\n")}
-${fieldIndent}})`);
-        }
-
-        return {
-          code: schema?.default
-            ? `export default defineSchema({
-${schema?.contents ? schema.contents : ""}
-${tableBuilder.join("\n\n")}
-});
-`
-            : `${client ? `${client}\n\n` : ""}export const ${schema?.exportName ?? "schema"} = defineSchema({
-${schema?.contents ? schema.contents : ""}
-${tableBuilder.join("\n\n")}
-});
-`,
-          path: file ?? "./src/db.ts",
-          append: true,
-        };
+      async count(props) {
+        return (await exec(client, "count", props)).entryCount;
       },
+
+      async create(props) {
+        return (await exec(client, "create", props)).entries[0];
+      },
+
+      async delete(props) {
+        return (await exec(client, "delete", props)).entries[0];
+      },
+
+      async deleteMany(props) {
+        return (await exec(client, "deleteMany", props)).entries;
+      },
+
+      async findOne(props) {
+        return (await exec(client, "findOne", props)).entries[0];
+      },
+
+      async findMany(props) {
+        return (await exec(client, "findMany", props)).entries;
+      },
+
+      async update(props) {
+        return (await exec(client, "update", props)).entries[0];
+      },
+
+      async updateMany(props) {
+        return (await exec(client, "updateMany", props)).entries;
+      },
+
+      createSchema,
     }),
   });
 
-interface ClientAndSchema {
-  schema?: {
-    default: boolean;
-    contents: string;
-    exportName: string;
-  };
-  client?: string;
-}
-
-async function deleteClientAndSchema(file?: string): Promise<ClientAndSchema> {
-  if (!file) return {};
-
-  // TODO
-  return {};
+async function exec(
+  client: Kineo<Schema, Adapter<any, any>>,
+  mode: string,
+  props: any
+) {
+  const ir = compile(mode, props);
+  const result = await client.$adapter.compile(ir);
+  return (await client.$adapter.exec(result)) as any;
 }

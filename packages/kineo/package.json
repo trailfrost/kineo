@@ -20,6 +20,10 @@
       "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
+    "./ir": {
+      "types": "./dist/ir.d.mts",
+      "import": "./dist/ir.mjs"
+    },
     "./kit": {
       "types": "./dist/kit/index.d.mts",
       "import": "./dist/kit/index.mjs"

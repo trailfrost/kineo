@@ -48,7 +48,7 @@ export const kineoAdapter = (client: Kineo<any, any>) =>
 async function exec(
   client: Kineo<Schema, Adapter<any, any>>,
   mode: string,
-  props: any
+  props: any,
 ) {
   const ir = compile(mode, props);
   const result = await client.$adapter.compile(ir);

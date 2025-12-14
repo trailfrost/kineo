@@ -1,10 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import fs from "fs/promises";
-import {
-  createSchema,
-  deleteClientAndSchema,
-  type ClientAndSchema,
-} from "@/schema";
+import { createSchema, replaceSchemaInPlace } from "@/schema";
 
 vi.mock("fs/promises", () => ({
   default: {
@@ -15,53 +11,35 @@ vi.mock("fs/promises", () => ({
 
 const mockedFs = vi.mocked(fs);
 
-describe("deleteClientAndSchema", () => {
+describe("replaceSchemaInPlace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("returns empty object when no file is provided", async () => {
-    const result = await deleteClientAndSchema();
-
-    expect(result).toEqual({});
-    expect(mockedFs.readFile).not.toHaveBeenCalled();
-    expect(mockedFs.writeFile).not.toHaveBeenCalled();
-  });
-
-  test("extracts named exported schema and client and rewrites file", async () => {
+  test("replaces named exported schema in-place", async () => {
     const fileContents = `
 import { defineSchema } from "x";
 
 export const schema = defineSchema({
   foo: "bar",
 });
-
-export const client = Kineo({}, schema);
 `;
 
     mockedFs.readFile.mockResolvedValueOnce(fileContents);
+    mockedFs.writeFile.mockResolvedValueOnce(undefined);
 
-    const result = await deleteClientAndSchema("db.ts");
-
-    expect(result).toEqual<ClientAndSchema>({
-      schema: {
-        default: false,
-        contents: `{
-  foo: "bar",
-}`,
-        exportName: "schema",
-      },
-      client: `export const client = Kineo({}, schema);`,
-    });
+    await replaceSchemaInPlace("db.ts", `  users: model("User", {})`);
 
     expect(mockedFs.writeFile).toHaveBeenCalledTimes(1);
 
     const written = mockedFs.writeFile.mock.calls[0][1];
-    expect(written).not.toContain("export const schema");
-    expect(written).not.toContain("export const client");
+
+    expect(written).toContain(`export const schema = defineSchema({`);
+    expect(written).toContain(`users: model("User"`);
+    expect(written).not.toContain(`foo: "bar"`);
   });
 
-  test("extracts default exported schema", async () => {
+  test("replaces default exported schema in-place", async () => {
     const fileContents = `
 export default defineSchema({
   hello: "world",
@@ -69,16 +47,23 @@ export default defineSchema({
 `;
 
     mockedFs.readFile.mockResolvedValueOnce(fileContents);
+    mockedFs.writeFile.mockResolvedValueOnce(undefined);
 
-    const result = await deleteClientAndSchema("schema.ts");
+    await replaceSchemaInPlace("schema.ts", `  things: model("Thing", {})`);
 
-    expect(result.schema).toEqual({
-      default: true,
-      contents: `{
-  hello: "world",
-}`,
-      exportName: "default",
-    });
+    const written = mockedFs.writeFile.mock.calls[0][1];
+
+    expect(
+      (written as string).trim().startsWith("export default defineSchema")
+    ).toBe(true);
+    expect(written).toContain(`things: model("Thing"`);
+    expect(written).not.toContain(`hello: "world"`);
+  });
+
+  test("throws if no schema is found", async () => {
+    mockedFs.readFile.mockResolvedValueOnce(`export const x = 1;`);
+
+    expect(await replaceSchemaInPlace("db.ts", `  foo: "bar"`)).toBeUndefined();
   });
 });
 
@@ -87,7 +72,17 @@ describe("createSchema", () => {
     vi.clearAllMocks();
   });
 
-  test("generates schema code without file input", async () => {
+  test("writes schema into existing file", async () => {
+    mockedFs.readFile.mockResolvedValueOnce(`
+import { defineSchema } from "x";
+
+export const schema = defineSchema({
+  existing: true,
+});
+`);
+
+    mockedFs.writeFile.mockResolvedValueOnce(undefined);
+
     const tables = {
       users: {
         modelName: "User",
@@ -104,23 +99,30 @@ describe("createSchema", () => {
       },
     } as any;
 
-    const result = await createSchema({ tables });
+    const result = await createSchema({
+      tables,
+      file: "db.ts",
+    });
 
-    expect(result.path).toBe("./src/db.ts");
-    expect(result.append).toBe(true);
+    expect(result).toEqual({
+      path: "db.ts",
+      code: "",
+    });
 
-    expect(result.code).toContain(`export const schema = defineSchema`);
-    expect(result.code).toContain(`users: model("User"`);
-    expect(result.code).toContain(`id: field.string().required()`);
-    expect(result.code).toContain(`email: field.string().index()`);
+    const written = mockedFs.writeFile.mock.calls[0][1];
+
+    expect(written).toContain(`users: model("User"`);
+    expect(written).toContain(`id: field.string().required()`);
+    expect(written).toContain(`email: field.string().index()`);
+    expect(written).not.toContain(`existing: true`);
   });
 
-  test("reuses existing schema and client from file", async () => {
+  test("preserves client and other code", async () => {
     mockedFs.readFile.mockResolvedValueOnce(`
 export const client = Kineo({});
 
 export const schema = defineSchema({
-  existing: true,
+  old: true,
 });
 `);
 
@@ -138,49 +140,15 @@ export const schema = defineSchema({
       },
     } as any;
 
-    const result = await createSchema({
+    await createSchema({
       tables,
       file: "db.ts",
     });
 
-    expect(result.code).toContain(`export const schema = defineSchema`);
-    expect(result.code).toContain(`existing: true`);
-    expect(result.code).toContain(`posts: model("Post"`);
+    const written = mockedFs.writeFile.mock.calls[0][1];
 
-    // client should be preserved at the top
-    expect(result.code.startsWith(`export const client = Kineo({});`)).toBe(
-      true,
-    );
-  });
-
-  test("emits default export when previous schema was default", async () => {
-    mockedFs.readFile.mockResolvedValueOnce(`
-export default defineSchema({
-  old: true,
-});
-`);
-
-    mockedFs.writeFile.mockResolvedValueOnce(undefined);
-
-    const tables = {
-      things: {
-        modelName: "Thing",
-        fields: {
-          name: {
-            type: "string",
-          },
-        },
-      },
-    } as any;
-
-    const result = await createSchema({
-      tables,
-      file: "schema.ts",
-    });
-
-    expect(result.code.trim().startsWith("export default defineSchema")).toBe(
-      true,
-    );
-    expect(result.code).toContain(`things: model("Thing"`);
+    expect(written).toContain(`export const client = Kineo({});`);
+    expect(written).toContain(`posts: model("Post"`);
+    expect(written).not.toContain(`old: true`);
   });
 });

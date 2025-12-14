@@ -1,6 +1,8 @@
 import fs from "fs/promises";
 import type { BetterAuthDBSchema } from "better-auth/db";
 
+// TODO make this safer by returning no code and just replacing the schema definition in place
+
 export async function createSchema({
   tables,
   file,
@@ -84,19 +86,19 @@ export async function deleteClientAndSchema(
    *   export default defineSchema(...);
    */
   const schemaRegex =
-    /(?:export\s+default\s+(defineSchema\s*\([\s\S]*?\))\s*;)|(?:(export\s+)?(const|let|var)\s+(\w+)\s*=\s*(defineSchema\s*\([\s\S]*?\))\s*;)/m;
+    /(?:export\s+default\s+defineSchema\s*\(([\s\S]*?)\)\s*;)|(?:(export\s+)?(const|let|var)\s+(\w+)\s*=\s*defineSchema\s*\(([\s\S]*?)\)\s*;)/m;
 
   const schemaMatch = contents.match(schemaRegex);
   if (schemaMatch) {
     const fullMatch = schemaMatch[0];
 
     const isDefault = Boolean(schemaMatch[1]);
-    const schemaCall = isDefault ? schemaMatch[1] : schemaMatch[5];
+    const schemaContents = isDefault ? schemaMatch[1] : schemaMatch[5];
     const exportName = isDefault ? "default" : schemaMatch[4];
 
     result.schema = {
       default: isDefault,
-      contents: schemaCall.trim(),
+      contents: schemaContents.trim(),
       exportName,
     };
 

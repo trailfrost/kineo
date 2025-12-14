@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2020",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "strict": true,
     "esModuleInterop": true,

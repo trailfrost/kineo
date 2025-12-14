@@ -24,13 +24,13 @@ export async function createSchema({
         fieldBuilder.push(`relation.to(${field.references.model})`);
       else
         fieldBuilder.push(
-          `field.${typeof field.type === "string" ? (field.type.endsWith("[]") ? `${field.type}().array()` : `${field.type}()`) : "string().array()"}`
+          `field.${typeof field.type === "string" ? (field.type.endsWith("[]") ? `${field.type}().array()` : `${field.type}()`) : "string().array()"}`,
         );
 
       if (field.fieldName) fieldBuilder.push(`name(${field.fieldName})`);
       if (field.defaultValue)
         fieldBuilder.push(
-          `default(${typeof field.defaultValue === "function" ? field.defaultValue() : field.defaultValue})`
+          `default(${typeof field.defaultValue === "function" ? field.defaultValue() : field.defaultValue})`,
         );
       if (field.index) fieldBuilder.push(`index()`);
       if (field.required) fieldBuilder.push("required()");
@@ -38,8 +38,8 @@ export async function createSchema({
     }
 
     tableBuilder.push(`${tableIndent}${key}: model("${table.modelName}", {
-${fields.join("\n")}
-${fieldIndent}})`);
+${fields.join(",\n")}
+${tableIndent}})`);
   }
 
   return {
@@ -69,10 +69,61 @@ export interface ClientAndSchema {
 }
 
 export async function deleteClientAndSchema(
-  file?: string
+  file?: string,
 ): Promise<ClientAndSchema> {
   if (!file) return {};
 
-  // TODO
-  return {};
+  let contents = await fs.readFile(file, "utf-8");
+
+  const result: ClientAndSchema = {};
+
+  /**
+   * Match schema:
+   *   export const schema = defineSchema(...);
+   *   const schema = defineSchema(...);
+   *   export default defineSchema(...);
+   */
+  const schemaRegex =
+    /(?:export\s+default\s+(defineSchema\s*\([\s\S]*?\))\s*;)|(?:(export\s+)?(const|let|var)\s+(\w+)\s*=\s*(defineSchema\s*\([\s\S]*?\))\s*;)/m;
+
+  const schemaMatch = contents.match(schemaRegex);
+  if (schemaMatch) {
+    const fullMatch = schemaMatch[0];
+
+    const isDefault = Boolean(schemaMatch[1]);
+    const schemaCall = isDefault ? schemaMatch[1] : schemaMatch[5];
+    const exportName = isDefault ? "default" : schemaMatch[4];
+
+    result.schema = {
+      default: isDefault,
+      contents: schemaCall.trim(),
+      exportName,
+    };
+
+    contents = contents.replace(fullMatch, "");
+  }
+
+  /**
+   * Match client:
+   *   export const client = Kineo(...);
+   *   const client = Kineo(...);
+   *   export default Kineo(...);
+   */
+  const clientRegex =
+    /(?:export\s+default\s+Kineo\s*\([\s\S]*?\)\s*;)|(?:(export\s+)?(const|let|var)\s+\w+\s*=\s*Kineo\s*\([\s\S]*?\)\s*;)/m;
+
+  const clientMatch = contents.match(clientRegex);
+  if (clientMatch) {
+    const [fullMatch] = clientMatch;
+
+    result.client = fullMatch.trim();
+    contents = contents.replace(fullMatch, "");
+  }
+
+  // Clean up excessive blank lines
+  contents = contents.replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+
+  await fs.writeFile(file, contents, "utf-8");
+
+  return result;
 }

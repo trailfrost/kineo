@@ -1,17 +1,15 @@
 import type { CleanedWhere, JoinConfig } from "better-auth/adapters";
 import * as IR from "kineo/ir";
 
-export interface SortBy {
-  field: string;
-  direction: "asc" | "desc";
-}
-
 export interface CompileOpts {
   model: string;
   where?: CleanedWhere[];
   select?: string[];
   limit?: number;
-  sortBy?: SortBy;
+  sortBy?: {
+    field: string;
+    direction: "asc" | "desc";
+  };
   offset?: number;
   data?: Record<string, any>;
   join?: JoinConfig;

@@ -54,7 +54,7 @@ export default defineSchema({
     const written = mockedFs.writeFile.mock.calls[0][1];
 
     expect(
-      (written as string).trim().startsWith("export default defineSchema")
+      (written as string).trim().startsWith("export default defineSchema"),
     ).toBe(true);
     expect(written).toContain(`things: model("Thing"`);
     expect(written).not.toContain(`hello: "world"`);

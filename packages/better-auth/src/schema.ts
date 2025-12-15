@@ -22,7 +22,9 @@ export async function createSchema({
       const fieldBuilder: string[] = [];
 
       if (field.references) {
-        fieldBuilder.push(`relation.to("${field.references.model}")`);
+        fieldBuilder.push(
+          `relation.to("${field.references.model}"${field.fieldName ? `, "${field.fieldName}"` : ""})`,
+        );
       } else {
         fieldBuilder.push(
           `field.${
@@ -31,7 +33,7 @@ export async function createSchema({
                 ? `${field.type}(${field.fieldName ? `"${field.fieldName}"` : ""}).array()`
                 : `${field.type}(${field.fieldName ? `"${field.fieldName}"` : ""})`
               : `string(${field.fieldName ? `"${field.fieldName}"` : ""}).array()`
-          }`
+          }`,
         );
       }
 
@@ -41,7 +43,7 @@ export async function createSchema({
             typeof field.defaultValue === "function"
               ? field.defaultValue()
               : field.defaultValue
-          })`
+          })`,
         );
       }
       if (field.index) fieldBuilder.push("index()");
@@ -52,8 +54,8 @@ export async function createSchema({
 
     tableBuilder.push(
       `${tableIndent}${tableKey}: model("${table.modelName}", {\n${fields.join(
-        "\n"
-      )}\n${tableIndent}}),`
+        "\n",
+      )}\n${tableIndent}}),`,
     );
   }
 

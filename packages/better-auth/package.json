@@ -1,11 +1,17 @@
 {
   "name": "@kineojs/better-auth",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Kineo plugin/adapter for Better-Auth.",
-  "main": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "engines": {
     "node": ">= 20.19.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "check": "tsc -b",

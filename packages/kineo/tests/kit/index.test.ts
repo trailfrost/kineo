@@ -152,11 +152,6 @@ describe("deploy()", () => {
       deploy: vi.fn(),
     });
 
-    // crypto.hash doesn't exist — you can mock it to test call shape
-    vi.mock("node:crypto", () => ({
-      default: { hash: vi.fn().mockReturnValue("hash123") },
-    }));
-
     await deploy(adapter, "");
     expect(adapter.deploy).toHaveBeenCalled();
   });

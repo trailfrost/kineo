@@ -5,7 +5,7 @@ import type { Kineo } from "@/client";
 import type { Adapter, MigrationEntry } from "@/adapter";
 import { FieldDef, RelationDef, type Schema } from "@/schema";
 
-import type { Jiti } from "jiti/lib/types";
+import type { Jiti } from "jiti";
 
 /**
  * A file path based import in the configuration file.
@@ -341,7 +341,7 @@ export async function deploy(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.deploy) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.deploy(
     migration,
-    crypto.hash("sha512", JSON.stringify(migration)),
+    crypto.createHash("sha512").update(JSON.stringify(migration)).digest("hex"),
   );
 }
 
@@ -355,7 +355,7 @@ export async function status(adapter: Adapter<any, any>, migration: string) {
   if (!adapter.status) throw new KineoKitError(KineoKitErrorKind.NoSupport);
   return await adapter.status(
     migration,
-    crypto.hash("sha512", JSON.stringify(migration)),
+    crypto.createHash("sha512").update(JSON.stringify(migration)).digest("hex"),
   );
 }
 

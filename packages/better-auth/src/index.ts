@@ -18,11 +18,11 @@ export const kineoAdapter = (client: Kineo<any, any>) =>
       },
 
       async delete(props) {
-        return (await exec(client, "delete", props)).entries[0];
+        await exec(client, "delete", props);
       },
 
       async deleteMany(props) {
-        return (await exec(client, "deleteMany", props)).entries;
+        return (await exec(client, "deleteMany", props)).entryCount;
       },
 
       async findOne(props) {
@@ -38,7 +38,7 @@ export const kineoAdapter = (client: Kineo<any, any>) =>
       },
 
       async updateMany(props) {
-        return (await exec(client, "updateMany", props)).entries;
+        return (await exec(client, "updateMany", props)).entryCount;
       },
 
       createSchema,

@@ -4,6 +4,9 @@
   "description": "Kineo plugin/adapter for Better-Auth.",
   "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">= 20.19.0"
+  },
   "scripts": {
     "check": "tsc -b",
     "build": "tsdown",
@@ -21,7 +24,7 @@
     "kineo": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "~20.5.0",
+    "@types/node": "~20.19.0",
     "kineo": "workspace:*",
     "tsdown": "^0.18.0",
     "typescript": "^5.9.2"

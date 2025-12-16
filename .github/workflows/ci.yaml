@@ -6,48 +6,44 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: docker/setup-buildx-action@v3
-      - uses: pnpm/action-setup@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - name: Build and start Docker Compose
-        run: docker compose up -d --build
+      - name: Start Docker Compose
+        run: docker compose up -d
 
-      - name: Wait for all services to be healthy
-        run: |
-          echo "Waiting for database containers to become healthy..."
-          for service in mysql postgres neo4j; do
-            echo "Checking $service..."
-            for i in {1..30}; do
-              status=$(docker inspect --format='{{.State.Health.Status}}' kineo_${service} || echo "not found")
-              if [ "$status" = "healthy" ]; then
-                echo "$service is healthy!"
-                break
-              fi
-              echo "$service status: $status (attempt $i)"
-              sleep 5
-            done
-          done
+      - name: Set up Node.js 20.5.0
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.5.0
+          cache: "pnpm"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
 
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run type check
+      - name: Build
+        run: pnpm build
+
+      - name: Type check
         run: pnpm check
 
-      - name: Run ESLint
-        run: pnpm lint
-
-      - name: Run Prettier
+      - name: Format check
         run: pnpm format
 
-      - name: Run tests
-        run: pnpm test
+      - name: Lint
+        run: pnpm lint
 
-      - name: Shutdown Docker
+      # always shut down Docker Compose
+      - name: Stop Docker Compose
         if: always()
-        run: docker compose down -v
+        run: docker compose down

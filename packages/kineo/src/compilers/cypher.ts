@@ -1,4 +1,5 @@
 import type { Compiler } from "@/adapter";
+import neo4j from "neo4j-driver";
 import * as IR from "@/ir";
 
 /**
@@ -98,9 +99,13 @@ function propsToCypher(
   return entries.length ? `{ ${entries.join(", ")} }` : "{}";
 }
 
-function normalizeValue(v: any) {
+function normalizeValue(v: any): any {
+  if (Array.isArray(v)) {
+    return v.map(normalizeValue);
+  }
+
   if (v instanceof Date) {
-    return v.toISOString(); // TODO update this to use proper Neo4j datetimes
+    return neo4j.types.DateTime.fromStandardDate(v);
   }
   if (typeof v === "object" && v !== null && !Array.isArray(v)) {
     throw new Error(

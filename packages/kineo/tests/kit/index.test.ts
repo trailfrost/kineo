@@ -15,7 +15,7 @@ import type { Adapter, MigrationEntry } from "@/adapter";
 
 // A minimal fake adapter
 function createFakeAdapter(
-  overrides: Partial<Adapter<any, any>> = {},
+  overrides: Partial<Adapter<any, any>> = {}
 ): Adapter<any, any> {
   return {
     Model: class FakeModel {},
@@ -36,7 +36,7 @@ describe("push()", () => {
   test("throws if adapter lacks pull or push", async () => {
     const adapter = createFakeAdapter({});
     await expect(push(adapter, simpleSchema)).rejects.toThrowError(
-      KineoKitError,
+      KineoKitError
     );
   });
 
@@ -127,7 +127,7 @@ describe("generate()", () => {
   test("throws if adapter lacks generate", async () => {
     const adapter = createFakeAdapter({});
     await expect(generate(adapter, simpleSchema, simpleSchema)).rejects.toThrow(
-      KineoKitError,
+      KineoKitError
     );
   });
 
@@ -169,7 +169,11 @@ describe("status()", () => {
     });
 
     vi.mock("node:crypto", () => ({
-      default: { hash: vi.fn().mockReturnValue("hash123") },
+      default: {
+        createHash: vi
+          .fn()
+          .mockReturnValue({ update: () => ({ digest: () => "abc123" }) }),
+      },
     }));
 
     const result = await status(adapter, "");
@@ -239,13 +243,13 @@ describe("decompileEntries()", () => {
 
     const command = result.find((x) => x.type === "command" && x.command);
     expect(command?.type === "command" && command?.command).toBe(
-      "CREATE TABLE users",
+      "CREATE TABLE users"
     );
     expect(command?.description).toBe("create users table");
 
     const reverse = result.find((x) => x.type === "command" && x.reverse);
     expect(reverse?.type === "command" && reverse?.reverse).toBe(
-      "DROP TABLE users",
+      "DROP TABLE users"
     );
   });
 
@@ -292,7 +296,7 @@ describe("decompileEntries()", () => {
           type: "note",
           note: "-- Note content",
         }),
-      ]),
+      ])
     );
   });
 });

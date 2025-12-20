@@ -11,7 +11,6 @@
       "cache": false
     },
     "test": {
-      "dependsOn": ["^test"],
       "persistent": true,
       "cache": false
     }

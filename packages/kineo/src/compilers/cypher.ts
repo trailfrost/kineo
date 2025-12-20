@@ -92,10 +92,22 @@ function propsToCypher(
   const entries: string[] = [];
   for (const [k, v] of Object.entries(props || {})) {
     const pname = ctx.nextParamName(`${prefix}_${k}`.replace(/\W/g, ""));
-    ctx.params[pname] = v;
+    ctx.params[pname] = normalizeValue(v);
     entries.push(`${k}: $${pname}`);
   }
   return entries.length ? `{ ${entries.join(", ")} }` : "{}";
+}
+
+function normalizeValue(v: any) {
+  if (v instanceof Date) {
+    return v.toISOString(); // TODO update this to use proper Neo4j datetimes
+  }
+  if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+    throw new Error(
+      `Unsupported parameter value (object): ${JSON.stringify(v)}`,
+    );
+  }
+  return v;
 }
 
 /**
@@ -133,7 +145,7 @@ function whereToCypher(
     if (value && typeof value === "object" && !Array.isArray(value)) {
       for (const [op, val] of Object.entries(value)) {
         const pname = ctx.nextParamName(key);
-        ctx.params[pname] = val;
+        ctx.params[pname] = normalizeValue(val);
         const opHandler = opMap[op];
         parts.push(
           opHandler ? opHandler(field, pname) : `${field} = $${pname}`,
@@ -141,11 +153,11 @@ function whereToCypher(
       }
     } else if (Array.isArray(value)) {
       const pname = ctx.nextParamName(key);
-      ctx.params[pname] = value;
+      ctx.params[pname] = normalizeValue(value);
       parts.push(`${field} IN $${pname}`);
     } else {
       const pname = ctx.nextParamName(key);
-      ctx.params[pname] = value;
+      ctx.params[pname] = normalizeValue(value);
       parts.push(`${field} = $${pname}`);
     }
   }
@@ -389,7 +401,7 @@ function compileUpsertStatement(
     ? `ON CREATE SET ${Object.entries(createData)
         .map(([k, v]) => {
           const p = ctx.nextParamName(`oncreate_${k}`);
-          ctx.params[p] = v;
+          ctx.params[p] = normalizeValue(v);
           return `${alias}.${k} = $${p}`;
         })
         .join(", ")}`
@@ -399,7 +411,7 @@ function compileUpsertStatement(
     ? `ON MATCH SET ${Object.entries(updateData)
         .map(([k, v]) => {
           const p = ctx.nextParamName(`onmatch_${k}`);
-          ctx.params[p] = v;
+          ctx.params[p] = normalizeValue(v);
           return `${alias}.${k} = $${p}`;
         })
         .join(", ")}`

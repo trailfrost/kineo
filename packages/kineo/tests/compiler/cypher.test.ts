@@ -1,6 +1,7 @@
 import { describe, test, expect } from "vitest";
 import { compile } from "@/compilers/cypher";
 import * as IR from "@/ir";
+import { DateTime } from "neo4j-driver";
 
 describe("compile()", () => {
   test("throws on unsupported statement type", () => {
@@ -228,5 +229,20 @@ describe("compile()", () => {
     expect(command).toContain("<-[:*1..3]->");
     expect(command).toContain("RETURN p");
     expect(command).toContain("LIMIT 2");
+  });
+
+  test("normalizes dates into neo4j date time", () => {
+    const ir = {
+      statements: [
+        {
+          type: IR.StatementType.Create,
+          data: {
+            hello: new Date(),
+          },
+        },
+      ],
+    } as any;
+    const { params } = compile(ir);
+    expect(params["create_hello_1"]).toBeInstanceOf(DateTime);
   });
 });

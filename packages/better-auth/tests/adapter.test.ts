@@ -64,13 +64,13 @@ describe("kineoAdapter", () => {
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
         }),
-      })
+      }),
     );
 
     expect(result).toEqual(
       expect.objectContaining({
         id: "1",
-      })
+      }),
     );
   });
 
@@ -180,7 +180,7 @@ describe("kineoAdapter", () => {
             connector: "AND",
           },
         ],
-      })
+      }),
     );
 
     expect(result).toMatchObject({
@@ -203,7 +203,7 @@ describe("kineoAdapter", () => {
         model: "user",
         where: [],
         update: expect.any(Object),
-      })
+      }),
     );
 
     expect(result).toEqual(execResult.entryCount);

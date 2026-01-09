@@ -1,6 +1,6 @@
 {
   "name": "kineo",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
   "main": "./dist/index.mjs",
@@ -68,6 +68,7 @@
   "devDependencies": {
     "@types/node": "~20.19.0",
     "tsdown": "^0.18.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.15"
   }
 }

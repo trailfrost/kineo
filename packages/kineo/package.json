@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/trailfrost/kineo"
+    "url": "git+https://github.com/sprucepad/kineo"
   },
   "engines": {
     "node": ">= 20.19.0"
@@ -56,7 +56,7 @@
     "object-graph-mapper",
     "object-relation-mapper"
   ],
-  "author": "trailfrost",
+  "author": "sprucepad",
   "license": "MIT",
   "dependencies": {
     "convoker": "^0.3.4",

@@ -1,6 +1,6 @@
 {
   "name": "@kineojs/better-auth",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Kineo plugin/adapter for Better-Auth.",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -33,6 +33,7 @@
     "@types/node": "~20.19.0",
     "kineo": "workspace:*",
     "tsdown": "^0.18.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.15"
   }
 }

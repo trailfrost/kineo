@@ -163,10 +163,20 @@ export function Neo4jAdapter(opts: Neo4jOpts): Neo4jAdapter {
 
         for (const key of record.keys) {
           const value = toNative(record.get(key));
-          obj[key.toString()] = value;
 
-          // Collect relationship-like objects
           collectEdges(value, edges);
+
+          // Flatten nodes
+          if (
+            value &&
+            typeof value === "object" &&
+            "labels" in value &&
+            "identity" in value
+          ) {
+            Object.assign(obj, value);
+          } else {
+            obj[key.toString()] = value;
+          }
         }
 
         entries.push(obj);
@@ -724,7 +734,7 @@ function serializeDefault(v: any): string {
  * @param value The value to convert.
  * @returns The converted value.
  */
-function toNative(value: any): any {
+export function toNative(value: any): any {
   if (neo4j.isInt(value)) {
     // convert neo4j.Integer -> number (safe)
     return value.inSafeRange() ? value.toNumber() : value.toBigInt();
@@ -781,7 +791,7 @@ function toNative(value: any): any {
  * @param value The value.
  * @param edges The array to collect to.
  */
-function collectEdges(value: any, edges: any[]) {
+export function collectEdges(value: any, edges: any[]) {
   if (!value) return;
 
   // Relationship-like object (produced by toNative)

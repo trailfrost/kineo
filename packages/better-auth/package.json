@@ -1,6 +1,6 @@
 {
   "name": "@kineojs/better-auth",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Kineo plugin/adapter for Better-Auth.",
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
@@ -17,7 +17,7 @@
     "check": "tsc",
     "build": "tsdown",
     "test": "vitest",
-    "prepublishOnly": "pnpm build"
+    "prepare": "pnpm build"
   },
   "keywords": [
     "kineo",

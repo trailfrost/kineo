@@ -46,9 +46,10 @@
   ],
   "scripts": {
     "kit": "jiti src/kit/main.ts",
-    "check": "tsc -b",
+    "check": "tsc",
     "build": "tsdown",
-    "test": "vitest"
+    "test": "vitest",
+    "prepublishOnly": "pnpm build"
   },
   "keywords": [
     "ogm",

@@ -1,6 +1,6 @@
 {
   "name": "kineo",
-  "version": "0.9.3",
+  "version": "0.9.4",
   "type": "module",
   "description": "Declarive, TypeScript-first Object-Relation/Graph Mapper (ORM/OGM).",
   "main": "./dist/index.mjs",
@@ -49,7 +49,7 @@
     "check": "tsc",
     "build": "tsdown",
     "test": "vitest",
-    "prepublishOnly": "pnpm build"
+    "prepare": "pnpm build"
   },
   "keywords": [
     "ogm",
